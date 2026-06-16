@@ -1,0 +1,402 @@
+/* ===== リセット・基本 ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue:    #2563eb;
+  --blue-l:  #dbeafe;
+  --green:   #16a34a;
+  --green-l: #dcfce7;
+  --orange:  #d97706;
+  --orange-l:#fef3c7;
+  --red:     #dc2626;
+  --red-l:   #fee2e2;
+  --gray-bg: #f1f5f9;
+  --gray-b:  #cbd5e1;
+  --gray-t:  #94a3b8;
+  --dark:    #1e293b;
+  --slate:   #475569;
+  --white:   #ffffff;
+  --radius:  14px;
+  --shadow:  0 2px 12px rgba(0,0,0,.08);
+}
+
+html, body { height: 100%; }
+body {
+  font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+  background: var(--gray-bg);
+  color: var(--dark);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* ===== ヘッダー ===== */
+.app-header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--blue);
+  box-shadow: 0 2px 8px rgba(37,99,235,.3);
+}
+.header-inner {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  max-width: 960px; margin: 0 auto;
+}
+.header-inner h1 {
+  flex: 1; font-size: 1.2rem; font-weight: 700; color: var(--white);
+}
+.btn-back {
+  background: none; border: none; cursor: pointer;
+  color: var(--white); font-size: 1.4rem; padding: 4px 8px;
+}
+.btn-new {
+  background: var(--white); color: var(--blue);
+  border: none; border-radius: 10px;
+  padding: 8px 16px; font-size: .9rem; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+}
+.btn-new:hover { background: #e0eaff; }
+
+/* ===== ページ切り替え ===== */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ===== タブ ===== */
+.tab-bar {
+  display: flex; background: var(--white);
+  border-bottom: 2px solid var(--gray-b);
+  position: sticky; top: 56px; z-index: 90;
+}
+.tab {
+  flex: 1; padding: 14px 0; background: none; border: none;
+  font-size: .95rem; font-weight: 600; color: var(--gray-t);
+  cursor: pointer; border-bottom: 3px solid transparent;
+  transition: .15s;
+}
+.tab.active {
+  color: var(--blue); border-bottom-color: var(--blue);
+}
+
+/* ===== 月セレクタ ===== */
+.month-selector {
+  display: flex; align-items: center; justify-content: center; gap: 24px;
+  padding: 16px; background: var(--white);
+  font-size: 1.05rem; font-weight: 700;
+  border-bottom: 1px solid var(--gray-b);
+}
+.month-selector button {
+  background: none; border: none; font-size: 1.2rem;
+  color: var(--slate); cursor: pointer; padding: 4px 10px;
+}
+
+/* ===== 集計カード ===== */
+.summary-cards {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  padding: 16px; max-width: 960px; margin: 0 auto;
+}
+.summary-card {
+  background: var(--white); border-radius: var(--radius);
+  padding: 16px 12px; box-shadow: var(--shadow); text-align: center;
+}
+.summary-label { font-size: .78rem; color: var(--gray-t); margin-bottom: 6px; }
+.summary-value { font-size: 1.8rem; font-weight: 800; }
+.summary-value.blue   { color: var(--blue); }
+.summary-value.orange { color: var(--orange); }
+.summary-value.green  { color: var(--green); }
+
+/* ===== 進捗の凡例 ===== */
+.flow-legend {
+  text-align: center; font-size: .82rem; color: var(--gray-t);
+  padding: 6px 16px 12px;
+}
+.flow-legend .step { color: var(--slate); font-weight: 600; }
+.flow-legend .arrow { margin: 0 4px; }
+
+/* ===== 依頼一覧 ===== */
+.list-container {
+  padding: 0 16px 100px; max-width: 960px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.loading { text-align: center; padding: 60px 0; color: var(--gray-t); }
+.empty   { text-align: center; padding: 60px 0; color: var(--gray-t); }
+
+/* リストカード */
+.request-card {
+  background: var(--white); border-radius: var(--radius);
+  padding: 18px; box-shadow: var(--shadow);
+  cursor: pointer; transition: box-shadow .15s;
+  border-left: 4px solid transparent;
+}
+.request-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.12); }
+.request-card.pending { border-left-color: var(--orange); }
+.request-card.done    { border-left-color: var(--green); }
+.request-card.rejected{ border-left-color: var(--red); }
+
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.card-name { font-weight: 700; font-size: 1rem; }
+.card-date { font-size: .82rem; color: var(--gray-t); white-space: nowrap; }
+.card-item { font-size: .88rem; color: var(--slate); margin: 6px 0 10px; }
+.card-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+/* ステータスバッジ */
+.badge {
+  display: inline-block; font-size: .78rem; font-weight: 700;
+  padding: 4px 12px; border-radius: 99px;
+}
+.badge.pending  { background: var(--orange-l); color: var(--orange); }
+.badge.done     { background: var(--green-l);  color: var(--green); }
+.badge.rejected { background: var(--red-l);    color: var(--red); }
+
+/* 進捗ステッパー */
+.stepper { display: flex; align-items: center; gap: 0; }
+.step-dot {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; font-weight: 700;
+  background: var(--white); border: 2px solid var(--gray-b); color: var(--gray-t);
+}
+.step-dot.done { background: var(--green); border-color: var(--green); color: var(--white); }
+.step-dot.current { background: var(--orange); border-color: var(--orange); color: var(--white); }
+.step-line { width: 18px; height: 3px; background: var(--gray-b); }
+.step-line.done { background: var(--green); }
+
+/* ===== 帳票選択 ===== */
+.section-title {
+  padding: 24px 16px 12px; font-size: 1rem;
+  font-weight: 700; color: var(--slate);
+}
+.form-list {
+  padding: 0 16px; display: flex; flex-direction: column; gap: 12px;
+  max-width: 600px; margin: 0 auto;
+}
+.form-item {
+  background: var(--white); border-radius: var(--radius);
+  padding: 20px; box-shadow: var(--shadow);
+  display: flex; align-items: center; gap: 16px;
+  cursor: pointer; transition: box-shadow .15s;
+}
+.form-item:hover { box-shadow: 0 4px 20px rgba(0,0,0,.12); }
+.form-icon { font-size: 2rem; }
+.form-info { flex: 1; }
+.form-info-name { font-weight: 700; font-size: 1rem; }
+.form-info-desc { font-size: .82rem; color: var(--gray-t); margin-top: 2px; }
+.form-arrow { color: var(--gray-t); font-size: 1.2rem; }
+
+/* ===== 入力フォーム ===== */
+#formContainer {
+  padding: 16px; max-width: 720px; margin: 0 auto;
+}
+.form-section {
+  background: var(--white); border-radius: var(--radius);
+  padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px;
+}
+.form-section-title {
+  font-size: .9rem; font-weight: 700; color: var(--blue);
+  margin-bottom: 16px; padding-bottom: 8px;
+  border-bottom: 2px solid var(--blue-l);
+}
+.field { margin-bottom: 18px; }
+.field:last-child { margin-bottom: 0; }
+.field label {
+  display: block; font-size: .85rem; color: var(--slate);
+  font-weight: 600; margin-bottom: 6px;
+}
+.field input[type="text"],
+.field input[type="number"],
+.field input[type="date"],
+.field select,
+.field textarea {
+  width: 100%; padding: 12px 14px;
+  border: 2px solid var(--gray-b); border-radius: 10px;
+  font-size: 1rem; font-family: inherit;
+  background: var(--white); color: var(--dark);
+  transition: border-color .15s;
+  -webkit-appearance: none;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none; border-color: var(--blue);
+}
+.field textarea { min-height: 80px; resize: vertical; }
+.field.inline { display: flex; gap: 10px; }
+.field.inline > div { flex: 1; }
+
+/* 不明ボタン付き単価 */
+.price-row { display: flex; gap: 8px; align-items: flex-start; }
+.price-row input { flex: 1; }
+.btn-unknown {
+  padding: 12px 14px; border-radius: 10px;
+  background: var(--gray-bg); border: 2px solid var(--gray-b);
+  font-size: .9rem; cursor: pointer; white-space: nowrap;
+  color: var(--slate); font-family: inherit;
+}
+.btn-unknown.active {
+  background: var(--blue-l); border-color: var(--blue); color: var(--blue);
+}
+
+/* チェックボックストグル */
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--white); border-radius: var(--radius);
+  padding: 16px 20px; box-shadow: var(--shadow); margin-bottom: 16px;
+}
+.toggle-label { font-size: 1rem; color: var(--dark); }
+.toggle-switch { position: relative; width: 56px; height: 30px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; background: var(--gray-b);
+  border-radius: 99px; cursor: pointer; transition: .2s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute;
+  width: 22px; height: 22px; left: 4px; top: 4px;
+  background: var(--white); border-radius: 50%; transition: .2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--blue); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(26px); }
+
+/* 明細カード */
+.detail-card {
+  background: var(--white); border-radius: var(--radius);
+  border: 2px solid var(--blue-l); margin-bottom: 12px;
+  overflow: hidden;
+}
+.detail-card-header {
+  background: var(--blue-l); padding: 12px 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 700; color: var(--blue);
+}
+.btn-remove-row {
+  background: none; border: none; color: var(--gray-t);
+  cursor: pointer; font-size: .9rem; padding: 4px 8px;
+}
+.btn-remove-row:hover { color: var(--red); }
+.detail-card-body { padding: 16px; }
+
+.btn-add-row {
+  display: block; width: 100%;
+  padding: 14px; border-radius: var(--radius);
+  border: 2px dashed var(--blue); background: none;
+  color: var(--blue); font-size: 1rem; font-weight: 700;
+  cursor: pointer; font-family: inherit; margin-top: 8px;
+  transition: background .15s;
+}
+.btn-add-row:hover { background: var(--blue-l); }
+
+/* アクションボタン */
+.form-actions {
+  position: sticky; bottom: 0; z-index: 90;
+  padding: 16px; background: var(--white);
+  box-shadow: 0 -2px 12px rgba(0,0,0,.08);
+  display: flex; gap: 10px; max-width: 960px; margin: 0 auto;
+}
+.btn-confirm {
+  flex: 1; padding: 16px; background: var(--blue);
+  border: none; border-radius: var(--radius);
+  color: var(--white); font-size: 1rem; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+}
+.btn-confirm:hover { background: #1d4ed8; }
+.btn-submit {
+  flex: 2; padding: 16px; background: var(--green);
+  border: none; border-radius: var(--radius);
+  color: var(--white); font-size: 1rem; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+}
+.btn-back-white {
+  flex: 1; padding: 16px; background: var(--gray-bg);
+  border: 2px solid var(--gray-b); border-radius: var(--radius);
+  color: var(--slate); font-size: 1rem; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+}
+
+/* ===== 確認画面 ===== */
+.confirm-box {
+  padding: 16px; max-width: 720px; margin: 0 auto;
+}
+.confirm-section {
+  background: var(--white); border-radius: var(--radius);
+  padding: 20px; box-shadow: var(--shadow); margin-bottom: 12px;
+}
+.confirm-section-title {
+  font-size: .85rem; font-weight: 700; color: var(--blue);
+  margin-bottom: 12px; padding-bottom: 6px;
+  border-bottom: 2px solid var(--blue-l);
+}
+.confirm-row {
+  display: flex; gap: 12px; padding: 8px 0;
+  border-bottom: 1px solid var(--gray-bg); font-size: .92rem;
+}
+.confirm-row:last-child { border-bottom: none; }
+.confirm-key { width: 120px; color: var(--gray-t); flex-shrink: 0; }
+.confirm-val { color: var(--dark); font-weight: 600; flex: 1; }
+
+/* ===== 完了画面 ===== */
+.complete-box {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 60vh;
+  padding: 40px 24px; text-align: center; gap: 20px;
+}
+.complete-icon {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: var(--green); color: var(--white);
+  font-size: 2.5rem; display: flex; align-items: center; justify-content: center;
+}
+.complete-title { font-size: 1.4rem; font-weight: 800; color: var(--dark); }
+.complete-sub { font-size: .9rem; color: var(--gray-t); max-width: 300px; }
+
+/* ===== 詳細・承認 ===== */
+#detailBox {
+  padding: 16px; max-width: 720px; margin: 0 auto;
+}
+.approval-section {
+  background: var(--white); border-radius: var(--radius);
+  padding: 20px; box-shadow: var(--shadow); margin-bottom: 12px;
+}
+.approval-title { font-weight: 700; color: var(--slate); margin-bottom: 16px; }
+.approval-steps { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+.approval-step { text-align: center; min-width: 60px; }
+.approval-step-dot {
+  width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .85rem;
+  border: 2px solid var(--gray-b); color: var(--gray-t); background: var(--white);
+}
+.approval-step-dot.done    { background: var(--green); border-color: var(--green); color: var(--white); }
+.approval-step-dot.current { background: var(--orange); border-color: var(--orange); color: var(--white); }
+.approval-step-label { font-size: .72rem; color: var(--gray-t); }
+.approval-step-line { flex: 1; min-width: 16px; height: 3px; background: var(--gray-b); margin-bottom: 24px; }
+.approval-step-line.done { background: var(--green); }
+
+.btn-approve {
+  width: 100%; padding: 16px; background: var(--green);
+  border: none; border-radius: var(--radius);
+  color: var(--white); font-size: 1rem; font-weight: 700;
+  cursor: pointer; font-family: inherit; margin-top: 12px;
+}
+.btn-reject {
+  width: 100%; padding: 14px; background: none;
+  border: 2px solid var(--red); border-radius: var(--radius);
+  color: var(--red); font-size: 1rem; font-weight: 700;
+  cursor: pointer; font-family: inherit; margin-top: 8px;
+}
+
+/* ===== ユーティリティ ===== */
+.hidden { display: none !important; }
+.mt-8  { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+
+/* ===== PC レスポンシブ ===== */
+@media (min-width: 768px) {
+  .summary-cards { padding: 24px; gap: 16px; }
+  .summary-value { font-size: 2.2rem; }
+  .list-container { padding: 0 24px 80px; }
+  #formContainer  { padding: 24px; }
+  .confirm-box    { padding: 24px; }
+  #detailBox      { padding: 24px; }
+  .field.inline   { gap: 16px; }
+
+  /* PCでは入力フォームを3列グリッドにできる行がある */
+  .field-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .field-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+}
