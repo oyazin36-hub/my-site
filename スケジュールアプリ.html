@@ -51,6 +51,8 @@
      so labels can spill into empty space to show the full name */
   span.tasklbl{position:absolute;left:2px;top:50%;transform:translateY(-50%);color:#fff;font-size:12px;font-weight:bold;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;pointer-events:none;z-index:2;
     text-shadow:0 0 2px #000,0 0 3px #000,0 0 3px rgba(0,0,0,.8);}
+  span.tasklbl.full{max-width:none!important;overflow:visible;text-overflow:clip;}
+  .spacer{min-width:200px;width:200px;}
   td.cell.tstart{box-shadow:inset 2px 0 0 rgba(255,255,255,.9);}
   table.gantt.w18 th.day,table.gantt.w18 td.day{width:20px;min-width:20px;max-width:20px;}
   table.gantt.wq th.day,table.gantt.wq td.day{width:54px;min-width:54px;max-width:54px;}
@@ -205,7 +207,7 @@ function addDeadlineMarker(cells, te, base){
   }
 }
 /* day cells for a project's 予定 row: per-task segments (blue=未完了 / 黄=完了) + labels + ticks */
-function planRowCells(p, dates, base, dayW){
+function planRowCells(p, dates, base, dayW, full){
   const N=dates.length;
   const dated=p.tasks.filter(t=>t.start&&t.due).slice().sort((a,b)=>pd(a.start)-pd(b.start));
   const color=new Array(N).fill(null), tick=new Array(N).fill(false), label=new Array(N).fill(null);
@@ -229,8 +231,11 @@ function planRowCells(p, dates, base, dayW){
     if(color[di]==="plan")cls="day cell plan"; else if(color[di]==="done")cls="day cell done";
     if(tick[di])cls+=" tstart";
     const td=el("td",{class:cls});
-    if(label[di]){ const px=Math.max(12,label[di].wdays*dayW-4);
-      td.append(el("span",{class:"tasklbl",style:`max-width:${px}px`,title:label[di].name}, label[di].name)); }
+    if(label[di]){
+      const sp=el("span",{class:"tasklbl"+(full?" full":""),title:label[di].name}, label[di].name);
+      if(!full) sp.style.maxWidth=Math.max(12,label[di].wdays*dayW-4)+"px";
+      td.append(sp);
+    }
     cells.push(td);
   }
   return cells;
@@ -251,7 +256,7 @@ function firstWeekIdx(weeks, dateISO){ // first week whose end is on/after the d
   for(let i=0;i<weeks.length;i++){ if(addDays(weeks[i],6)>=d) return i; }
   return -1;
 }
-function planRowCellsWeekly(p, weeks, colW){
+function planRowCellsWeekly(p, weeks, colW, full){
   const N=weeks.length;
   const dated=p.tasks.filter(t=>t.start&&t.due).slice().sort((a,b)=>pd(a.start)-pd(b.start));
   const color=new Array(N).fill(null), tick=new Array(N).fill(false), label=new Array(N).fill(null);
@@ -272,8 +277,11 @@ function planRowCellsWeekly(p, weeks, colW){
     if(color[wi]==="plan")cls="day cell plan"; else if(color[wi]==="done")cls="day cell done";
     if(tick[wi])cls+=" tstart";
     const td=el("td",{class:cls});
-    if(label[wi]){ const px=Math.max(14,label[wi].wk*colW-4);
-      td.append(el("span",{class:"tasklbl",style:`max-width:${px}px`,title:label[wi].name}, label[wi].name)); }
+    if(label[wi]){
+      const sp=el("span",{class:"tasklbl"+(full?" full":""),title:label[wi].name}, label[wi].name);
+      if(!full) sp.style.maxWidth=Math.max(14,label[wi].wk*colW-4)+"px";
+      td.append(sp);
+    }
     cells.push(td);
   }
   return cells;
@@ -469,8 +477,10 @@ function viewQuarter(){
   while(i<N){ let j=i; const m=weeks[i].getMonth(); while(j<N && weeks[j].getMonth()===m) j++;
     const lab=(weeks[i].getFullYear())+"/"+(m+1);
     r1.append(el("th",{class:"month",colspan:j-i},lab)); i=j; }
+  r1.append(el("th",{class:"month spacer"},""));
   const r2=el("tr");
   for(const ws of weeks) r2.append(el("th",{class:"day"}, el("div",{class:"daynum"},(ws.getMonth()+1)+"/"+ws.getDate())));
+  r2.append(el("th",{class:"spacer"}));
   thead.append(r1,r2);tbl.append(thead);
   const tb=el("tbody");
   if(DATA.projects.length===0) tb.append(el("tr",{},el("td",{class:"lab",colspan:6+N},"案件がありません。")));
@@ -483,12 +493,14 @@ function viewQuarter(){
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[3]}px`,rowspan:2},mdLabel(ag.start)));
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[4]}px`,rowspan:2},mdLabel(tend)));
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[5]}px`,rowspan:2},mdLabel(ag.done)));
-    const pc=planRowCellsWeekly(p,weeks,colW);
+    const pc=planRowCellsWeekly(p,weeks,colW,true);
     addDeadlineMarkerWeekly(pc,tend,weeks);
     pc.forEach(c=>trP.append(c));
+    trP.append(el("td",{class:"spacer"}));
     tb.append(trP);
     const trA=el("tr",{class:"actrow tsep"});
     actRowCellsWeekly(p,weeks).forEach(c=>trA.append(c));
+    trA.append(el("td",{class:"spacer"}));
     tb.append(trA);
   });
   tbl.append(tb);
@@ -514,8 +526,10 @@ function viewMonth(){
   const r1=el("tr");
   heads.forEach((h,k)=>r1.append(el("th",{class:"fixcol lh",style:`left:${lefts[k]}px;min-width:${cw[k]}px;width:${cw[k]}px`,rowspan:3},h)));
   r1.append(el("th",{class:"month",colspan:ndays},mv.year+"年"+mv.month+"月"));
+  r1.append(el("th",{class:"month spacer"},""));
   const r2=el("tr"),r3=el("tr");
   for(const d of dates){r2.append(el("th",{class:"day "+wdClass(d)},el("div",{class:"daynum"},String(d.getDate()))));r3.append(el("th",{class:"day "+wdClass(d)},el("div",{class:"wd"},WD[d.getDay()])));}
+  r2.append(el("th",{class:"spacer"}));r3.append(el("th",{class:"spacer"}));
   thead.append(r1,r2,r3);tbl.append(thead);
   const tb=el("tbody");
   const monBase=new Date(mv.year,mv.month-1,1);
@@ -529,12 +543,14 @@ function viewMonth(){
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[3]}px`,rowspan:2},mdLabel(ag.start)));
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[4]}px`,rowspan:2},mdLabel(tend)));
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[5]}px`,rowspan:2},mdLabel(ag.done)));
-    const pc=planRowCells(p,dates,monBase,34);
+    const pc=planRowCells(p,dates,monBase,34,true);
     addDeadlineMarker(pc,tend,monBase);
     pc.forEach(c=>trP.append(c));
+    trP.append(el("td",{class:"spacer"}));
     tb.append(trP);
     const trA=el("tr",{class:"actrow tsep"});
     actRowCells(p,dates).forEach(c=>trA.append(c));
+    trA.append(el("td",{class:"spacer"}));
     tb.append(trA);
   });
   tbl.append(tb);
