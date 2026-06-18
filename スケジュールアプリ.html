@@ -49,8 +49,8 @@
   td.cell{position:relative;}
   /* white text with a dark outline = readable on blue / yellow / green / white alike,
      so labels can spill into empty space to show the full name */
-  span.tasklbl{position:absolute;left:2px;top:50%;transform:translateY(-50%);color:#fff;font-size:11px;font-weight:bold;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;pointer-events:none;z-index:2;
-    text-shadow:-1px -1px 0 rgba(0,0,0,.6),1px -1px 0 rgba(0,0,0,.6),-1px 1px 0 rgba(0,0,0,.6),1px 1px 0 rgba(0,0,0,.6);}
+  span.tasklbl{position:absolute;left:2px;top:50%;transform:translateY(-50%);color:#fff;font-size:12px;font-weight:bold;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;pointer-events:none;z-index:2;
+    text-shadow:0 0 2px #000,0 0 3px #000,0 0 3px rgba(0,0,0,.8);}
   td.cell.tstart{box-shadow:inset 2px 0 0 rgba(255,255,255,.9);}
   table.gantt.w18 th.day,table.gantt.w18 td.day{width:20px;min-width:20px;max-width:20px;}
   table.gantt.wq th.day,table.gantt.wq td.day{width:54px;min-width:54px;max-width:54px;}
@@ -85,9 +85,11 @@
   .help table.lg td{border:1px solid #ddd;padding:5px 12px;vertical-align:middle;}
   .help .big{font-size:15px;font-weight:bold;}
   @media print{
+    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
     header,.toolbar,.tabs,.noprint{display:none!important;}
     .gridwrap{max-height:none;overflow:visible;border:none;}
     .view{padding:0;}
+    span.tasklbl{text-shadow:0 0 1px #000,0 0 2px #000;}
   }
 </style>
 </head>
@@ -698,8 +700,9 @@ function printA3(){
   const ch=target.scrollHeight||target.offsetHeight||700;
   const landscape = cw>=ch;
   const mm=v=>v/25.4*96; // mm -> px @96dpi
-  const pageW=mm((landscape?420:297)-12), pageH=mm((landscape?297:420)-12);
-  const scale=Math.min(pageW/cw, pageH/ch, 1);
+  const pageW=mm((landscape?420:297)-12);
+  // fit to page WIDTH (as large as possible); tall content flows to extra pages
+  const scale=Math.min(pageW/cw, 1);
   const old=document.getElementById("__printA3"); if(old)old.remove();
   const st=document.createElement("style"); st.id="__printA3";
   st.textContent=`@page{size:A3 ${landscape?"landscape":"portrait"};margin:6mm;}
