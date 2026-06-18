@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スケジュール管理</title>
+<style>
+  :root{
+    --blue:#2E5395; --green:#5BA72B; --wknd:#E4E7F0; --hdr:#404040;
+    --input:#FFF2CC; --border:#BFBFBF; --line:#E0E0E0;
+    --dayw:24px; --rowh:24px;
+  }
+  *{box-sizing:border-box;}
+  body{font-family:"Meiryo","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;margin:0;color:#222;background:#f6f6f8;font-size:13px;}
+  header{background:#fff;border-bottom:1px solid #ddd;padding:8px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  header h1{font-size:17px;margin:0;}
+  .tabs{display:flex;gap:4px;}
+  .tab{padding:6px 14px;border:1px solid #ccc;border-bottom:none;background:#eceff4;cursor:pointer;border-radius:6px 6px 0 0;font-weight:bold;}
+  .tab.active{background:#fff;color:var(--blue);box-shadow:0 -2px 0 var(--blue) inset;}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 14px;background:#fff;border-bottom:1px solid #eee;}
+  .legend{display:inline-flex;align-items:center;gap:5px;margin-left:6px;}
+  .sw{width:16px;height:12px;display:inline-block;border:1px solid #999;}
+  button.btn{padding:5px 12px;border:1px solid #bbb;background:#fafafa;border-radius:5px;cursor:pointer;}
+  button.btn:hover{background:#eef;}
+  button.primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+  button.danger{color:#b00;}
+  .view{padding:10px 14px;}
+  .gridwrap{overflow:auto;border:1px solid var(--border);background:#fff;max-height:74vh;}
+  table.gantt{border-collapse:separate;border-spacing:0;table-layout:fixed;}
+  table.gantt th,table.gantt td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:0;height:var(--rowh);font-weight:normal;background:#fff;}
+  .fixcol{position:sticky;z-index:3;background:#fff;}
+  thead th.fixcol{z-index:6;}
+  thead th{position:sticky;top:0;z-index:4;background:var(--hdr);color:#fff;text-align:center;}
+  thead th.month{background:#d9d9d9;color:#222;font-weight:bold;text-align:left;padding-left:4px;}
+  .lh{background:var(--hdr)!important;color:#fff;font-weight:bold;text-align:center;}
+  td.lab{padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  td.num{text-align:center;}
+  .day{width:var(--dayw);min-width:var(--dayw);max-width:var(--dayw);text-align:center;}
+  .daynum{font-size:10px;color:#333;}
+  .wd{font-size:9px;color:#666;}
+  .sat .daynum,.sat .wd{color:#1a3fb0;}
+  .sun .daynum,.sun .wd{color:#c0392b;}
+  td.cell.wknd{background:var(--wknd);}
+  td.cell.plan{background:var(--blue);}
+  td.cell.act{background:var(--green);}
+  td.cell{position:relative;}
+  span.tasklbl{position:absolute;left:1px;top:3px;color:#fff;font-size:10px;font-weight:bold;white-space:nowrap;pointer-events:none;z-index:2;}
+  input,select{font-family:inherit;font-size:12px;border:1px solid #ccc;border-radius:3px;padding:2px 3px;}
+  td input.t{width:96%;border:none;background:transparent;}
+  td input.t:focus{background:#fffbe6;outline:1px solid var(--blue);}
+  td.din{background:var(--input);}
+  td.din input{width:96%;border:none;background:transparent;}
+  .mono{font-family:Consolas,monospace;}
+  .hint{color:#888;font-size:12px;}
+  .pname{font-weight:bold;}
+  .rowdel{color:#b00;cursor:pointer;border:none;background:none;font-weight:bold;}
+  @media print{
+    header,.toolbar,.tabs,.noprint{display:none!important;}
+    .gridwrap{max-height:none;overflow:visible;border:none;}
+    .view{padding:0;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>📅 スケジュール管理</h1>
+  <div class="tabs" id="tabs"></div>
+</header>
+<div class="toolbar" id="toolbar"></div>
+<div class="view" id="view"></div>
+
+<script>
+"use strict";
+/* ================= data model ================= */
+const LS_KEY="scheduleAppData_v1";
+const COLORS={plan:"#2E5395",act:"#5BA72B"};
+function uid(){return Math.random().toString(36).slice(2,9);}
+
+function seedData(){
+  return {
+    baseYear:2026,
+    monthView:{year:2026,month:5},
+    projects:[
+      {id:uid(),name:"A社_看板リニューアル",owner:"原マシナリ",base:"2026-04-01",tasks:[
+        {id:uid(),name:"見積取得",owner:"原副社長",start:"2026-04-16",due:"2026-04-22",done:"2026-04-27"},
+        {id:uid(),name:"予算書作成",owner:"今井",start:"2026-04-22",due:"2026-04-29",done:"2026-05-08"},
+        {id:uid(),name:"発注(納期2か月)",owner:"井上",start:"2026-05-15",due:"2026-05-30",done:""},
+        {id:uid(),name:"制作(2か月)",owner:"原副社長",start:"2026-06-01",due:"2026-07-30",done:""},
+        {id:uid(),name:"工事",owner:"",start:"2026-08-01",due:"2026-08-31",done:""},
+        {id:uid(),name:"運用開始",owner:"",start:"2026-09-01",due:"2026-09-01",done:""},
+      ]},
+      {id:uid(),name:"B社_QR検品ライン",owner:"佐藤",base:"2026-05-01",tasks:[
+        {id:uid(),name:"要件定義",owner:"佐藤",start:"2026-05-10",due:"2026-05-20",done:"2026-05-22"},
+        {id:uid(),name:"設計",owner:"鈴木",start:"2026-05-21",due:"2026-06-10",done:"2026-06-15"},
+        {id:uid(),name:"製作",owner:"工場",start:"2026-06-16",due:"2026-08-20",done:""},
+        {id:uid(),name:"導入",owner:"佐藤",start:"2026-08-21",due:"2026-09-15",done:""},
+      ]},
+      {id:uid(),name:"C社_設備更新",owner:"田中",base:"2026-03-01",tasks:[
+        {id:uid(),name:"現地調査",owner:"田中",start:"2026-03-01",due:"2026-03-15",done:"2026-03-18"},
+        {id:uid(),name:"発注",owner:"田中",start:"2026-03-16",due:"2026-04-15",done:"2026-04-20"},
+        {id:uid(),name:"据付工事",owner:"業者",start:"2026-05-01",due:"2026-06-30",done:"2026-07-05"},
+        {id:uid(),name:"試運転",owner:"田中",start:"2026-07-01",due:"2026-07-10",done:"2026-07-12"},
+      ]},
+    ]
+  };
+}
+let DATA=load();
+function load(){
+  try{const s=localStorage.getItem(LS_KEY);if(s)return JSON.parse(s);}catch(e){}
+  return seedData();
+}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(DATA));}catch(e){}}
+
+/* ================= date utils ================= */
+function pd(s){if(!s)return null;const p=s.split("-");return new Date(+p[0],+p[1]-1,+p[2]);}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+function dnum(d){return Math.floor(d.getTime()/86400000);}
+function between(d,a,b){return d>=a&&d<=b;}
+const WD=["日","月","火","水","木","金","土"]; // getDay():0=Sun
+function wdClass(d){const g=d.getDay();return g===0?"sun":(g===6?"sat":"");}
+function isWknd(d){const g=d.getDay();return g===0||g===6;}
+function mdLabel(s){const d=pd(s);return d?(d.getMonth()+1)+"/"+d.getDate():"";}
+
+/* ================= core (testable) ================= */
+// returns "plan" | "act" | "" for a given day & range
+function cellState(day, startISO, endISO){
+  const s=pd(startISO), e=pd(endISO);
+  if(!s||!e) return false;
+  return between(day,s,e);
+}
+function aggregate(p){
+  let starts=[],dues=[],dones=[];
+  for(const t of p.tasks){
+    if(t.start) starts.push(pd(t.start));
+    if(t.due) dues.push(pd(t.due));
+    if(t.done) dones.push(pd(t.done));
+  }
+  const mn=starts.length?new Date(Math.min(...starts.map(d=>d.getTime()))):null;
+  const mx=dues.length?new Date(Math.max(...dues.map(d=>d.getTime()))):null;
+  const dn=dones.length?new Date(Math.max(...dones.map(d=>d.getTime()))):null;
+  return {start:mn?iso(mn):"", due:mx?iso(mx):"", done:dn?iso(dn):""};
+}
+
+/* ================= rendering helpers ================= */
+const el=(t,a,...c)=>{const e=document.createElement(t);if(a)for(const k in a){if(k==="class")e.className=a[k];else if(k==="html")e.innerHTML=a[k];else if(k.startsWith("on"))e.addEventListener(k.slice(2),a[k]);else e.setAttribute(k,a[k]);}for(const x of c){if(x==null)continue;e.append(x.nodeType?x:document.createTextNode(x));}return e;};
+
+let TAB="project", CURPROJ=null;
+const TABS=[["project","案件詳細"],["master","年間まとめ"],["month","月別"],["simple","簡易表"],["data","データ/保存"]];
+
+function renderTabs(){
+  const tb=document.getElementById("tabs");tb.innerHTML="";
+  for(const [k,label] of TABS){
+    tb.append(el("div",{class:"tab"+(TAB===k?" active":""),onclick:()=>{TAB=k;render();}},label));
+  }
+}
+function legend(){
+  return el("span",{},
+    el("span",{class:"legend"}, el("span",{class:"sw",style:"background:"+COLORS.plan}), "予定"),
+    el("span",{class:"legend"}, el("span",{class:"sw",style:"background:"+COLORS.act}), "実績"),
+    el("span",{class:"legend"}, el("span",{class:"sw",style:"background:var(--wknd)"}), "土日"));
+}
+
+/* day header cells for a daily range */
+function dayHeaders(dates){
+  const monthRow=[], dayRow=[], wdRow=[];
+  let i=0;
+  while(i<dates.length){
+    let j=i; const m=dates[i].getMonth();
+    while(j<dates.length && dates[j].getMonth()===m) j++;
+    const span=j-i;
+    const lab=(i===0? dates[i].getFullYear()+"/"+(m+1) : (m+1)+"月");
+    monthRow.push(el("th",{class:"month",colspan:span},lab));
+    i=j;
+  }
+  for(const d of dates){
+    dayRow.push(el("th",{class:"day "+wdClass(d)}, el("div",{class:"daynum"},String(d.getDate()))));
+    wdRow.push(el("th",{class:"day "+wdClass(d)}, el("div",{class:"wd"},WD[d.getDay()])));
+  }
+  return {monthRow,dayRow,wdRow};
+}
+
+/* sticky left header cells builder */
+function fixTh(text,left,w){return el("th",{class:"fixcol lh",style:`left:${left}px;min-width:${w}px;width:${w}px`},text);}
+
+/* ================= VIEW: project detail ================= */
+function viewProject(){
+  if(!CURPROJ && DATA.projects[0]) CURPROJ=DATA.projects[0].id;
+  const p=DATA.projects.find(x=>x.id===CURPROJ);
+  const tbar=document.getElementById("toolbar");tbar.innerHTML="";
+  const sel=el("select",{onchange:e=>{CURPROJ=e.target.value;render();}});
+  for(const pr of DATA.projects) sel.append(el("option",{value:pr.id,...(pr.id===CURPROJ?{selected:"selected"}:{})},pr.name));
+  tbar.append("案件:",sel);
+  tbar.append(el("button",{class:"btn",onclick:addProject},"＋案件追加"));
+  if(p){
+    tbar.append(el("button",{class:"btn",onclick:()=>addTask(p)},"＋タスク追加"));
+    tbar.append("　基準日:");
+    tbar.append(el("input",{type:"date",value:p.base||"",onchange:e=>{p.base=e.target.value;save();render();}}));
+    tbar.append(el("button",{class:"btn danger",onclick:()=>delProject(p)},"案件削除"));
+  }
+  tbar.append(legend());
+  const wrap=el("div",{class:"gridwrap"});
+  if(!p){document.getElementById("view").replaceChildren(wrap);return;}
+  const base=pd(p.base)||new Date(DATA.baseYear,0,1);
+  const N=365; const dates=[]; for(let i=0;i<N;i++)dates.push(addDays(base,i));
+  // column widths
+  const cw=[34,150,90,86,86,86]; const lefts=[]; let acc=0; for(const w of cw){lefts.push(acc);acc+=w;}
+  const heads=["No","タスク","担当","開始日","締切日","完了日"];
+  const tbl=el("table",{class:"gantt"});
+  const thead=el("thead");
+  // month row
+  const r1=el("tr");
+  heads.forEach((h,k)=>{ if(k===0) r1.append(el("th",{class:"fixcol lh",style:`left:${lefts[0]}px;min-width:${cw[0]}px;width:${cw[0]}px`,rowspan:3},"No")); else r1.append(el("th",{class:"fixcol lh",style:`left:${lefts[k]}px;min-width:${cw[k]}px;width:${cw[k]}px`,rowspan:3},h)); });
+  const dh=dayHeaders(dates); dh.monthRow.forEach(c=>r1.append(c));
+  const r2=el("tr"); dh.dayRow.forEach(c=>r2.append(c));
+  const r3=el("tr"); dh.wdRow.forEach(c=>r3.append(c));
+  thead.append(r1,r2,r3); tbl.append(thead);
+  const tb=el("tbody");
+  p.tasks.forEach((t,ti)=>{
+    const tr=el("tr");
+    tr.append(el("td",{class:"fixcol num",style:`left:${lefts[0]}px`}, el("button",{class:"rowdel",title:"削除",onclick:()=>{p.tasks.splice(ti,1);save();render();}},"×"), " "+(ti+1)));
+    tr.append(tdInput(t,"name","text",lefts[1]));
+    tr.append(tdInput(t,"owner","text",lefts[2]));
+    tr.append(tdInput(t,"start","date",lefts[3]));
+    tr.append(tdInput(t,"due","date",lefts[4]));
+    tr.append(tdInput(t,"done","date",lefts[5]));
+    for(const d of dates){
+      let cls="cell"; if(isWknd(d))cls+=" wknd";
+      if(cellState(d,t.start,t.due)) cls="cell plan";
+      else if(cellState(d,t.start,t.done)) cls="cell act"; // done-only fallback
+      // show both: plan row shows plan; we combine: plan takes precedence, else actual, else weekend
+      const td=el("td",{class:"day "+cls}); tr.append(td);
+    }
+    tb.append(tr);
+  });
+  tbl.append(tb); wrap.append(tbl);
+  document.getElementById("view").replaceChildren(wrap);
+}
+function tdInput(obj,field,type,left){
+  const td=el("td",{class:(type==="date"?"din fixcol":"fixcol"),style:`left:${left}px`});
+  const inp=el("input",{class:"t",type:type,value:obj[field]||"",onchange:e=>{obj[field]=e.target.value;save();render();}});
+  td.append(inp);return td;
+}
+
+/* ================= VIEW: master (annual consolidation) ================= */
+function viewMaster(){
+  const tbar=document.getElementById("toolbar");tbar.innerHTML="";
+  tbar.append("基準年:");
+  tbar.append(el("input",{type:"number",value:DATA.baseYear,style:"width:80px",onchange:e=>{DATA.baseYear=+e.target.value;save();render();}}));
+  tbar.append(el("span",{class:"hint"},"　各案件シートから自動集約（予定=全体の開始〜終了予定 / 実績=開始〜完了）"));
+  tbar.append(legend());
+  const base=new Date(DATA.baseYear,0,1);
+  const N=365; const dates=[];for(let i=0;i<N;i++)dates.push(addDays(base,i));
+  const cw=[34,160,90,70,80,70]; const lefts=[];let acc=0;for(const w of cw){lefts.push(acc);acc+=w;}
+  const heads=["No","案件名","担当","開始","終了予定","完了"];
+  const tbl=el("table",{class:"gantt"});const thead=el("thead");
+  const r1=el("tr");
+  heads.forEach((h,k)=>r1.append(el("th",{class:"fixcol lh",style:`left:${lefts[k]}px;min-width:${cw[k]}px;width:${cw[k]}px`,rowspan:3},h)));
+  const dh=dayHeaders(dates);dh.monthRow.forEach(c=>r1.append(c));
+  const r2=el("tr");dh.dayRow.forEach(c=>r2.append(c));
+  const r3=el("tr");dh.wdRow.forEach(c=>r3.append(c));
+  thead.append(r1,r2,r3);tbl.append(thead);
+  const tb=el("tbody");
+  DATA.projects.forEach((p,pi)=>{
+    const ag=aggregate(p);
+    // plan row
+    const trP=el("tr");
+    trP.append(el("td",{class:"fixcol num",style:`left:${lefts[0]}px`,rowspan:2},String(pi+1)));
+    trP.append(el("td",{class:"fixcol lab pname",style:`left:${lefts[1]}px`,rowspan:2},p.name));
+    trP.append(el("td",{class:"fixcol lab",style:`left:${lefts[2]}px`,rowspan:2},p.owner||""));
+    trP.append(el("td",{class:"fixcol num",style:`left:${lefts[3]}px`,rowspan:2},mdLabel(ag.start)));
+    trP.append(el("td",{class:"fixcol num",style:`left:${lefts[4]}px`,rowspan:2},mdLabel(ag.due)));
+    trP.append(el("td",{class:"fixcol num",style:`left:${lefts[5]}px`,rowspan:2},mdLabel(ag.done)));
+    // build label map: start day index -> task name
+    const labelAt={};
+    for(const t of p.tasks){ if(t.start){const off=dnum(pd(t.start))-dnum(base); if(off>=0&&off<N) labelAt[off]=t.name;} }
+    dates.forEach((d,di)=>{
+      let cls="cell"; if(isWknd(d))cls+=" wknd";
+      if(cellState(d,ag.start,ag.due)) cls="cell plan";
+      const td=el("td",{class:"day "+cls});
+      if(labelAt[di]!=null) td.append(el("span",{class:"tasklbl"},labelAt[di]));
+      trP.append(td);
+    });
+    tb.append(trP);
+    // actual row
+    const trA=el("tr");
+    dates.forEach(d=>{
+      let cls="cell"; if(isWknd(d))cls+=" wknd";
+      if(cellState(d,ag.start,ag.done)) cls="cell act";
+      trA.append(el("td",{class:"day "+cls}));
+    });
+    tb.append(trA);
+  });
+  tbl.append(tb);
+  const wrap=el("div",{class:"gridwrap"});wrap.append(tbl);
+  document.getElementById("view").replaceChildren(wrap);
+}
+
+/* ================= VIEW: month ================= */
+function viewMonth(){
+  const mv=DATA.monthView;
+  const tbar=document.getElementById("toolbar");tbar.innerHTML="";
+  tbar.append("年:");
+  tbar.append(el("input",{type:"number",value:mv.year,style:"width:80px",onchange:e=>{mv.year=+e.target.value;save();render();}}));
+  tbar.append("月:");
+  const msel=el("select",{onchange:e=>{mv.month=+e.target.value;save();render();}});
+  for(let m=1;m<=12;m++)msel.append(el("option",{value:m,...(m===mv.month?{selected:"selected"}:{})},m+"月"));
+  tbar.append(msel);tbar.append(legend());
+  const ndays=new Date(mv.year,mv.month,0).getDate();
+  const dates=[];for(let i=1;i<=ndays;i++)dates.push(new Date(mv.year,mv.month-1,i));
+  const cw=[34,160,90,70,80,70];const lefts=[];let acc=0;for(const w of cw){lefts.push(acc);acc+=w;}
+  const heads=["No","案件名","担当","開始","終了予定","完了"];
+  const tbl=el("table",{class:"gantt"});const thead=el("thead");
+  const r1=el("tr");
+  heads.forEach((h,k)=>r1.append(el("th",{class:"fixcol lh",style:`left:${lefts[k]}px;min-width:${cw[k]}px;width:${cw[k]}px`,rowspan:3},h)));
+  r1.append(el("th",{class:"month",colspan:ndays},mv.year+"年"+mv.month+"月"));
+  const r2=el("tr"),r3=el("tr");
+  for(const d of dates){r2.append(el("th",{class:"day "+wdClass(d)},el("div",{class:"daynum"},String(d.getDate()))));r3.append(el("th",{class:"day "+wdClass(d)},el("div",{class:"wd"},WD[d.getDay()])));}
+  thead.append(r1,r2,r3);tbl.append(thead);
+  const tb=el("tbody");
+  DATA.projects.forEach((p,pi)=>{
+    const ag=aggregate(p);
+    const trP=el("tr");
+    trP.append(el("td",{class:"fixcol num",style:`left:${lefts[0]}px`,rowspan:2},String(pi+1)));
+    trP.append(el("td",{class:"fixcol lab pname",style:`left:${lefts[1]}px`,rowspan:2},p.name));
+    trP.append(el("td",{class:"fixcol lab",style:`left:${lefts[2]}px`,rowspan:2},p.owner||""));
+    trP.append(el("td",{class:"fixcol num",style:`left:${lefts[3]}px`,rowspan:2},mdLabel(ag.start)));
+    trP.append(el("td",{class:"fixcol num",style:`left:${lefts[4]}px`,rowspan:2},mdLabel(ag.due)));
+    trP.append(el("td",{class:"fixcol num",style:`left:${lefts[5]}px`,rowspan:2},mdLabel(ag.done)));
+    for(const d of dates){let cls="cell";if(isWknd(d))cls+=" wknd";if(cellState(d,ag.start,ag.due))cls="cell plan";trP.append(el("td",{class:"day "+cls}));}
+    tb.append(trP);
+    const trA=el("tr");
+    for(const d of dates){let cls="cell";if(isWknd(d))cls+=" wknd";if(cellState(d,ag.start,ag.done))cls="cell act";trA.append(el("td",{class:"day "+cls}));}
+    tb.append(trA);
+  });
+  tbl.append(tb);
+  const wrap=el("div",{class:"gridwrap"});wrap.append(tbl);
+  document.getElementById("view").replaceChildren(wrap);
+}
+
+/* ================= VIEW: simple (monthly, 1 page) ================= */
+function monthOverlap(monStart, startISO, endISO){
+  const s=pd(startISO), e=pd(endISO); if(!s||!e) return false;
+  const me=new Date(monStart.getFullYear(),monStart.getMonth()+1,0);
+  return monStart<=e && me>=s;
+}
+function viewSimple(){
+  const tbar=document.getElementById("toolbar");tbar.innerHTML="";
+  tbar.append("対象年:");
+  tbar.append(el("input",{type:"number",value:DATA.baseYear,style:"width:80px",onchange:e=>{DATA.baseYear=+e.target.value;save();render();}}));
+  tbar.append(el("button",{class:"btn",onclick:()=>window.print()},"🖨 印刷"));
+  tbar.append(el("span",{class:"legend"},el("span",{class:"sw",style:"background:"+COLORS.plan}),"予定の月"));
+  tbar.append(el("span",{class:"legend"},el("span",{class:"sw",style:"background:"+COLORS.act}),"完了済みの月"));
+  const cw=[34,210,90,64,72,64];const lefts=[];let acc=0;for(const w of cw){lefts.push(acc);acc+=w;}
+  const heads=["No","案件名","担当","開始","終了予定","完了"];
+  const tbl=el("table",{class:"gantt"});tbl.style.tableLayout="auto";
+  const thead=el("thead");const r1=el("tr");
+  heads.forEach((h,k)=>r1.append(el("th",{class:"lh",style:`min-width:${cw[k]}px`},h)));
+  for(let m=1;m<=12;m++)r1.append(el("th",{style:"min-width:46px",class:"lh"},m+"月"));
+  thead.append(r1);tbl.append(thead);
+  const tb=el("tbody");
+  DATA.projects.forEach((p,pi)=>{
+    const ag=aggregate(p);const tr=el("tr");
+    tr.append(el("td",{class:"num"},String(pi+1)));
+    tr.append(el("td",{class:"lab pname"},p.name));
+    tr.append(el("td",{class:"lab"},p.owner||""));
+    tr.append(el("td",{class:"num"},mdLabel(ag.start)));
+    tr.append(el("td",{class:"num"},mdLabel(ag.due)));
+    tr.append(el("td",{class:"num"},mdLabel(ag.done)));
+    for(let m=1;m<=12;m++){
+      const ms=new Date(DATA.baseYear,m-1,1);
+      let cls="cell";
+      if(ag.done && monthOverlap(ms,ag.start,ag.done)) cls="cell act";
+      else if(monthOverlap(ms,ag.start,ag.due)) cls="cell plan";
+      tr.append(el("td",{class:cls,style:"height:26px"}));
+    }
+    tb.append(tr);
+  });
+  tbl.append(tb);
+  const wrap=el("div",{class:"gridwrap"});wrap.style.maxHeight="none";wrap.append(tbl);
+  document.getElementById("view").replaceChildren(el("h3",{class:"noprint"},DATA.baseYear+"年 簡易スケジュール"),wrap);
+}
+
+/* ================= VIEW: data ================= */
+function viewData(){
+  document.getElementById("toolbar").innerHTML="";
+  const v=document.getElementById("view");v.innerHTML="";
+  v.append(el("h3",{},"データの保存・共有"));
+  v.append(el("p",{class:"hint"},"入力はこの端末のブラウザに自動保存されます。社内で共有する場合は『書き出し』でJSONを共有フォルダに置き、各自が『読み込み』してください。"));
+  v.append(el("button",{class:"btn primary",onclick:exportJSON},"💾 JSON書き出し"));
+  v.append(" ");
+  const imp=el("input",{type:"file",accept:".json",style:"display:none",onchange:importJSON});
+  v.append(el("button",{class:"btn",onclick:()=>imp.click()},"📂 JSON読み込み"));
+  v.append(imp);
+  v.append(" ");
+  v.append(el("button",{class:"btn danger",onclick:()=>{if(confirm("サンプルデータに戻します。よろしいですか？")){DATA=seedData();save();render();}}},"初期化(サンプルに戻す)"));
+  v.append(el("p",{class:"hint mono"},"案件数: "+DATA.projects.length+" / 保存キー: "+LS_KEY));
+}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(DATA,null,2)],{type:"application/json"});
+  const a=el("a",{href:URL.createObjectURL(blob),download:"schedule_data.json"});document.body.append(a);a.click();a.remove();
+}
+function importJSON(e){
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{DATA=JSON.parse(r.result);save();alert("読み込みました");render();}catch(err){alert("読み込み失敗: "+err.message);}};
+  r.readAsText(f);
+}
+
+/* ================= actions ================= */
+function addProject(){
+  const name=prompt("案件名を入力","新規案件");if(!name)return;
+  DATA.projects.push({id:uid(),name,owner:"",base:DATA.baseYear+"-01-01",tasks:[{id:uid(),name:"",owner:"",start:"",due:"",done:""}]});
+  CURPROJ=DATA.projects[DATA.projects.length-1].id;save();render();
+}
+function delProject(p){if(!confirm("案件「"+p.name+"」を削除しますか？"))return;DATA.projects=DATA.projects.filter(x=>x.id!==p.id);CURPROJ=DATA.projects[0]?DATA.projects[0].id:null;save();render();}
+function addTask(p){p.tasks.push({id:uid(),name:"",owner:"",start:"",due:"",done:""});save();render();}
+
+/* ================= main ================= */
+function render(){
+  renderTabs();
+  if(TAB==="project")viewProject();
+  else if(TAB==="master")viewMaster();
+  else if(TAB==="month")viewMonth();
+  else if(TAB==="simple")viewSimple();
+  else if(TAB==="data")viewData();
+}
+if(typeof window!=="undefined" && window.document && !window.__TEST__){ render(); }
+
+/* expose for tests */
+if(typeof window!=="undefined"){window.getDATA=()=>DATA;}
+if(typeof module!=="undefined"){module.exports={cellState,aggregate,monthOverlap,seedData,pd,iso,addDays,WD};}
+</script>
+</body>
+</html>
