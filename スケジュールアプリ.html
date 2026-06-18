@@ -47,8 +47,10 @@
   /* continuous bars: hide inner gridlines so labels stay readable */
   td.cell.plan,td.cell.act,td.cell.done{border-right-color:transparent;border-bottom-color:transparent;}
   td.cell{position:relative;}
-  span.tasklbl{position:absolute;left:3px;top:4px;color:#fff;font-size:11px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;pointer-events:none;z-index:2;text-shadow:0 1px 1px rgba(0,0,0,.5);}
-  span.tasklbl.dk{color:#3b2f00;text-shadow:0 1px 1px rgba(255,255,255,.45);}
+  /* white text with a dark outline = readable on blue / yellow / green / white alike,
+     so labels can spill into empty space to show the full name */
+  span.tasklbl{position:absolute;left:2px;top:50%;transform:translateY(-50%);color:#fff;font-size:11px;font-weight:bold;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;pointer-events:none;z-index:2;
+    text-shadow:-1px -1px 0 rgba(0,0,0,.6),1px -1px 0 rgba(0,0,0,.6),-1px 1px 0 rgba(0,0,0,.6),1px 1px 0 rgba(0,0,0,.6);}
   td.cell.tstart{box-shadow:inset 2px 0 0 rgba(255,255,255,.9);}
   table.gantt.w18 th.day,table.gantt.w18 td.day{width:18px;min-width:18px;max-width:18px;}
   tr.planrow td{height:26px;}
@@ -181,9 +183,11 @@ function planRowCells(p, dates, base, dayW){
     let at=null;
     if(so>=0&&so<N) at=so; else if(so<0&&eo>=0) at=0; // starts before view but visible
     if(at!=null && label[at]==null){
-      let endo = (i+1<dated.length) ? dnum(pd(dated[i+1].start))-dnum(base) : eo+1;
+      // slot runs until the next task starts; the last task may use all trailing space.
+      // a long name therefore spills into the gap / trailing area instead of being clipped.
+      let endo = (i+1<dated.length) ? dnum(pd(dated[i+1].start))-dnum(base) : N;
       const wdays=Math.max(1, Math.min(endo,N)-at);
-      label[at]={name:t.name||"(無題)", wdays, done}; tick[at]=true;
+      label[at]={name:t.name||"(無題)", wdays}; tick[at]=true;
     }
   });
   const cells=[];
@@ -192,8 +196,8 @@ function planRowCells(p, dates, base, dayW){
     if(color[di]==="plan")cls="day cell plan"; else if(color[di]==="done")cls="day cell done";
     if(tick[di])cls+=" tstart";
     const td=el("td",{class:cls});
-    if(label[di]){ const px=Math.max(10,label[di].wdays*dayW-4);
-      td.append(el("span",{class:"tasklbl"+(label[di].done?" dk":""),style:`width:${px}px`,title:label[di].name}, label[di].name)); }
+    if(label[di]){ const px=Math.max(12,label[di].wdays*dayW-4);
+      td.append(el("span",{class:"tasklbl",style:`max-width:${px}px`,title:label[di].name}, label[di].name)); }
     cells.push(td);
   }
   return cells;
