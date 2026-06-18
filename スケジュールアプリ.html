@@ -31,13 +31,13 @@
   .fixcol{position:sticky;z-index:3;background:#fff;}
   thead th.fixcol{z-index:6;}
   thead th{position:sticky;top:0;z-index:4;background:var(--hdr);color:#fff;text-align:center;}
-  thead th.month{background:#d9d9d9;color:#222;font-weight:bold;text-align:left;padding-left:4px;}
+  thead th.month{background:#d9d9d9;color:#222;font-weight:bold;text-align:center;white-space:nowrap;font-size:12px;}
   .lh{background:var(--hdr)!important;color:#fff;font-weight:bold;text-align:center;}
   td.lab{padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   td.num{text-align:center;}
-  .day{width:var(--dayw);min-width:var(--dayw);max-width:var(--dayw);text-align:center;}
-  .daynum{font-size:10px;color:#333;}
-  .wd{font-size:9px;color:#666;}
+  .day{width:var(--dayw);min-width:var(--dayw);max-width:var(--dayw);text-align:center;position:relative;}
+  .daynum{font-size:11px;color:#333;}
+  .wd{font-size:10px;color:#666;}
   .sat .daynum,.sat .wd{color:#1a3fb0;}
   .sun .daynum,.sun .wd{color:#c0392b;}
   td.cell.wknd{background:var(--wknd);}
@@ -52,9 +52,15 @@
   span.tasklbl{position:absolute;left:2px;top:50%;transform:translateY(-50%);color:#fff;font-size:11px;font-weight:bold;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;pointer-events:none;z-index:2;
     text-shadow:-1px -1px 0 rgba(0,0,0,.6),1px -1px 0 rgba(0,0,0,.6),-1px 1px 0 rgba(0,0,0,.6),1px 1px 0 rgba(0,0,0,.6);}
   td.cell.tstart{box-shadow:inset 2px 0 0 rgba(255,255,255,.9);}
-  table.gantt.w18 th.day,table.gantt.w18 td.day{width:18px;min-width:18px;max-width:18px;}
+  table.gantt.w18 th.day,table.gantt.w18 td.day{width:20px;min-width:20px;max-width:20px;}
   tr.planrow td{height:26px;}
   tr.actrow td{height:15px;}
+  /* thick separators so each task / project is clearly divided */
+  tr.tsep > td{border-bottom:2px solid #8a8a8a !important;}
+  tr.grpfix > td.fixcol{border-bottom:2px solid #8a8a8a !important;}
+  /* project overall target-end (終了予定日) marker */
+  .deadline{box-shadow:inset -2px 0 0 #d11;}
+  span.dlmark{position:absolute;top:-3px;left:50%;transform:translateX(-50%);color:#d11;font-size:11px;line-height:1;z-index:5;pointer-events:none;text-shadow:0 0 2px #fff,0 0 2px #fff;}
   input,select{font-family:inherit;font-size:12px;border:1px solid #ccc;border-radius:3px;padding:2px 3px;}
   td input.t{width:96%;border:none;background:transparent;}
   td input.t:focus{background:#fffbe6;outline:1px solid var(--blue);}
@@ -102,7 +108,7 @@ function seedData(){
     baseYear:2026,
     monthView:{year:2026,month:5},
     projects:[
-      {id:uid(),name:"A社_看板リニューアル",owner:"原マシナリ",base:"2026-04-01",tasks:[
+      {id:uid(),name:"A社_看板リニューアル",owner:"原マシナリ",base:"2026-04-01",targetEnd:"2026-09-30",tasks:[
         {id:uid(),name:"見積取得",owner:"原副社長",start:"2026-04-16",due:"2026-04-22",done:"2026-04-27"},
         {id:uid(),name:"予算書作成",owner:"今井",start:"2026-04-22",due:"2026-04-29",done:"2026-05-08"},
         {id:uid(),name:"発注(納期2か月)",owner:"井上",start:"2026-05-15",due:"2026-05-30",done:""},
@@ -110,13 +116,13 @@ function seedData(){
         {id:uid(),name:"工事",owner:"",start:"2026-08-01",due:"2026-08-31",done:""},
         {id:uid(),name:"運用開始",owner:"",start:"2026-09-01",due:"2026-09-01",done:""},
       ]},
-      {id:uid(),name:"B社_QR検品ライン",owner:"佐藤",base:"2026-05-01",tasks:[
+      {id:uid(),name:"B社_QR検品ライン",owner:"佐藤",base:"2026-05-01",targetEnd:"2026-09-30",tasks:[
         {id:uid(),name:"要件定義",owner:"佐藤",start:"2026-05-10",due:"2026-05-20",done:"2026-05-22"},
         {id:uid(),name:"設計",owner:"鈴木",start:"2026-05-21",due:"2026-06-10",done:"2026-06-15"},
         {id:uid(),name:"製作",owner:"工場",start:"2026-06-16",due:"2026-08-20",done:""},
         {id:uid(),name:"導入",owner:"佐藤",start:"2026-08-21",due:"2026-09-15",done:""},
       ]},
-      {id:uid(),name:"C社_設備更新",owner:"田中",base:"2026-03-01",tasks:[
+      {id:uid(),name:"C社_設備更新",owner:"田中",base:"2026-03-01",targetEnd:"2026-07-15",tasks:[
         {id:uid(),name:"現地調査",owner:"田中",start:"2026-03-01",due:"2026-03-15",done:"2026-03-18"},
         {id:uid(),name:"発注",owner:"田中",start:"2026-03-16",due:"2026-04-15",done:"2026-04-20"},
         {id:uid(),name:"据付工事",owner:"業者",start:"2026-05-01",due:"2026-06-30",done:"2026-07-05"},
@@ -180,7 +186,17 @@ function legend(){
     el("span",{class:"legend"}, el("span",{class:"sw",style:"background:"+COLORS.plan}), "予定"),
     el("span",{class:"legend"}, el("span",{class:"sw",style:"background:"+COLORS.done}), "完了タスク"),
     el("span",{class:"legend"}, el("span",{class:"sw",style:"background:"+COLORS.act}), "実績"),
-    el("span",{class:"legend"}, el("span",{class:"sw",style:"background:var(--wknd)"}), "土日"));
+    el("span",{class:"legend"}, el("span",{class:"sw",style:"background:var(--wknd)"}), "土日"),
+    el("span",{class:"legend"}, el("span",{style:"color:#d11;font-weight:bold"},"▼"), "終了予定日"));
+}
+/* add a ▼ marker at the project's overall target end date */
+function addDeadlineMarker(cells, te, base){
+  if(!te) return;
+  const off=dnum(pd(te))-dnum(base);
+  if(off>=0 && off<cells.length){
+    cells[off].classList.add("deadline");
+    cells[off].append(el("span",{class:"dlmark",title:"終了予定日 "+mdLabel(te)},"▼"));
+  }
 }
 /* day cells for a project's 予定 row: per-task segments (blue=未完了 / 黄=完了) + labels + ticks */
 function planRowCells(p, dates, base, dayW){
@@ -255,6 +271,8 @@ function viewProject(){
     tbar.append(el("button",{class:"btn",onclick:()=>addTask(p)},"＋タスク追加"));
     tbar.append("　基準日:");
     tbar.append(el("input",{type:"date",value:p.base||"",onchange:e=>{p.base=e.target.value;save();render();}}));
+    tbar.append("　終了予定日(全体):");
+    tbar.append(el("input",{type:"date",value:p.targetEnd||"",title:"この案件がすべて終わる予定日",onchange:e=>{p.targetEnd=e.target.value;save();render();}}));
     tbar.append(el("button",{class:"btn danger",onclick:()=>delProject(p)},"案件削除"));
   }
   tbar.append(legend());
@@ -270,13 +288,15 @@ function viewProject(){
   // month row
   const r1=el("tr");
   heads.forEach((h,k)=>{ if(k===0) r1.append(el("th",{class:"fixcol lh",style:`left:${lefts[0]}px;min-width:${cw[0]}px;width:${cw[0]}px`,rowspan:3},"No")); else r1.append(el("th",{class:"fixcol lh",style:`left:${lefts[k]}px;min-width:${cw[k]}px;width:${cw[k]}px`,rowspan:3},h)); });
-  const dh=dayHeaders(dates); dh.monthRow.forEach(c=>r1.append(c));
+  const dh=dayHeaders(dates);
+  addDeadlineMarker(dh.dayRow, p.targetEnd, base); // show 終了予定日 on the date header
+  dh.monthRow.forEach(c=>r1.append(c));
   const r2=el("tr"); dh.dayRow.forEach(c=>r2.append(c));
   const r3=el("tr"); dh.wdRow.forEach(c=>r3.append(c));
   thead.append(r1,r2,r3); tbl.append(thead);
   const tb=el("tbody");
   p.tasks.forEach((t,ti)=>{
-    const tr=el("tr");
+    const tr=el("tr",{class:"tsep"});
     tr.append(el("td",{class:"fixcol num",style:`left:${lefts[0]}px`}, el("button",{class:"rowdel",title:"削除",onclick:()=>{p.tasks.splice(ti,1);save();render();}},"×"), " "+(ti+1)));
     tr.append(tdInput(t,"name","text",lefts[1]));
     tr.append(tdInput(t,"owner","text",lefts[2]));
@@ -311,6 +331,7 @@ function masterTimeline(){
     if(ag.start)starts.push(pd(ag.start));
     if(ag.due)ends.push(pd(ag.due));
     if(ag.done)ends.push(pd(ag.done));
+    if(p.targetEnd)ends.push(pd(p.targetEnd));
   }
   let first,last;
   if(starts.length&&ends.length){
@@ -346,16 +367,19 @@ function viewMaster(){
   }
   DATA.projects.forEach((p,pi)=>{
     const ag=aggregate(p);
-    const trP=el("tr",{class:"planrow"});
+    const tend=p.targetEnd||ag.due;
+    const trP=el("tr",{class:"planrow grpfix"});
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[0]}px`,rowspan:2},String(pi+1)));
     trP.append(el("td",{class:"fixcol lab pname",style:`left:${lefts[1]}px`,rowspan:2,title:p.name},p.name));
     trP.append(el("td",{class:"fixcol lab",style:`left:${lefts[2]}px`,rowspan:2},p.owner||""));
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[3]}px`,rowspan:2},mdLabel(ag.start)));
-    trP.append(el("td",{class:"fixcol num",style:`left:${lefts[4]}px`,rowspan:2},mdLabel(ag.due)));
+    trP.append(el("td",{class:"fixcol num",style:`left:${lefts[4]}px`,rowspan:2},mdLabel(tend)));
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[5]}px`,rowspan:2},mdLabel(ag.done)));
-    planRowCells(p,dates,base,DW_M).forEach(c=>trP.append(c));
+    const pc=planRowCells(p,dates,base,DW_M);
+    addDeadlineMarker(pc,tend,base);
+    pc.forEach(c=>trP.append(c));
     tb.append(trP);
-    const trA=el("tr",{class:"actrow"});
+    const trA=el("tr",{class:"actrow tsep"});
     actRowCells(p,dates).forEach(c=>trA.append(c));
     tb.append(trA);
   });
@@ -389,16 +413,19 @@ function viewMonth(){
   const monBase=new Date(mv.year,mv.month-1,1);
   DATA.projects.forEach((p,pi)=>{
     const ag=aggregate(p);
-    const trP=el("tr",{class:"planrow"});
+    const tend=p.targetEnd||ag.due;
+    const trP=el("tr",{class:"planrow grpfix"});
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[0]}px`,rowspan:2},String(pi+1)));
     trP.append(el("td",{class:"fixcol lab pname",style:`left:${lefts[1]}px`,rowspan:2},p.name));
     trP.append(el("td",{class:"fixcol lab",style:`left:${lefts[2]}px`,rowspan:2},p.owner||""));
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[3]}px`,rowspan:2},mdLabel(ag.start)));
-    trP.append(el("td",{class:"fixcol num",style:`left:${lefts[4]}px`,rowspan:2},mdLabel(ag.due)));
+    trP.append(el("td",{class:"fixcol num",style:`left:${lefts[4]}px`,rowspan:2},mdLabel(tend)));
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[5]}px`,rowspan:2},mdLabel(ag.done)));
-    planRowCells(p,dates,monBase,24).forEach(c=>trP.append(c));
+    const pc=planRowCells(p,dates,monBase,24);
+    addDeadlineMarker(pc,tend,monBase);
+    pc.forEach(c=>trP.append(c));
     tb.append(trP);
-    const trA=el("tr",{class:"actrow"});
+    const trA=el("tr",{class:"actrow tsep"});
     actRowCells(p,dates).forEach(c=>trA.append(c));
     tb.append(trA);
   });
@@ -429,18 +456,18 @@ function viewSimple(){
   thead.append(r1);tbl.append(thead);
   const tb=el("tbody");
   DATA.projects.forEach((p,pi)=>{
-    const ag=aggregate(p);const tr=el("tr");
+    const ag=aggregate(p);const tend=p.targetEnd||ag.due;const tr=el("tr");
     tr.append(el("td",{class:"num"},String(pi+1)));
     tr.append(el("td",{class:"lab pname"},p.name));
     tr.append(el("td",{class:"lab"},p.owner||""));
     tr.append(el("td",{class:"num"},mdLabel(ag.start)));
-    tr.append(el("td",{class:"num"},mdLabel(ag.due)));
+    tr.append(el("td",{class:"num"},mdLabel(tend)));
     tr.append(el("td",{class:"num"},mdLabel(ag.done)));
     for(let m=1;m<=12;m++){
       const ms=new Date(DATA.baseYear,m-1,1);
       let cls="cell";
       if(ag.done && monthOverlap(ms,ag.start,ag.done)) cls="cell act";
-      else if(monthOverlap(ms,ag.start,ag.due)) cls="cell plan";
+      else if(monthOverlap(ms,ag.start,tend)) cls="cell plan";
       tr.append(el("td",{class:cls,style:"height:26px"}));
     }
     tb.append(tr);
@@ -478,7 +505,7 @@ function importJSON(e){
 /* ================= actions ================= */
 function addProject(){
   const name=prompt("案件名を入力","新規案件");if(!name)return;
-  DATA.projects.push({id:uid(),name,owner:"",base:DATA.baseYear+"-01-01",tasks:[{id:uid(),name:"",owner:"",start:"",due:"",done:""}]});
+  DATA.projects.push({id:uid(),name,owner:"",base:DATA.baseYear+"-01-01",targetEnd:"",tasks:[{id:uid(),name:"",owner:"",start:"",due:"",done:""}]});
   CURPROJ=DATA.projects[DATA.projects.length-1].id;save();render();
 }
 function delProject(p){if(!confirm("案件「"+p.name+"」を削除しますか？"))return;DATA.projects=DATA.projects.filter(x=>x.id!==p.id);CURPROJ=DATA.projects[0]?DATA.projects[0].id:null;save();render();}
