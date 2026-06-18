@@ -64,6 +64,17 @@
   .hint{color:#888;font-size:12px;}
   .pname{font-weight:bold;}
   .rowdel{color:#b00;cursor:pointer;border:none;background:none;font-weight:bold;}
+  .help{max-width:920px;line-height:1.75;font-size:13.5px;}
+  .help h2{font-size:20px;color:var(--blue);border-bottom:2px solid var(--blue);padding-bottom:4px;margin:26px 0 8px;}
+  .help h3{font-size:15px;margin:14px 0 4px;}
+  .help ol,.help ul{margin:6px 0 8px 24px;}
+  .help li{margin:4px 0;}
+  .help .chip{display:inline-block;min-width:54px;text-align:center;padding:1px 8px;border-radius:4px;color:#fff;font-weight:bold;font-size:12px;text-shadow:0 1px 1px rgba(0,0,0,.3);}
+  .help .step{background:#eef3fb;border-left:4px solid var(--blue);padding:8px 12px;margin:8px 0;border-radius:0 6px 6px 0;}
+  .help .note{background:#fff7df;border-left:4px solid var(--yellow);padding:8px 12px;margin:8px 0;border-radius:0 6px 6px 0;}
+  .help table.lg{border-collapse:collapse;margin:8px 0;}
+  .help table.lg td{border:1px solid #ddd;padding:5px 12px;vertical-align:middle;}
+  .help .big{font-size:15px;font-weight:bold;}
   @media print{
     header,.toolbar,.tabs,.noprint{display:none!important;}
     .gridwrap{max-height:none;overflow:visible;border:none;}
@@ -156,7 +167,7 @@ function aggregate(p){
 const el=(t,a,...c)=>{const e=document.createElement(t);if(a)for(const k in a){if(k==="class")e.className=a[k];else if(k==="html")e.innerHTML=a[k];else if(k.startsWith("on"))e.addEventListener(k.slice(2),a[k]);else e.setAttribute(k,a[k]);}for(const x of c){if(x==null)continue;e.append(x.nodeType?x:document.createTextNode(x));}return e;};
 
 let TAB="project", CURPROJ=null;
-const TABS=[["project","案件詳細"],["master","年間まとめ"],["month","月別"],["simple","簡易表"],["data","データ/保存"]];
+const TABS=[["project","案件詳細"],["master","年間まとめ"],["month","月別"],["simple","簡易表"],["data","データ/保存"],["help","❓使い方"]];
 
 function renderTabs(){
   const tb=document.getElementById("tabs");tb.innerHTML="";
@@ -473,6 +484,77 @@ function addProject(){
 function delProject(p){if(!confirm("案件「"+p.name+"」を削除しますか？"))return;DATA.projects=DATA.projects.filter(x=>x.id!==p.id);CURPROJ=DATA.projects[0]?DATA.projects[0].id:null;save();render();}
 function addTask(p){p.tasks.push({id:uid(),name:"",owner:"",start:"",due:"",done:""});save();render();}
 
+/* ================= VIEW: help / manual ================= */
+function viewHelp(){
+  const tbar=document.getElementById("toolbar");tbar.innerHTML="";
+  tbar.append(el("span",{class:"big"},"📖 このアプリの説明書"));
+  tbar.append(el("button",{class:"btn",onclick:()=>window.print()},"🖨 この説明書を印刷"));
+  const v=document.getElementById("view");
+  v.innerHTML=`
+  <div class="help">
+    <h2>1. このアプリでできること</h2>
+    <ul>
+      <li>案件（プロジェクト）ごとに、タスクの予定と進み具合を管理できます。</li>
+      <li><b>日付を入れるだけ</b>で、ガントチャート（横帯の予定表）が<b>自動で色塗り</b>されます。</li>
+      <li>全案件を1枚にまとめた「年間まとめ」、「月別」、印刷向けの「簡易表」が<b>自動で</b>できます。</li>
+      <li>インストール不要。このファイルをブラウザで開くだけで使えます（インターネット接続も不要）。</li>
+    </ul>
+
+    <h2>2. 色の意味（これだけ覚えればOK）</h2>
+    <table class="lg">
+      <tr><td><span class="chip" style="background:#2E5395">青</span></td><td>予定 … これから行うタスク</td></tr>
+      <tr><td><span class="chip" style="background:#F4C20D">黄</span></td><td>完了したタスク（「完了日」を入れたもの）</td></tr>
+      <tr><td><span class="chip" style="background:#5BA72B">緑</span></td><td>実績 … 実際に動いた期間（年間まとめ・月別の下段）</td></tr>
+      <tr><td><span class="chip" style="background:#E4E7F0;color:#333;text-shadow:none">土日</span></td><td>土曜・日曜（薄いグレー）</td></tr>
+    </table>
+
+    <h2>3. 画面（タブ）の説明</h2>
+    <ul>
+      <li><b>案件詳細</b> … 案件ごとにタスクを入力するメイン画面。</li>
+      <li><b>年間まとめ</b> … 全案件を縦に並べた年間の予定表。帯の上にタスク名が出ます。自動更新。</li>
+      <li><b>月別</b> … 上の「年」「月」を選ぶと、その月だけを拡大して表示。</li>
+      <li><b>簡易表</b> … 月単位の1ページ表。印刷や報告に便利。</li>
+      <li><b>データ/保存</b> … 保存データの書き出し・読み込み・初期化。</li>
+      <li><b>❓使い方</b> … この説明書。</li>
+    </ul>
+
+    <h2>4. 基本の使い方（3ステップ）</h2>
+    <div class="step"><b>① 案件を追加</b><br>「案件詳細」タブ →「＋案件追加」を押し、案件名を入力します。</div>
+    <div class="step"><b>② タスクと日付を入力</b><br>「＋タスク追加」で行を増やし、<b>タスク名・担当・開始日・締切日</b>を入力します。<br>※ 帯（色）が出るには <b>開始日と締切日の両方</b>が必要です。</div>
+    <div class="step"><b>③ 終わったら完了日を入力</b><br>そのタスクが <span class="chip" style="background:#F4C20D">黄色</span> に変わります。</div>
+    <div class="note">「年間まとめ」「月別」「簡易表」は<b>自動で反映</b>されます。ボタンを押す必要はありません。</div>
+
+    <h2>5. データの保存と社内共有</h2>
+    <ul>
+      <li>入力内容は<b>この端末のブラウザに自動保存</b>されます（次に開いても残っています）。</li>
+      <li><b>他の人や別PCと共有するとき</b>：「データ/保存」タブ →「JSON書き出し」で1ファイル出力 → 社内の共有フォルダに置く → 各自が「JSON読み込み」で開きます。</li>
+    </ul>
+    <div class="note"><b>注意：</b>自動保存は「端末ごと・ブラウザごと」です。別のPCやブラウザに移すときは、上のJSONの書き出し／読み込みで受け渡してください。</div>
+
+    <h2>6. 印刷のしかた</h2>
+    <ul>
+      <li>「簡易表」タブの「🖨 印刷」ボタン、またはキーボードの <b>Ctrl + P</b>（Macは <b>⌘ + P</b>）。</li>
+      <li>この説明書も、上の「🖨 この説明書を印刷」で紙に出せます。</li>
+    </ul>
+
+    <h2>7. バーの上のタスク名について</h2>
+    <ul>
+      <li>名前がバーより長いときは、後ろの空き部分へ伸ばして表示します。</li>
+      <li>それでも入りきらない時は「…」で省略します。<b>マウスを乗せると全文</b>が出ます。</li>
+    </ul>
+
+    <h2>8. 困ったとき（よくある質問）</h2>
+    <ul>
+      <li><b>Q. 色（帯）が出ない</b><br>A. そのタスクに<b>開始日と締切日の両方</b>が入っているか確認してください。</li>
+      <li><b>Q. 年間まとめに案件が出てこない</b><br>A. その案件に<b>日付の入ったタスクが1つ以上</b>必要です。</li>
+      <li><b>Q. 入力した内容が消えた／別PCで見たら空だった</b><br>A. 保存は端末ごとです。「JSON書き出し／読み込み」で移してください。</li>
+      <li><b>Q. 最初からやり直したい</b><br>A. 「データ/保存」→「初期化」でサンプルに戻ります（<b>入力は消えます</b>のでご注意）。心配なら先にJSON書き出しを。</li>
+      <li><b>Q. 案件やタスクを消したい</b><br>A. 案件は「案件詳細」の「案件削除」、タスクは各行の左にある「×」で削除できます。</li>
+    </ul>
+    <p style="color:#888;margin-top:18px">※ 推奨ブラウザ：Microsoft Edge / Google Chrome（最新版）。社内サーバ／共有フォルダに置いて全員で利用できます。</p>
+  </div>`;
+}
+
 /* ================= main ================= */
 function render(){
   renderTabs();
@@ -481,6 +563,7 @@ function render(){
   else if(TAB==="month")viewMonth();
   else if(TAB==="simple")viewSimple();
   else if(TAB==="data")viewData();
+  else if(TAB==="help")viewHelp();
 }
 if(typeof window!=="undefined" && window.document && !window.__TEST__){ render(); }
 
