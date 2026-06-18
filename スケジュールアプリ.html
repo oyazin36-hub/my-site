@@ -54,6 +54,7 @@
   td.cell.tstart{box-shadow:inset 2px 0 0 rgba(255,255,255,.9);}
   table.gantt.w18 th.day,table.gantt.w18 td.day{width:20px;min-width:20px;max-width:20px;}
   table.gantt.wq th.day,table.gantt.wq td.day{width:54px;min-width:54px;max-width:54px;}
+  table.gantt.wmonth th.day,table.gantt.wmonth td.day{width:34px;min-width:34px;max-width:34px;}
   table.gantt.wq td.cell.tstart{box-shadow:inset 2px 0 0 rgba(255,255,255,.95);}
   tr.planrow td{height:26px;}
   tr.actrow td{height:15px;}
@@ -507,7 +508,7 @@ function viewMonth(){
   const dates=[];for(let i=1;i<=ndays;i++)dates.push(new Date(mv.year,mv.month-1,i));
   const cw=[34,160,90,70,80,70];const lefts=[];let acc=0;for(const w of cw){lefts.push(acc);acc+=w;}
   const heads=["No","案件名","担当","開始","終了予定","完了"];
-  const tbl=el("table",{class:"gantt"});const thead=el("thead");
+  const tbl=el("table",{class:"gantt wmonth"});const thead=el("thead");
   const r1=el("tr");
   heads.forEach((h,k)=>r1.append(el("th",{class:"fixcol lh",style:`left:${lefts[k]}px;min-width:${cw[k]}px;width:${cw[k]}px`,rowspan:3},h)));
   r1.append(el("th",{class:"month",colspan:ndays},mv.year+"年"+mv.month+"月"));
@@ -526,7 +527,7 @@ function viewMonth(){
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[3]}px`,rowspan:2},mdLabel(ag.start)));
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[4]}px`,rowspan:2},mdLabel(tend)));
     trP.append(el("td",{class:"fixcol num",style:`left:${lefts[5]}px`,rowspan:2},mdLabel(ag.done)));
-    const pc=planRowCells(p,dates,monBase,24);
+    const pc=planRowCells(p,dates,monBase,34);
     addDeadlineMarker(pc,tend,monBase);
     pc.forEach(c=>trP.append(c));
     tb.append(trP);
