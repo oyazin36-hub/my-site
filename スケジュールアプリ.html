@@ -325,7 +325,7 @@ function viewProject(){
     tbar.append(el("input",{type:"date",value:p.targetEnd||"",title:"この案件がすべて終わる予定日",onchange:e=>{p.targetEnd=e.target.value;save();render();}}));
     tbar.append(el("button",{class:"btn danger",onclick:()=>delProject(p)},"案件削除"));
   }
-  tbar.append(legend());
+  tbar.append(legend());tbar.append(printBtn());
   const wrap=el("div",{class:"gridwrap"});
   if(!p){document.getElementById("view").replaceChildren(wrap);return;}
   const base=pd(p.base)||new Date(DATA.baseYear,0,1);
@@ -399,7 +399,7 @@ const DW_M=18;
 function viewMaster(){
   const tbar=document.getElementById("toolbar");tbar.innerHTML="";
   tbar.append(el("span",{class:"hint"},"全案件を自動集約（予定=全体の開始〜終了予定 / 実績=開始〜完了）。期間は全案件に自動フィット。"));
-  tbar.append(legend());
+  tbar.append(legend());tbar.append(printBtn());
   const {first:base,dates}=masterTimeline();
   const N=dates.length;
   const cw=[34,170,80,60,68,60]; const lefts=[];let acc=0;for(const w of cw){lefts.push(acc);acc+=w;}
@@ -450,7 +450,7 @@ function viewQuarter(){
   for(let m=1;m<=12;m++)msel.append(el("option",{value:m,...(m===qv.month?{selected:"selected"}:{})},m+"月"));
   tbar.append(msel);
   tbar.append(el("span",{class:"hint"},"（"+qv.month+"月〜"+((qv.month+2-1)%12+1)+"月の3か月・1列=1週間）"));
-  tbar.append(legend());
+  tbar.append(legend());tbar.append(printBtn());
   // 3-month range, weekly columns starting Monday
   const rangeStart=new Date(qv.year,qv.month-1,1);
   const rangeEnd=new Date(qv.year,qv.month-1+3,0);
@@ -503,7 +503,7 @@ function viewMonth(){
   tbar.append("月:");
   const msel=el("select",{onchange:e=>{mv.month=+e.target.value;save();render();}});
   for(let m=1;m<=12;m++)msel.append(el("option",{value:m,...(m===mv.month?{selected:"selected"}:{})},m+"月"));
-  tbar.append(msel);tbar.append(legend());
+  tbar.append(msel);tbar.append(legend());tbar.append(printBtn());
   const ndays=new Date(mv.year,mv.month,0).getDate();
   const dates=[];for(let i=1;i<=ndays;i++)dates.push(new Date(mv.year,mv.month-1,i));
   const cw=[34,160,90,70,80,70];const lefts=[];let acc=0;for(const w of cw){lefts.push(acc);acc+=w;}
@@ -550,7 +550,7 @@ function viewSimple(){
   const tbar=document.getElementById("toolbar");tbar.innerHTML="";
   tbar.append("対象年:");
   tbar.append(el("input",{type:"number",value:DATA.baseYear,style:"width:80px",onchange:e=>{DATA.baseYear=+e.target.value;save();render();}}));
-  tbar.append(el("button",{class:"btn",onclick:()=>window.print()},"🖨 印刷"));
+  tbar.append(printBtn());
   tbar.append(el("span",{class:"legend"},el("span",{class:"sw",style:"background:"+COLORS.plan}),"予定の月"));
   tbar.append(el("span",{class:"legend"},el("span",{class:"sw",style:"background:"+COLORS.act}),"完了済みの月"));
   const cw=[34,210,90,64,72,64];const lefts=[];let acc=0;for(const w of cw){lefts.push(acc);acc+=w;}
@@ -621,7 +621,7 @@ function addTask(p){p.tasks.push({id:uid(),name:"",owner:"",start:"",due:"",done
 function viewHelp(){
   const tbar=document.getElementById("toolbar");tbar.innerHTML="";
   tbar.append(el("span",{class:"big"},"📖 このアプリの説明書"));
-  tbar.append(el("button",{class:"btn",onclick:()=>window.print()},"🖨 この説明書を印刷"));
+  tbar.append(el("button",{class:"btn",onclick:printA3},"🖨 A3で印刷"));
   const v=document.getElementById("view");
   v.innerHTML=`
   <div class="help">
@@ -665,10 +665,11 @@ function viewHelp(){
     </ul>
     <div class="note"><b>注意：</b>自動保存は「端末ごと・ブラウザごと」です。別のPCやブラウザに移すときは、上のJSONの書き出し／読み込みで受け渡してください。</div>
 
-    <h2>6. 印刷のしかた</h2>
+    <h2>6. 印刷のしかた（A3対応）</h2>
     <ul>
-      <li>「簡易表」タブの「🖨 印刷」ボタン、またはキーボードの <b>Ctrl + P</b>（Macは <b>⌘ + P</b>）。</li>
-      <li>この説明書も、上の「🖨 この説明書を印刷」で紙に出せます。</li>
+      <li>各タブの右上にある <b>「🖨 A3印刷」</b> ボタンを押すと、その画面を <b>A3用紙1枚に収まるよう自動調整</b>して印刷できます（向きも自動）。</li>
+      <li>印刷ダイアログで用紙が「A3」になっているか確認してください（プリンタにA3が必要です。PDF保存も可）。</li>
+      <li>横長すぎて小さくなる場合は、「3か月」や「月別」など期間を絞った画面で印刷すると大きく印刷できます。</li>
     </ul>
 
     <h2>7. バーの上のタスク名について</h2>
@@ -688,6 +689,32 @@ function viewHelp(){
     <p style="color:#888;margin-top:18px">※ 推奨ブラウザ：Microsoft Edge / Google Chrome（最新版）。社内サーバ／共有フォルダに置いて全員で利用できます。</p>
   </div>`;
 }
+
+/* ================= A3 printing ================= */
+function printA3(){
+  const view=document.getElementById("view");
+  const target=view.querySelector("table")||view.querySelector(".help")||view;
+  const cw=target.scrollWidth||target.offsetWidth||1000;
+  const ch=target.scrollHeight||target.offsetHeight||700;
+  const landscape = cw>=ch;
+  const mm=v=>v/25.4*96; // mm -> px @96dpi
+  const pageW=mm((landscape?420:297)-12), pageH=mm((landscape?297:420)-12);
+  const scale=Math.min(pageW/cw, pageH/ch, 1);
+  const old=document.getElementById("__printA3"); if(old)old.remove();
+  const st=document.createElement("style"); st.id="__printA3";
+  st.textContent=`@page{size:A3 ${landscape?"landscape":"portrait"};margin:6mm;}
+  @media print{
+    .gridwrap{max-height:none!important;overflow:visible!important;border:none!important;}
+    .fixcol,thead th{position:static!important;}
+    #view{zoom:${scale};}
+  }`;
+  document.head.append(st);
+  const cleanup=()=>{const e=document.getElementById("__printA3");if(e)e.remove();window.removeEventListener("afterprint",cleanup);};
+  window.addEventListener("afterprint",cleanup);
+  window.print();
+  setTimeout(cleanup,1500);
+}
+function printBtn(){return el("button",{class:"btn",onclick:printA3},"🖨 A3印刷");}
 
 /* ================= main ================= */
 function render(){
