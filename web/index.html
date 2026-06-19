@@ -74,9 +74,19 @@ tbody tr:nth-child(even){background:var(--lblue);}
 .modal-foot{border-top:1px solid var(--line);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;}
 .sel-label{font-size:14px;color:#333;}
 #col-apply{background:var(--green);}#col-apply:disabled{background:#9bcdae;}
+.pdf-panel{position:fixed;top:0;right:0;width:44vw;height:100vh;background:#525659;z-index:90;
+  display:flex;flex-direction:column;box-shadow:-2px 0 12px rgba(0,0,0,.3);}
+.pdf-panel.hidden{display:none;}
+.pdf-panel-head{background:var(--navy);color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font-size:14px;}
+.pdf-panel-close{background:transparent;color:#fff;font-size:22px;line-height:1;padding:0 6px;border:none;}
+.pdf-panel-body{flex:1;overflow:auto;padding:10px;text-align:center;}
+.pdf-panel-body canvas{max-width:100%;margin:0 auto 10px;display:block;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.4);}
+.pdf-loading{color:#fff;padding:24px;}
+body.pdf-open{padding-right:44vw;}
+body.pdf-open .topbar{padding-right:24px;}
 @media print{
 @page{size:A4 portrait;margin:10mm;}
-body{background:#fff;}.no-print{display:none!important;}.panel,.topbar{display:none!important;}
+body{background:#fff;}body.pdf-open{padding-right:0;}.no-print{display:none!important;}.panel,.topbar{display:none!important;}
 .report-head{margin:0 0 6px;}.table-wrap{overflow:visible;padding:0;}
 th,td{padding:3px 5px;font-size:10px;}.cell-img{display:none!important;}
 tbody tr:nth-child(even){background:#eef4fb!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
@@ -125,6 +135,14 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
     <span>単価セルはクリックで手修正できます。</span>
   </div>
 </section>
+
+<div id="pdf-panel" class="pdf-panel hidden no-print">
+  <div class="pdf-panel-head">
+    <span id="pdf-panel-title">PDF</span>
+    <button class="pdf-panel-close" onclick="closePdfPanel()" aria-label="閉じる">×</button>
+  </div>
+  <div id="pdf-panel-body" class="pdf-panel-body"></div>
+</div>
 
 <div id="col-modal" class="modal hidden no-print">
   <div class="modal-box">
@@ -491,9 +509,9 @@ function renderInputs(){
     const div=document.createElement('div'); div.className='company-card';
     const thumb=thumbUrl(c.arts && c.arts[0] ? c.arts[0].page1Canvas : null, 260);
     div.innerHTML=`
-      <div class="cc-thumb-label">読み取ったPDF（クリックで開く）</div>
+      <div class="cc-thumb-label">読み取ったPDF（クリックで横に表示）</div>
       ${thumb?`<img class="cc-thumb" src="${thumb}" data-i="${i}" alt="見積書">`:''}
-      <div class="cc-file">📄 ${escapeHtml(c.filename)}　<a href="#" class="cc-openpdf" data-i="${i}">PDFを開く ↗</a></div>
+      <div class="cc-file">📄 ${escapeHtml(c.filename)}　<a href="#" class="cc-openpdf" data-i="${i}">横に並べて表示 ▸</a></div>
       <label>社名<input type="text" value="${escapeHtml(c.name)}" data-i="${i}" class="name-input"></label>
       <label>倍率<input type="number" step="0.01" min="0" value="${c.multiplier}" data-i="${i}" class="mult-input"></label>
       <div class="cc-stat">品番 ${c.rows.length} 件 / 単価読取 ${priced} 件
@@ -504,14 +522,34 @@ function renderInputs(){
   box.querySelectorAll('.name-input').forEach(el=>el.addEventListener('input',e=>{COMPANIES[e.target.dataset.i].name=e.target.value;renderTable();}));
   box.querySelectorAll('.mult-input').forEach(el=>el.addEventListener('input',e=>{COMPANIES[e.target.dataset.i].multiplier=parseFloat(e.target.value)||0;renderTable();}));
   box.querySelectorAll('.col-btn').forEach(el=>el.addEventListener('click',e=>openColumnPicker(parseInt(e.target.dataset.i,10))));
-  box.querySelectorAll('.cc-thumb').forEach(el=>el.addEventListener('click',e=>openOriginalPdf(e.target.dataset.i)));
-  box.querySelectorAll('.cc-openpdf').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();openOriginalPdf(e.target.dataset.i);}));
+  box.querySelectorAll('.cc-thumb').forEach(el=>el.addEventListener('click',e=>openPdfPanel(e.target.dataset.i)));
+  box.querySelectorAll('.cc-openpdf').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();openPdfPanel(e.target.dataset.i);}));
 }
-// 渡した本物のPDFを新しいタブで開く（全ページ閲覧・拡大できる）
-function openOriginalPdf(i){
+// 渡したPDFを画面右に並べて表示（全ページ・スクロール可）。新タブを使わないので確実。
+async function openPdfPanel(i){
   const c=COMPANIES[i]; if(!c||!c.file) return;
-  if(!c._pdfUrl) c._pdfUrl=URL.createObjectURL(c.file);
-  window.open(c._pdfUrl,'_blank');
+  document.getElementById('pdf-panel-title').textContent=`${c.name}：${c.filename}`;
+  const body=document.getElementById('pdf-panel-body');
+  body.innerHTML='<div class="pdf-loading">PDFを表示中…</div>';
+  document.getElementById('pdf-panel').classList.remove('hidden');
+  document.body.classList.add('pdf-open');
+  try{
+    const buf=await c.file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    body.innerHTML='';
+    for(let p=1;p<=pdf.numPages;p++){
+      const page=await pdf.getPage(p);
+      const vp=page.getViewport({scale:1.5});
+      const cnv=document.createElement('canvas'); cnv.width=vp.width; cnv.height=vp.height;
+      await page.render({canvasContext:cnv.getContext('2d'),viewport:vp}).promise;
+      body.appendChild(cnv);
+    }
+  }catch(e){ body.innerHTML='<div class="pdf-loading">表示できませんでした: '+escapeHtml(e.message)+'</div>'; }
+}
+function closePdfPanel(){
+  document.getElementById('pdf-panel').classList.add('hidden');
+  document.body.classList.remove('pdf-open');
+  document.getElementById('pdf-panel-body').innerHTML='';
 }
 function roundUp(v,u){return Math.ceil(v/u)*u;}
 function yen(v){return v==null?'':'¥'+v.toLocaleString();}
