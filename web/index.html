@@ -155,10 +155,19 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
   </div>
 </div>
 
-<!-- ライブラリ（ブラウザ内で動く部品） -->
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
-<script async src="https://docs.opencv.org/4.x/opencv.js" id="opencv-script"></script>
+<!-- ライブラリ（ブラウザ内で動く部品）
+     integrity(SRI)付き: ファイルが少しでも改ざんされていたらブラウザが実行を拒否する。
+     バージョン固定 + jsdelivr配信。 -->
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"
+        integrity="sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"
+        integrity="sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F"
+        crossorigin="anonymous"></script>
+<script async id="opencv-script"
+        src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"
+        integrity="sha384-XsTfGA62I8LzqS3D7IcgiSOCrJuECWLcg4s1M0AnrkDCcJ8lXX+j+qdg+o6t7KZa"
+        crossorigin="anonymous"></script>
 
 <script>
 // ====================== 設定 ======================
