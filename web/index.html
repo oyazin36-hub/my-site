@@ -25,8 +25,11 @@ border-radius:6px;padding:8px 10px;max-height:160px;overflow:auto;white-space:pr
 .company-card{border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--lblue);min-width:240px;flex:1;}
 .cc-file{font-size:12px;color:#555;margin-bottom:8px;word-break:break-all;}
 .cc-thumb{width:100%;max-height:220px;object-fit:contain;object-position:top;border:1px solid var(--line);
-  border-radius:6px;background:#fff;margin-bottom:8px;cursor:zoom-in;display:block;}
+  border-radius:6px;background:#fff;margin-bottom:8px;cursor:pointer;display:block;}
+.cc-thumb:hover{outline:2px solid var(--blue);}
 .cc-thumb-label{font-size:11px;color:#888;margin-bottom:4px;}
+.cc-openpdf{color:var(--blue);text-decoration:none;font-weight:bold;}
+.cc-openpdf:hover{text-decoration:underline;}
 .company-card label{display:block;font-size:13px;color:#333;margin-bottom:8px;}
 .company-card input{display:block;width:100%;margin-top:3px;padding:6px 8px;border:1px solid var(--line);border-radius:5px;font-size:14px;}
 .company-card .mult-input{border-color:var(--orange);font-weight:bold;}
@@ -122,10 +125,6 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
     <span>単価セルはクリックで手修正できます。</span>
   </div>
 </section>
-
-<div id="img-modal" class="modal hidden no-print" onclick="closeBigImage()">
-  <img id="img-modal-img" style="max-width:92vw;max-height:92vh;background:#fff;border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,.5);" alt="見積書">
-</div>
 
 <div id="col-modal" class="modal hidden no-print">
   <div class="modal-box">
@@ -492,9 +491,9 @@ function renderInputs(){
     const div=document.createElement('div'); div.className='company-card';
     const thumb=thumbUrl(c.arts && c.arts[0] ? c.arts[0].page1Canvas : null, 260);
     div.innerHTML=`
-      <div class="cc-thumb-label">読み取ったPDF（クリックで拡大）</div>
+      <div class="cc-thumb-label">読み取ったPDF（クリックで開く）</div>
       ${thumb?`<img class="cc-thumb" src="${thumb}" data-i="${i}" alt="見積書">`:''}
-      <div class="cc-file">📄 ${escapeHtml(c.filename)}</div>
+      <div class="cc-file">📄 ${escapeHtml(c.filename)}　<a href="#" class="cc-openpdf" data-i="${i}">PDFを開く ↗</a></div>
       <label>社名<input type="text" value="${escapeHtml(c.name)}" data-i="${i}" class="name-input"></label>
       <label>倍率<input type="number" step="0.01" min="0" value="${c.multiplier}" data-i="${i}" class="mult-input"></label>
       <div class="cc-stat">品番 ${c.rows.length} 件 / 単価読取 ${priced} 件
@@ -505,17 +504,15 @@ function renderInputs(){
   box.querySelectorAll('.name-input').forEach(el=>el.addEventListener('input',e=>{COMPANIES[e.target.dataset.i].name=e.target.value;renderTable();}));
   box.querySelectorAll('.mult-input').forEach(el=>el.addEventListener('input',e=>{COMPANIES[e.target.dataset.i].multiplier=parseFloat(e.target.value)||0;renderTable();}));
   box.querySelectorAll('.col-btn').forEach(el=>el.addEventListener('click',e=>openColumnPicker(parseInt(e.target.dataset.i,10))));
-  box.querySelectorAll('.cc-thumb').forEach(el=>el.addEventListener('click',e=>{
-    const c=COMPANIES[e.target.dataset.i];
-    const cv=c.arts&&c.arts[0]?c.arts[0].page1Canvas:null;
-    if(cv) showBigImage(cv.toDataURL('image/png'));
-  }));
+  box.querySelectorAll('.cc-thumb').forEach(el=>el.addEventListener('click',e=>openOriginalPdf(e.target.dataset.i)));
+  box.querySelectorAll('.cc-openpdf').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();openOriginalPdf(e.target.dataset.i);}));
 }
-function showBigImage(uri){
-  document.getElementById('img-modal-img').src=uri;
-  document.getElementById('img-modal').classList.remove('hidden');
+// 渡した本物のPDFを新しいタブで開く（全ページ閲覧・拡大できる）
+function openOriginalPdf(i){
+  const c=COMPANIES[i]; if(!c||!c.file) return;
+  if(!c._pdfUrl) c._pdfUrl=URL.createObjectURL(c.file);
+  window.open(c._pdfUrl,'_blank');
 }
-function closeBigImage(){document.getElementById('img-modal').classList.add('hidden');}
 function roundUp(v,u){return Math.ceil(v/u)*u;}
 function yen(v){return v==null?'':'¥'+v.toLocaleString();}
 function escapeHtml(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
