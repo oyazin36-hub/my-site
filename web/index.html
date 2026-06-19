@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>相見積もり比較アプリ（HTML版）</title>
+<style>
+:root{--navy:#1f3a5f;--blue:#2f6fb3;--green:#15803d;--green-bg:#e3f6ea;--orange:#c2410c;
+--yellow:#fff7d6;--line:#cbd5e1;--lblue:#eef4fb;}
+*{box-sizing:border-box;}
+body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;color:#1a1a1a;margin:0;background:#eef1f5;}
+.hidden{display:none;}
+.topbar{background:var(--navy);color:#fff;padding:14px 24px;display:flex;align-items:baseline;gap:16px;}
+.topbar h1{font-size:20px;margin:0;}.tag{font-size:13px;color:#bcd3ee;}
+.panel{background:#fff;margin:16px auto;max-width:1180px;padding:18px 24px;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.panel h2{font-size:16px;color:var(--navy);margin:0 0 6px;}
+.hint{font-size:13px;color:#666;margin:0 0 12px;}
+#upload-form{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+button{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:9px 20px;font-size:14px;cursor:pointer;}
+button:hover{background:#265d97;}button:disabled{background:#9bb6d4;cursor:wait;}
+.status{margin-top:10px;font-size:13px;color:var(--orange);}
+#log{margin-top:10px;font-size:12px;color:#555;background:#f8fafc;border:1px solid var(--line);
+border-radius:6px;padding:8px 10px;max-height:160px;overflow:auto;white-space:pre-wrap;font-family:monospace;display:none;}
+.company-inputs{display:flex;gap:14px;flex-wrap:wrap;}
+.company-card{border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--lblue);min-width:240px;flex:1;}
+.cc-file{font-size:12px;color:#555;margin-bottom:8px;word-break:break-all;}
+.company-card label{display:block;font-size:13px;color:#333;margin-bottom:8px;}
+.company-card input{display:block;width:100%;margin-top:3px;padding:6px 8px;border:1px solid var(--line);border-radius:5px;font-size:14px;}
+.company-card .mult-input{border-color:var(--orange);font-weight:bold;}
+.cc-stat{font-size:12px;color:#777;}.cc-warn{color:var(--orange);}
+.col-btn{margin-top:8px;width:100%;background:#fff;color:var(--orange);border:1px solid var(--orange);padding:7px;font-size:13px;}
+.col-btn:hover{background:#fff1e2;}
+.report-head{max-width:1180px;margin:16px auto 6px;padding:0 8px;display:flex;justify-content:space-between;align-items:flex-end;}
+.rep-title{font-size:20px;color:var(--navy);margin:0;}.rep-sub{font-size:12px;color:#555;margin-top:4px;}
+.print-btn{background:var(--green);}.print-btn:hover{background:#11652f;}
+.table-wrap{max-width:1180px;margin:0 auto;overflow-x:auto;padding:0 8px;}
+table{width:100%;border-collapse:collapse;background:#fff;}
+th,td{border:1px solid var(--line);padding:5px 8px;font-size:13px;}
+thead th{background:var(--navy);color:#fff;text-align:center;font-weight:normal;}
+.th-sub{font-size:11px;color:#cfe0f2;}
+tbody tr:nth-child(even){background:var(--lblue);}
+.pn{font-weight:bold;color:var(--navy);white-space:nowrap;}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.muted{color:#999;}.min{background:var(--green-bg);color:var(--green);font-weight:bold;}
+.cheap{text-align:center;color:var(--green);font-weight:bold;white-space:nowrap;}
+.need{color:var(--orange);}.warncell{background:var(--yellow);}
+.unit{position:relative;cursor:pointer;}
+.unit .ok{color:var(--green);font-size:11px;float:left;}.unit .mid{color:var(--blue);font-size:11px;float:left;}
+.unit .warn{color:var(--orange);font-size:11px;float:left;}
+.cell-img{display:none;position:absolute;right:0;top:100%;z-index:5;border:1px solid #888;background:#fff;max-width:240px;box-shadow:0 2px 6px rgba(0,0,0,.3);}
+.unit:hover .cell-img{display:block;}
+.edit-input{width:90px;text-align:right;padding:2px 4px;}
+.legend{max-width:1180px;margin:10px auto 30px;padding:0 8px;font-size:12px;color:#555;display:flex;gap:18px;flex-wrap:wrap;}
+.legend .ok{color:var(--green);}.legend .mid{color:var(--blue);}.legend .warn{color:var(--orange);}.legend .min-key{color:var(--green);}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;}
+.modal.hidden{display:none;}
+.modal-box{background:#fff;border-radius:10px;width:min(960px,94vw);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
+.modal-head{background:var(--navy);color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;font-size:16px;}
+.modal-close{background:transparent;color:#fff;font-size:22px;line-height:1;padding:0 6px;border:none;}
+.modal-box .hint{padding:10px 18px 0;}
+.col-stage{padding:12px 18px;overflow:auto;}
+.col-imgwrap{position:relative;display:inline-block;line-height:0;}
+.col-img{max-width:100%;height:auto;display:block;}
+.col-line{position:absolute;top:0;bottom:0;width:2px;background:rgba(47,111,179,.7);pointer-events:none;}
+.col-band{position:absolute;top:0;bottom:0;cursor:pointer;background:transparent;}
+.col-band:hover{background:rgba(47,111,179,.18);}
+.col-band.selected{background:rgba(224,123,0,.32);outline:2px solid var(--orange);}
+.modal-foot{border-top:1px solid var(--line);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;}
+.sel-label{font-size:14px;color:#333;}
+#col-apply{background:var(--green);}#col-apply:disabled{background:#9bcdae;}
+@media print{
+@page{size:A4 portrait;margin:10mm;}
+body{background:#fff;}.no-print{display:none!important;}.panel,.topbar{display:none!important;}
+.report-head{margin:0 0 6px;}.table-wrap{overflow:visible;padding:0;}
+th,td{padding:3px 5px;font-size:10px;}.cell-img{display:none!important;}
+tbody tr:nth-child(even){background:#eef4fb!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.min{background:#e3f6ea!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar no-print">
+  <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
+  <span class="tag">インストール不要・ブラウザだけで動作</span>
+</header>
+
+<section class="panel no-print" id="upload-panel">
+  <h2>① 見積書PDFをアップロード</h2>
+  <p class="hint">各社の見積書PDFを選んでください（複数選択可）。スキャン画像のPDFでもOK。
+    初回は読取りエンジン（約15MB）の取得に少し時間がかかります（ネット接続が必要）。</p>
+  <form id="upload-form">
+    <input type="file" id="pdfs" accept="application/pdf" multiple required>
+    <button type="submit" id="go">読み取る</button>
+  </form>
+  <div id="status" class="status"></div>
+  <div id="log"></div>
+</section>
+
+<section id="result" class="hidden">
+  <div class="panel no-print">
+    <h2>② 社名と倍率を入力</h2>
+    <p class="hint">人が入力するのはここだけ。倍率を変えると下の比較表が自動で再計算されます。</p>
+    <div id="company-inputs" class="company-inputs"></div>
+  </div>
+  <div class="report-head">
+    <div><h2 class="rep-title">相見積もり比較表</h2><div class="rep-sub" id="rep-sub"></div></div>
+    <button class="print-btn no-print" onclick="window.print()">🖨 A4で印刷</button>
+  </div>
+  <div class="table-wrap">
+    <table id="compare"><thead id="compare-head"></thead><tbody id="compare-body"></tbody></table>
+  </div>
+  <div class="legend">
+    <span><b class="ok">◎</b> 高信頼（複数回の読みが一致）</span>
+    <span><b class="mid">○</b> 2回一致</span>
+    <span><b class="warn">△</b> 要確認（読みがバラついた／読めず）</span>
+    <span><b class="min-key">緑</b> 各品番の最安値</span>
+    <span>単価セルはクリックで手修正できます。</span>
+  </div>
+</section>
+
+<div id="col-modal" class="modal hidden no-print">
+  <div class="modal-box">
+    <div class="modal-head"><span id="col-modal-title">単価の列を指定</span>
+      <button class="modal-close" onclick="closeColPicker()">×</button></div>
+    <p class="hint">表に重ねた区切りのうち、<b>「単価」の列をクリック</b>してください。選んだ列で読み直します。</p>
+    <div id="col-stage" class="col-stage"></div>
+    <div class="modal-foot"><span id="col-sel-label" class="sel-label">列を選んでください</span>
+      <button id="col-apply" disabled onclick="applyColumn()">この列で読み直す</button></div>
+  </div>
+</div>
+
+<!-- ライブラリ（ブラウザ内で動く部品） -->
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script async src="https://docs.opencv.org/4.x/opencv.js" id="opencv-script"></script>
+
+<script>
+// ====================== 設定 ======================
+const RENDER_SCALE = 3.0;        // PDF→画像の拡大率
+const UNIT_READ = 10;            // 単価は10円きざみ
+const UNIT_ROUND = 100;          // 計算結果は100円単位で切り上げ
+const PRICE_MIN = 300, PRICE_MAX = 200000;
+
+const PN_RE = /(?:[A-Za-z]{2,6}\d{0,2}[-_ ]?)?([0-9oOlIzZeg]{3})[-_ ]?M[-_ ]?([0-9oOlIzZeBsSgt]{3})/;
+const PRICE_RE = /\d{1,3}(?:[,.]\d{3})|\d{3,6}/g;
+const DIGIT_MAP = {o:'0',O:'0',Q:'0',D:'0',l:'1',I:'1',i:'1',z:'2',Z:'2',S:'5',s:'5',B:'8',e:'6',g:'9',t:'1'};
+function normDigits(s){return s.split('').map(c=>DIGIT_MAP[c]!==undefined?DIGIT_MAP[c]:c).join('');}
+
+let COMPANIES = [];
+
+// ====================== ログ ======================
+function log(msg){
+  const el=document.getElementById('log'); el.style.display='block';
+  el.textContent += msg+'\n'; el.scrollTop=el.scrollHeight;
+}
+function setStatus(s){document.getElementById('status').textContent=s;}
+
+// ====================== ライブラリ初期化 ======================
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+}
+function waitOpenCV(){
+  return new Promise((resolve,reject)=>{
+    const t0=Date.now();
+    (function check(){
+      if (window.cv && cv.Mat) return resolve();
+      if (Date.now()-t0 > 60000) return reject(new Error('OpenCV.js の読み込みに失敗（ネット接続を確認）'));
+      setTimeout(check,200);
+    })();
+  });
+}
+let workerText=null, workerNum=null;
+async function ensureWorkers(){
+  if (!workerText){
+    log('読取りエンジンを準備中…（初回は時間がかかります）');
+    workerText = await Tesseract.createWorker('jpn+eng', 1);
+  }
+  if (!workerNum){
+    workerNum = await Tesseract.createWorker('eng', 1);
+    await workerNum.setParameters({
+      tessedit_char_whitelist: '0123456789,.',
+      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK
+    });
+  }
+}
+
+// ====================== 共通ユーティリティ ======================
+function parsePrices(text){
+  const out=[]; let m;
+  PRICE_RE.lastIndex=0;
+  while((m=PRICE_RE.exec(text))!==null){
+    const v=parseInt(m[0].replace(/[,.]/g,''),10);
+    if(v>=PRICE_MIN && v<=PRICE_MAX && v%UNIT_READ===0) out.push(v);
+  }
+  return out;
+}
+function normalizeKey(joined){
+  const m=joined.match(PN_RE); if(!m) return null;
+  const g=normDigits(m[1]), s=normDigits(m[2]);
+  if(/^\d{3}$/.test(g) && /^\d{3}$/.test(s)) return g+'-M'+s;
+  return null;
+}
+// Tesseractの結果から単語配列(bbox付き)を取り出す（v5の差異に対応）
+function getWords(data){
+  if (data.words && data.words.length) return data.words;
+  const out=[];
+  (data.blocks||[]).forEach(b=>(b.paragraphs||[]).forEach(p=>(p.lines||[]).forEach(l=>
+    (l.words||[]).forEach(w=>out.push(w)))));
+  return out;
+}
+function groupBands(words, tol){
+  const bands=[];
+  words.slice().sort((a,b)=>cyOf(a)-cyOf(b)).forEach(w=>{
+    const cy=cyOf(w);
+    let placed=false;
+    for(const b of bands){ if(Math.abs(cy-b.cy)<=tol){b.it.push(w);b.cy=(b.cy*b.n+cy)/(b.n+1);b.n++;placed=true;break;} }
+    if(!placed) bands.push({cy,n:1,it:[w]});
+  });
+  bands.forEach(b=>b.it.sort((a,b2)=>a.bbox.x0-b2.bbox.x0));
+  return bands;
+}
+function cyOf(w){return (w.bbox.y0+w.bbox.y1)/2;}
+
+// ====================== OpenCV 前処理 ======================
+// canvas(グレー化前のRGBA) -> {gacCanvas, cleanCanvas, columns, W, H}
+function preprocess(srcCanvas){
+  const src=cv.imread(srcCanvas);
+  const gray=new cv.Mat();
+  cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY); src.delete();
+  const g=deskew(gray); gray.delete();
+  const W=g.cols, H=g.rows;
+
+  // 加工なし版（コントラスト強調）
+  const gac=new cv.Mat(); cv.normalize(g,gac,0,255,cv.NORM_MINMAX);
+
+  // 加工あり版（適応的二値化 + 罫線除去）
+  const bw=new cv.Mat();
+  cv.adaptiveThreshold(g,bw,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,31,15);
+  const inv=new cv.Mat(); cv.bitwise_not(bw,inv);
+  const hor=new cv.Mat(), ver=new cv.Mat();
+  const kh=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(40,1));
+  const kv=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(1,40));
+  cv.morphologyEx(inv,hor,cv.MORPH_OPEN,kh);
+  cv.morphologyEx(inv,ver,cv.MORPH_OPEN,kv);
+  const lines=new cv.Mat(); cv.add(hor,ver,lines);
+  const k3=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(3,3));
+  cv.dilate(lines,lines,k3);
+  const clean=new cv.Mat(); cv.bitwise_or(bw,lines,clean);
+  cv.medianBlur(clean,clean,3);
+
+  const columns=detectColumns(g);
+
+  // canvas化
+  const gacCanvas=document.createElement('canvas'); cv.imshow(gacCanvas,gac);
+  const cleanCanvas=document.createElement('canvas'); cv.imshow(cleanCanvas,clean);
+
+  [g,gac,bw,inv,hor,ver,lines,clean,kh,kv,k3].forEach(m=>{try{m.delete();}catch(e){}});
+  return {gacCanvas,cleanCanvas,columns,W,H};
+}
+
+function deskew(gray){
+  try{
+    const small=new cv.Mat();
+    cv.resize(gray,small,new cv.Size(Math.max(1,gray.cols>>2),Math.max(1,gray.rows>>2)));
+    const inv=new cv.Mat(); cv.bitwise_not(small,inv); small.delete();
+    const thr=new cv.Mat(); cv.threshold(inv,thr,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU); inv.delete();
+    const pts=new cv.Mat(); cv.findNonZero(thr,pts); thr.delete();
+    if(pts.rows<50){pts.delete();return gray.clone();}
+    const rect=cv.minAreaRect(pts); pts.delete();
+    let ang=rect.angle; if(ang<-45) ang=-(90+ang); else ang=-ang;
+    if(Math.abs(ang)<0.2) return gray.clone();
+    const dst=new cv.Mat();
+    const M=cv.getRotationMatrix2D(new cv.Point(gray.cols/2,gray.rows/2),ang,1);
+    cv.warpAffine(gray,dst,M,new cv.Size(gray.cols,gray.rows),cv.INTER_CUBIC,cv.BORDER_CONSTANT,new cv.Scalar(255));
+    M.delete();
+    return dst;
+  }catch(e){ return gray.clone(); }
+}
+
+function detectColumns(g){
+  const h=g.rows,w=g.cols;
+  const roi=g.roi(new cv.Rect(0,Math.floor(h*0.28),w,Math.floor(h*0.96)-Math.floor(h*0.28)));
+  const bw=new cv.Mat();
+  cv.adaptiveThreshold(roi,bw,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,31,15); roi.delete();
+  const inv=new cv.Mat(); cv.bitwise_not(bw,inv); bw.delete();
+  const ver=new cv.Mat();
+  const kv=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(1,Math.max(20,(inv.rows/30)|0)));
+  cv.morphologyEx(inv,ver,cv.MORPH_OPEN,kv); inv.delete(); kv.delete();
+  const colsum=new Float64Array(w);
+  // 列ごとに白(=線)の量を合計
+  const sum=new cv.Mat(); cv.reduce(ver,sum,0,cv.REDUCE_SUM,cv.CV_32S);
+  for(let x=0;x<w;x++) colsum[x]=sum.intAt(0,x);
+  ver.delete(); sum.delete();
+  let mx=0; for(let x=0;x<w;x++) if(colsum[x]>mx) mx=colsum[x];
+  if(mx<=0) return [];
+  const thr=mx*0.4; const peaks=[]; let i=0;
+  while(i<w){ if(colsum[i]>thr){let j=i;while(j<w&&colsum[j]>thr)j++;peaks.push((i+j)/2/w);i=j;}else i++; }
+  const merged=[];
+  for(const p of peaks){ if(merged.length===0||p-merged[merged.length-1]>0.02) merged.push(p);
+    else merged[merged.length-1]=(merged[merged.length-1]+p)/2; }
+  return merged;
+}
+
+// ====================== 単価列のOCR ======================
+// canvas の x0..x1(px) 列を縦まるごとOCRし [{cy,value}] を返す
+async function ocrColumnStrip(canvas, x0, x1, scale){
+  x0=Math.max(0,x0|0); x1=x1|0;
+  const sw=x1-x0; if(sw<4) return [];
+  const tmp=document.createElement('canvas');
+  tmp.width=sw*scale; tmp.height=canvas.height*scale;
+  const ctx=tmp.getContext('2d');
+  ctx.drawImage(canvas, x0,0,sw,canvas.height, 0,0,tmp.width,tmp.height);
+  const {data}=await workerNum.recognize(tmp);
+  const res=[];
+  getWords(data).forEach(w=>{
+    const vals=parsePrices(w.text||'');
+    if(vals.length){ const cy=(w.bbox.y0+w.bbox.y1)/2/scale; vals.forEach(v=>res.push({cy,value:v})); }
+  });
+  return res;
+}
+
+function rowValue(gacList, clnList, y0, y1, rowText){
+  const inRange=a=>a.filter(r=>r.cy>=y0&&r.cy<=y1).map(r=>r.value);
+  const gac=inRange(gacList), cln=inRange(clnList), txt=parsePrices(rowText||'');
+  const all=gac.concat(cln,txt);
+  if(all.length===0) return {price:null,conf:''};
+  const votes={}; all.forEach(v=>votes[v]=(votes[v]||0)+1);
+  let best=null,bn=-1; for(const k in votes){ if(votes[k]>bn){bn=votes[k];best=parseInt(k,10);} }
+  const cross = gac.indexOf(best)>=0 && cln.indexOf(best)>=0;
+  let conf = (cross||bn>=3)?'◎':(bn===2?'○':'△');
+  return {price:best,conf};
+}
+
+function autoTankaColumn(columns, words, bands, W){
+  if(columns.length<2) return null;
+  const gaps=[]; for(let i=0;i<columns.length-1;i++) gaps.push([columns[i],columns[i+1]]);
+  // 数字を含む単語の位置
+  const numWords=words.filter(w=>/\d{3,}/.test((w.text||'').replace(/[,.]/g,'')))
+    .map(w=>({cx:(w.bbox.x0+w.bbox.x1)/2/W, cy:(w.bbox.y0+w.bbox.y1)/2}));
+  const hits=gaps.map(()=>0);
+  const sample=bands.slice(0,20);
+  gaps.forEach((g,gi)=>{
+    if(g[1]-g[0] < 0.03) return;
+    sample.forEach(b=>{
+      if(numWords.some(nw=>nw.cx>=g[0]&&nw.cx<=g[1]&&nw.cy>=b.y0&&nw.cy<=b.y1)) hits[gi]++;
+    });
+  });
+  const n=Math.max(1,sample.length);
+  const numeric=[]; hits.forEach((h,gi)=>{if(h>=n*0.4) numeric.push(gi);});
+  if(numeric.length===0) return null;
+  const gi = numeric.length>=2 ? numeric[numeric.length-2] : numeric[numeric.length-1];
+  return gaps[gi];
+}
+
+// PDFの全ページを処理して artifacts を作る
+async function buildArtifacts(file, idx, progress){
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  const arts=[];
+  for(let p=1;p<=pdf.numPages;p++){
+    progress(`${p}/${pdf.numPages}ページ 画像化…`);
+    const page=await pdf.getPage(p);
+    const viewport=page.getViewport({scale:RENDER_SCALE});
+    const canvas=document.createElement('canvas');
+    canvas.width=viewport.width; canvas.height=viewport.height;
+    await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+
+    progress(`${p}/${pdf.numPages}ページ 画像加工…`);
+    const pre=preprocess(canvas);
+
+    progress(`${p}/${pdf.numPages}ページ 文字認識…`);
+    const {data}=await workerText.recognize(pre.cleanCanvas);
+    const words=getWords(data);
+    const bands=[];
+    groupBands(words,16).forEach(b=>{
+      const joined=b.it.map(w=>w.text).join('');
+      const key=normalizeKey(joined);
+      if(!key) return;
+      const y0=Math.min(...b.it.map(w=>w.bbox.y0))-3;
+      const y1=Math.max(...b.it.map(w=>w.bbox.y1))+3;
+      bands.push({key,joined,y0,y1});
+    });
+    arts.push({...pre, words, bands, page1Canvas: p===1?canvas:null});
+  }
+  return arts;
+}
+
+// artifacts から単価を読み出して行リストにする（tankaIndex=null で自動）
+async function computeRows(arts, tankaIndex, progress){
+  const rows={}; const order=[];
+  for(let pi=0; pi<arts.length; pi++){
+    const a=arts[pi]; const W=a.W;
+    progress(`${pi+1}/${arts.length}ページ 単価読取り…`);
+    let col=null;
+    if(tankaIndex!=null && a.columns.length>=2 && tankaIndex<a.columns.length-1){
+      col=[a.columns[tankaIndex], a.columns[tankaIndex+1]];
+    } else {
+      col=autoTankaColumn(a.columns,a.words,a.bands,W);
+    }
+    let x0,x1;
+    if(col){ x0=(W*col[0])|0; x1=(W*col[1])|0; } else { x0=(W*0.40)|0; x1=(W*0.90)|0; }
+
+    const gacList=(await ocrColumnStrip(a.gacCanvas,x0,x1,2)).concat(await ocrColumnStrip(a.gacCanvas,x0,x1,3));
+    const clnList=(await ocrColumnStrip(a.cleanCanvas,x0,x1,2)).concat(await ocrColumnStrip(a.cleanCanvas,x0,x1,3));
+
+    for(const b of a.bands){
+      const jflag = b.joined.includes('除外')||b.joined.includes('樹脂');
+      let price=null, conf='', cell='';
+      if(!jflag){
+        const rv=rowValue(gacList,clnList,b.y0,b.y1,b.joined);
+        price=rv.price; conf=rv.conf;
+        cell=cropDataUrl(a.gacCanvas,x0,b.y0,x1,b.y1);
+      }
+      const entry={key:b.key,price,conf:(jflag?'除':conf),flag:(jflag?'除外':''),cell};
+      if(!(b.key in rows)){ rows[b.key]=entry; order.push(b.key); }
+      else if(rows[b.key].price==null && price!=null){ rows[b.key]=entry; }
+    }
+  }
+  return order.map(k=>rows[k]);
+}
+
+function cropDataUrl(canvas,x0,y0,x1,y1){
+  try{
+    const w=Math.max(1,(x1-x0)|0), h=Math.max(1,(y1-y0)|0);
+    const t=document.createElement('canvas'); t.width=w; t.height=h;
+    t.getContext('2d').drawImage(canvas,x0|0,y0|0,w,h,0,0,w,h);
+    return t.toDataURL('image/png');
+  }catch(e){ return ''; }
+}
+
+// ====================== メイン（アップロード） ======================
+document.getElementById('upload-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const files=document.getElementById('pdfs').files;
+  if(!files.length) return;
+  const btn=document.getElementById('go'); btn.disabled=true;
+  document.getElementById('log').textContent='';
+  try{
+    setStatus('部品を準備中…'); log('OpenCV.js を待機中…');
+    await waitOpenCV(); log('OpenCV.js OK');
+    await ensureWorkers(); log('読取りエンジン OK');
+    COMPANIES=[];
+    for(let i=0;i<files.length;i++){
+      const f=files[i]; const name=`${String.fromCharCode(65+i)}社`;
+      setStatus(`${name}（${f.name}）を読取り中…`);
+      log(`--- ${name}: ${f.name} ---`);
+      const arts=await buildArtifacts(f,i,(s)=>setStatus(`${name}: ${s}`));
+      const rows=await computeRows(arts,null,(s)=>setStatus(`${name}: ${s}`));
+      const priced=rows.filter(r=>r.price!=null).length;
+      log(`${name}: 品番${rows.length}件 / 単価読取${priced}件`);
+      COMPANIES.push({id:i, file:f, arts, filename:f.name, name, multiplier:1.0,
+        columns:arts[0]?arts[0].columns:[], rows});
+    }
+    setStatus('');
+    renderInputs(); renderTable();
+    document.getElementById('result').classList.remove('hidden');
+  }catch(err){
+    console.error(err);
+    setStatus('エラー: '+err.message);
+    log('エラー: '+(err.stack||err.message));
+  }finally{ btn.disabled=false; }
+});
+
+// ====================== 入力UI ======================
+function needCheck(c){return c.rows.filter(r=>!r.flag && (r.price==null||r.conf==='△')).length;}
+function renderInputs(){
+  const box=document.getElementById('company-inputs'); box.innerHTML='';
+  COMPANIES.forEach((c,i)=>{
+    const priced=c.rows.filter(r=>r.price!=null).length;
+    const div=document.createElement('div'); div.className='company-card';
+    div.innerHTML=`
+      <div class="cc-file">📄 ${escapeHtml(c.filename)}</div>
+      <label>社名<input type="text" value="${escapeHtml(c.name)}" data-i="${i}" class="name-input"></label>
+      <label>倍率<input type="number" step="0.01" min="0" value="${c.multiplier}" data-i="${i}" class="mult-input"></label>
+      <div class="cc-stat">品番 ${c.rows.length} 件 / 単価読取 ${priced} 件
+        ${needCheck(c)?`<span class="cc-warn">（要確認 ${needCheck(c)} 件）</span>`:''}</div>
+      <button class="col-btn no-print" data-i="${i}">単価列を指定して読み直す</button>`;
+    box.appendChild(div);
+  });
+  box.querySelectorAll('.name-input').forEach(el=>el.addEventListener('input',e=>{COMPANIES[e.target.dataset.i].name=e.target.value;renderTable();}));
+  box.querySelectorAll('.mult-input').forEach(el=>el.addEventListener('input',e=>{COMPANIES[e.target.dataset.i].multiplier=parseFloat(e.target.value)||0;renderTable();}));
+  box.querySelectorAll('.col-btn').forEach(el=>el.addEventListener('click',e=>openColumnPicker(parseInt(e.target.dataset.i,10))));
+}
+function roundUp(v,u){return Math.ceil(v/u)*u;}
+function yen(v){return v==null?'':'¥'+v.toLocaleString();}
+function escapeHtml(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+
+// ====================== 比較表 ======================
+function renderTable(){
+  const keys=[]; const seen=new Set();
+  COMPANIES.forEach(c=>c.rows.forEach(r=>{if(!seen.has(r.key)){seen.add(r.key);keys.push(r.key);}}));
+  const lookup=COMPANIES.map(c=>{const m={};c.rows.forEach(r=>m[r.key]=r);return m;});
+  let head='<tr><th class="pn-col">品番</th>';
+  COMPANIES.forEach(c=>{head+=`<th>${escapeHtml(c.name)}<br><span class="th-sub">単価</span></th><th>${escapeHtml(c.name)}<br><span class="th-sub">×${c.multiplier}</span></th>`;});
+  head+='<th>最安</th></tr>';
+  document.getElementById('compare-head').innerHTML=head;
+  let body='';
+  keys.forEach(key=>{
+    const finals=[];
+    COMPANIES.forEach((c,ci)=>{const r=lookup[ci][key];if(r&&r.price!=null)finals.push({ci,val:roundUp(r.price*c.multiplier,UNIT_ROUND)});});
+    const min=finals.length?Math.min(...finals.map(f=>f.val)):null;
+    let tr=`<tr><td class="pn">${escapeHtml(key)}</td>`;
+    COMPANIES.forEach((c,ci)=>{
+      const r=lookup[ci][key];
+      if(!r){tr+='<td class="num muted">なし</td><td class="num"></td>';return;}
+      if(r.flag){tr+='<td class="num muted">除外</td><td class="num"></td>';return;}
+      const conf=r.conf||'';
+      const badge=conf==='◎'?'<span class="ok">◎</span>':conf==='○'?'<span class="mid">○</span>':(r.price!=null?'<span class="warn">△</span>':'');
+      const warnCls=(conf==='△'||r.price==null)?' warncell':'';
+      const unitTxt=r.price!=null?yen(r.price):'<span class="need">要確認</span>';
+      tr+=`<td class="num unit${warnCls}" data-ci="${ci}" data-key="${escapeHtml(key)}" title="クリックで修正">${badge}<span class="uval">${unitTxt}</span>`+(r.cell?`<img class="cell-img" src="${r.cell}">`:'')+'</td>';
+      const fin=r.price!=null?roundUp(r.price*c.multiplier,UNIT_ROUND):null;
+      const isMin=fin!=null&&fin===min;
+      tr+=`<td class="num ${isMin?'min':''}">${fin!=null?yen(fin):''}</td>`;
+    });
+    const minCompanies=finals.filter(f=>f.val===min).map(f=>COMPANIES[f.ci].name);
+    tr+=`<td class="cheap">${min!=null?escapeHtml(minCompanies.join(', ')):'—'}</td></tr>`;
+    body+=tr;
+  });
+  document.getElementById('compare-body').innerHTML=body;
+  bindEdit();
+  const sub=COMPANIES.map(c=>`${escapeHtml(c.name)}×${c.multiplier}`).join('　');
+  document.getElementById('rep-sub').textContent=`倍率 ${sub} ／ 計算は100円単位で切り上げ ／ 全${keys.length}品番`;
+}
+function bindEdit(){
+  document.querySelectorAll('td.unit').forEach(td=>{
+    td.addEventListener('click',()=>{
+      if(td.querySelector('input'))return;
+      const ci=td.dataset.ci,key=td.dataset.key;
+      const row=COMPANIES[ci].rows.find(r=>r.key===key);
+      const cur=row&&row.price!=null?row.price:'';
+      td.innerHTML=`<input type="number" step="10" value="${cur}" class="edit-input">`;
+      const inp=td.querySelector('input'); inp.focus();
+      const commit=()=>{const v=inp.value===''?null:parseInt(inp.value,10);row.price=(v!=null&&!isNaN(v))?v:null;row.conf=row.price!=null?'手':'';renderTable();};
+      inp.addEventListener('blur',commit);
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();});
+    });
+  });
+}
+
+// ====================== 単価列の手動指定 ======================
+let pickState={ci:null,columns:[],selected:null};
+function openColumnPicker(i){
+  const c=COMPANIES[i];
+  pickState={ci:i,columns:c.columns,selected:null};
+  document.getElementById('col-modal-title').textContent=`${c.name}：単価の列を指定`;
+  document.getElementById('col-sel-label').textContent='列を選んでください';
+  document.getElementById('col-apply').disabled=true;
+  const stage=document.getElementById('col-stage'); stage.innerHTML='';
+  const art=c.arts[0];
+  if(!art||!art.page1Canvas||!c.columns.length){stage.innerHTML='この見積書では列を検出できませんでした。';}
+  else renderStage(art.page1Canvas.toDataURL('image/png'),c.columns);
+  document.getElementById('col-modal').classList.remove('hidden');
+}
+function renderStage(imgUri,columns){
+  const stage=document.getElementById('col-stage'); stage.innerHTML='';
+  const wrap=document.createElement('div'); wrap.className='col-imgwrap';
+  const img=document.createElement('img'); img.className='col-img'; img.src=imgUri;
+  wrap.appendChild(img);
+  img.onload=()=>{
+    columns.forEach(frac=>{const line=document.createElement('div');line.className='col-line';line.style.left=(frac*100)+'%';wrap.appendChild(line);});
+    for(let k=0;k<columns.length-1;k++){
+      const band=document.createElement('div'); band.className='col-band';
+      band.style.left=(columns[k]*100)+'%'; band.style.width=((columns[k+1]-columns[k])*100)+'%';
+      band.dataset.index=k; band.title=`列 ${k+1}`;
+      band.addEventListener('click',()=>selectBand(k)); wrap.appendChild(band);
+    }
+  };
+  stage.appendChild(wrap);
+}
+function selectBand(k){
+  pickState.selected=k;
+  document.querySelectorAll('.col-band').forEach(b=>b.classList.toggle('selected',parseInt(b.dataset.index,10)===k));
+  document.getElementById('col-sel-label').textContent=`列 ${k+1} を選択中（ここを単価として読みます）`;
+  document.getElementById('col-apply').disabled=false;
+}
+async function applyColumn(){
+  const i=pickState.ci; if(i==null||pickState.selected==null)return;
+  const c=COMPANIES[i]; const btn=document.getElementById('col-apply');
+  btn.disabled=true; btn.textContent='読み直し中…';
+  try{
+    c.rows=await computeRows(c.arts, pickState.selected, ()=>{});
+    renderInputs(); renderTable(); closeColPicker();
+  }catch(e){ alert('エラー: '+e.message); }
+  finally{ btn.textContent='この列で読み直す'; }
+}
+function closeColPicker(){document.getElementById('col-modal').classList.add('hidden');}
+</script>
+</body>
+</html>
