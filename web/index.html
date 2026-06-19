@@ -28,8 +28,9 @@ border-radius:6px;padding:8px 10px;max-height:160px;overflow:auto;white-space:pr
   border-radius:6px;background:#fff;margin-bottom:8px;cursor:pointer;display:block;}
 .cc-thumb:hover{outline:2px solid var(--blue);}
 .cc-thumb-label{font-size:11px;color:#888;margin-bottom:4px;}
-.cc-openpdf{color:var(--blue);text-decoration:none;font-weight:bold;}
-.cc-openpdf:hover{text-decoration:underline;}
+.pdf-view-btn{width:100%;background:var(--blue);color:#fff;border:none;border-radius:6px;
+  padding:8px;font-size:13px;font-weight:bold;cursor:pointer;margin-bottom:8px;}
+.pdf-view-btn:hover{background:#265d97;}
 .company-card label{display:block;font-size:13px;color:#333;margin-bottom:8px;}
 .company-card input{display:block;width:100%;margin-top:3px;padding:6px 8px;border:1px solid var(--line);border-radius:5px;font-size:14px;}
 .company-card .mult-input{border-color:var(--orange);font-weight:bold;}
@@ -100,6 +101,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
+  <span class="tag" style="margin-left:auto">版 2026-06-19e</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -508,9 +510,9 @@ function renderInputs(){
     const div=document.createElement('div'); div.className='company-card';
     const thumb=(c.arts && c.arts[0]) ? c.arts[0].pageImg : '';
     div.innerHTML=`
-      <div class="cc-thumb-label">読み取ったPDF（クリックで横に表示）</div>
-      ${thumb?`<img class="cc-thumb" src="${thumb}" data-i="${i}" alt="見積書">`:''}
-      <div class="cc-file">📄 ${escapeHtml(c.filename)}　<a href="#" class="cc-openpdf" data-i="${i}">横に並べて表示 ▸</a></div>
+      <div class="cc-file">📄 ${escapeHtml(c.filename)}</div>
+      <button class="pdf-view-btn" data-i="${i}">📄 このPDFを横に表示</button>
+      ${thumb?`<img class="cc-thumb" src="${thumb}" data-i="${i}" alt="見積書" onerror="this.style.display='none'">`:'<div class="cc-thumb-label">（プレビュー画像なし）</div>'}
       <label>社名<input type="text" value="${escapeHtml(c.name)}" data-i="${i}" class="name-input"></label>
       <label>倍率<input type="number" step="0.01" min="0" value="${c.multiplier}" data-i="${i}" class="mult-input"></label>
       <div class="cc-stat">品番 ${c.rows.length} 件 / 単価読取 ${priced} 件
@@ -522,7 +524,7 @@ function renderInputs(){
   box.querySelectorAll('.mult-input').forEach(el=>el.addEventListener('input',e=>{COMPANIES[e.target.dataset.i].multiplier=parseFloat(e.target.value)||0;renderTable();}));
   box.querySelectorAll('.col-btn').forEach(el=>el.addEventListener('click',e=>openColumnPicker(parseInt(e.target.dataset.i,10))));
   box.querySelectorAll('.cc-thumb').forEach(el=>el.addEventListener('click',e=>openPdfPanel(e.target.dataset.i)));
-  box.querySelectorAll('.cc-openpdf').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();openPdfPanel(e.target.dataset.i);}));
+  box.querySelectorAll('.pdf-view-btn').forEach(el=>el.addEventListener('click',e=>openPdfPanel(e.target.dataset.i)));
 }
 // 渡したPDFを画面右に並べて表示。読取り時に作った各ページ画像を再利用するので確実。
 function openPdfPanel(i){
