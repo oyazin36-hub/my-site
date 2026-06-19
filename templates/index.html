@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>相見積もり比較アプリ</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <h1>相見積もり比較アプリ</h1>
+  <span class="tag">PDFの品番・単価を自動読取り</span>
+</header>
+
+<!-- アップロード -->
+<section class="panel no-print" id="upload-panel">
+  <h2>① 見積書PDFをアップロード</h2>
+  <p class="hint">各社の見積書PDFを選んでください（複数選択可）。スキャン画像のPDFでもOKです。</p>
+  <form id="upload-form">
+    <input type="file" id="pdfs" name="pdfs" accept="application/pdf" multiple required>
+    <button type="submit" id="go">読み取る</button>
+  </form>
+  <div id="status" class="status"></div>
+</section>
+
+<!-- 結果 -->
+<section id="result" class="hidden">
+
+  <div class="panel no-print">
+    <h2>② 社名と倍率を入力</h2>
+    <p class="hint">人が入力するのはここだけ。倍率を変えると下の比較表が自動で再計算されます。</p>
+    <div id="company-inputs" class="company-inputs"></div>
+  </div>
+
+  <div class="report-head">
+    <div>
+      <h2 class="rep-title">相見積もり比較表</h2>
+      <div class="rep-sub" id="rep-sub"></div>
+    </div>
+    <button class="print-btn no-print" onclick="window.print()">🖨 A4で印刷</button>
+  </div>
+
+  <div class="table-wrap">
+    <table id="compare">
+      <thead id="compare-head"></thead>
+      <tbody id="compare-body"></tbody>
+    </table>
+  </div>
+
+  <div class="legend">
+    <span><b class="ok">◎</b> 高信頼（複数回の読みが一致）</span>
+    <span><b class="mid">○</b> 2回一致</span>
+    <span><b class="warn">△</b> 要確認（読みがバラついた／読めず）</span>
+    <span><b class="min-key">緑</b> 各品番の最安値</span>
+    <span>単価セルはクリックで手修正できます。</span>
+  </div>
+</section>
+
+<script>
+const UNIT_ROUND = 100;   // 計算結果は100円単位で切り上げ
+let COMPANIES = [];
+
+// --- アップロード処理 ---
+document.getElementById('upload-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const files = document.getElementById('pdfs').files;
+  if (!files.length) return;
+  const fd = new FormData();
+  for (const f of files) fd.append('pdfs', f);
+  const status = document.getElementById('status');
+  const btn = document.getElementById('go');
+  btn.disabled = true;
+  status.textContent = '読み取り中… （ページ数により数十秒かかります）';
+  try {
+    const res = await fetch('/analyze', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '失敗しました');
+    COMPANIES = data.companies;
+    status.textContent = '';
+    renderInputs();
+    renderTable();
+    document.getElementById('result').classList.remove('hidden');
+  } catch (err) {
+    status.textContent = 'エラー: ' + err.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// --- 社名・倍率の入力欄 ---
+function renderInputs() {
+  const box = document.getElementById('company-inputs');
+  box.innerHTML = '';
+  COMPANIES.forEach((c, i) => {
+    const priced = c.rows.filter(r => r.price != null).length;
+    const div = document.createElement('div');
+    div.className = 'company-card';
+    div.innerHTML = `
+      <div class="cc-file">📄 ${escapeHtml(c.filename)}</div>
+      <label>社名
+        <input type="text" value="${escapeHtml(c.name)}" data-i="${i}" class="name-input">
+      </label>
+      <label>倍率
+        <input type="number" step="0.01" min="0" value="${c.multiplier}" data-i="${i}" class="mult-input">
+      </label>
+      <div class="cc-stat">品番 ${c.rows.length} 件 / 単価読取 ${priced} 件</div>
+    `;
+    box.appendChild(div);
+  });
+  box.querySelectorAll('.name-input').forEach(el =>
+    el.addEventListener('input', e => { COMPANIES[e.target.dataset.i].name = e.target.value; renderTable(); }));
+  box.querySelectorAll('.mult-input').forEach(el =>
+    el.addEventListener('input', e => { COMPANIES[e.target.dataset.i].multiplier = parseFloat(e.target.value) || 0; renderTable(); }));
+}
+
+function roundUp(value, unit) { return Math.ceil(value / unit) * unit; }
+function yen(v) { return v == null ? '' : '¥' + v.toLocaleString(); }
+function escapeHtml(s) { return String(s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+
+// --- 比較表を組み立てる ---
+function renderTable() {
+  // 全社の品番を結合（共通キーでマッチング）
+  const keys = [];
+  const seen = new Set();
+  COMPANIES.forEach(c => c.rows.forEach(r => { if (!seen.has(r.key)) { seen.add(r.key); keys.push(r.key); } }));
+  const lookup = COMPANIES.map(c => {
+    const m = {}; c.rows.forEach(r => m[r.key] = r); return m;
+  });
+
+  // ヘッダ
+  let head = '<tr><th class="pn-col">品番</th>';
+  COMPANIES.forEach(c => {
+    head += `<th>${escapeHtml(c.name)}<br><span class="th-sub">単価</span></th>`;
+    head += `<th>${escapeHtml(c.name)}<br><span class="th-sub">×${c.multiplier}</span></th>`;
+  });
+  head += '<th>最安</th></tr>';
+  document.getElementById('compare-head').innerHTML = head;
+
+  // 本体
+  let body = '';
+  keys.forEach(key => {
+    const finals = [];
+    COMPANIES.forEach((c, ci) => {
+      const r = lookup[ci][key];
+      if (r && r.price != null) finals.push({ ci, val: roundUp(r.price * c.multiplier, UNIT_ROUND) });
+    });
+    const min = finals.length ? Math.min(...finals.map(f => f.val)) : null;
+
+    let tr = `<tr><td class="pn">${escapeHtml(key)}</td>`;
+    COMPANIES.forEach((c, ci) => {
+      const r = lookup[ci][key];
+      if (!r) { tr += `<td class="num muted">なし</td><td class="num"></td>`; return; }
+      if (r.flag) { tr += `<td class="num muted">除外</td><td class="num"></td>`; return; }
+      const conf = r.conf || '';
+      const badge = conf === '◎' ? '<span class="ok">◎</span>' :
+                    conf === '○' ? '<span class="mid">○</span>' :
+                    (r.price != null ? '<span class="warn">△</span>' : '');
+      const warnCls = (conf === '△' || r.price == null) ? ' warncell' : '';
+      const unitTxt = r.price != null ? yen(r.price) : '<span class="need">要確認</span>';
+      // 単価セル（クリックで手修正）
+      tr += `<td class="num unit${warnCls}" data-ci="${ci}" data-key="${escapeHtml(key)}"
+                 title="クリックで修正">${badge}<span class="uval">${unitTxt}</span>` +
+            (r.cell ? `<img class="cell-img" src="${r.cell}" alt="原本">` : '') + `</td>`;
+      // 計算結果
+      const fin = r.price != null ? roundUp(r.price * c.multiplier, UNIT_ROUND) : null;
+      const isMin = fin != null && fin === min;
+      tr += `<td class="num ${isMin ? 'min' : ''}">${fin != null ? yen(fin) : ''}</td>`;
+    });
+    // 最安社
+    const minCompanies = finals.filter(f => f.val === min).map(f => COMPANIES[f.ci].name);
+    tr += `<td class="cheap">${min != null ? escapeHtml(minCompanies.join(', ')) : '—'}</td></tr>`;
+    body += tr;
+  });
+  document.getElementById('compare-body').innerHTML = body;
+  bindEdit();
+
+  // 見出し
+  const sub = COMPANIES.map(c => `${escapeHtml(c.name)}×${c.multiplier}`).join('　');
+  document.getElementById('rep-sub').textContent =
+    `倍率 ${sub} ／ 計算は100円単位で切り上げ ／ 全${keys.length}品番`;
+}
+
+// --- 単価セルをクリックで修正 ---
+function bindEdit() {
+  document.querySelectorAll('td.unit').forEach(td => {
+    td.addEventListener('click', () => {
+      if (td.querySelector('input')) return;
+      const ci = td.dataset.ci, key = td.dataset.key;
+      const row = COMPANIES[ci].rows.find(r => r.key === key);
+      const cur = row && row.price != null ? row.price : '';
+      td.innerHTML = `<input type="number" step="10" value="${cur}" class="edit-input">`;
+      const inp = td.querySelector('input');
+      inp.focus();
+      const commit = () => {
+        const v = inp.value === '' ? null : parseInt(inp.value, 10);
+        row.price = (v != null && !isNaN(v)) ? v : null;
+        row.conf = row.price != null ? '手' : '';   // 手修正マーク
+        renderTable();
+      };
+      inp.addEventListener('blur', commit);
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+    });
+  });
+}
+</script>
+</body>
+</html>

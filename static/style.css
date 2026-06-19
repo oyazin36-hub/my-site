@@ -1,0 +1,109 @@
+:root {
+  --navy: #1f3a5f;
+  --blue: #2f6fb3;
+  --green: #15803d;
+  --green-bg: #e3f6ea;
+  --orange: #c2410c;
+  --yellow: #fff7d6;
+  --line: #cbd5e1;
+  --lblue: #eef4fb;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "IPAPGothic", sans-serif;
+  color: #1a1a1a; margin: 0; background: #eef1f5;
+}
+.hidden { display: none; }
+
+.topbar {
+  background: var(--navy); color: #fff; padding: 14px 24px;
+  display: flex; align-items: baseline; gap: 16px;
+}
+.topbar h1 { font-size: 20px; margin: 0; }
+.tag { font-size: 13px; color: #bcd3ee; }
+
+.panel {
+  background: #fff; margin: 16px auto; max-width: 1180px; padding: 18px 24px;
+  border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.panel h2 { font-size: 16px; color: var(--navy); margin: 0 0 6px; }
+.hint { font-size: 13px; color: #666; margin: 0 0 12px; }
+
+#upload-form { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+button {
+  background: var(--blue); color: #fff; border: none; border-radius: 6px;
+  padding: 9px 20px; font-size: 14px; cursor: pointer;
+}
+button:hover { background: #265d97; }
+button:disabled { background: #9bb6d4; cursor: wait; }
+.status { margin-top: 10px; font-size: 13px; color: var(--orange); }
+
+.company-inputs { display: flex; gap: 14px; flex-wrap: wrap; }
+.company-card {
+  border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px;
+  background: var(--lblue); min-width: 240px; flex: 1;
+}
+.cc-file { font-size: 12px; color: #555; margin-bottom: 8px; word-break: break-all; }
+.company-card label { display: block; font-size: 13px; color: #333; margin-bottom: 8px; }
+.company-card input {
+  display: block; width: 100%; margin-top: 3px; padding: 6px 8px;
+  border: 1px solid var(--line); border-radius: 5px; font-size: 14px;
+}
+.company-card .mult-input { border-color: var(--orange); font-weight: bold; }
+.cc-stat { font-size: 12px; color: #777; }
+
+.report-head {
+  max-width: 1180px; margin: 16px auto 6px; padding: 0 8px;
+  display: flex; justify-content: space-between; align-items: flex-end;
+}
+.rep-title { font-size: 20px; color: var(--navy); margin: 0; }
+.rep-sub { font-size: 12px; color: #555; margin-top: 4px; }
+.print-btn { background: var(--green); }
+.print-btn:hover { background: #11652f; }
+
+.table-wrap { max-width: 1180px; margin: 0 auto; overflow-x: auto; padding: 0 8px; }
+table { width: 100%; border-collapse: collapse; background: #fff; }
+th, td { border: 1px solid var(--line); padding: 5px 8px; font-size: 13px; }
+thead th { background: var(--navy); color: #fff; text-align: center; font-weight: normal; }
+.th-sub { font-size: 11px; color: #cfe0f2; }
+tbody tr:nth-child(even) { background: var(--lblue); }
+.pn { font-weight: bold; color: var(--navy); white-space: nowrap; }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.muted { color: #999; }
+.min { background: var(--green-bg); color: var(--green); font-weight: bold; }
+.cheap { text-align: center; color: var(--green); font-weight: bold; white-space: nowrap; }
+.need { color: var(--orange); }
+.warncell { background: var(--yellow); }
+
+.unit { position: relative; cursor: pointer; }
+.unit .ok { color: var(--green); font-size: 11px; float: left; }
+.unit .mid { color: var(--blue); font-size: 11px; float: left; }
+.unit .warn { color: var(--orange); font-size: 11px; float: left; }
+.cell-img {
+  display: none; position: absolute; right: 0; top: 100%; z-index: 5;
+  border: 1px solid #888; background: #fff; max-width: 220px; box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.unit:hover .cell-img { display: block; }
+.edit-input { width: 90px; text-align: right; padding: 2px 4px; }
+
+.legend {
+  max-width: 1180px; margin: 10px auto 30px; padding: 0 8px;
+  font-size: 12px; color: #555; display: flex; gap: 18px; flex-wrap: wrap;
+}
+.legend .ok { color: var(--green); } .legend .mid { color: var(--blue); }
+.legend .warn { color: var(--orange); } .legend .min-key { color: var(--green); }
+
+/* --- 印刷(A4) --- */
+@media print {
+  @page { size: A4 portrait; margin: 10mm; }
+  body { background: #fff; }
+  .no-print { display: none !important; }
+  .panel, .topbar { display: none !important; }
+  .report-head { margin: 0 0 6px; }
+  .table-wrap { overflow: visible; padding: 0; }
+  th, td { padding: 3px 5px; font-size: 10px; }
+  .cell-img { display: none !important; }
+  tbody tr:nth-child(even) { background: #eef4fb !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  thead th { background: #1f3a5f !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .min { background: #e3f6ea !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
