@@ -10,14 +10,34 @@
 単価は10円きざみ（末尾0）を前提にノイズを除去する。
 金額列(=単価×数量)は使わない。AIビジョンは使わない。
 """
+import os
 import re
 import base64
+import shutil
 import subprocess
 from collections import Counter
 
 import cv2
 import numpy as np
 import fitz  # PyMuPDF
+
+
+def _find_tesseract():
+    """tesseract本体の場所を探す。環境変数 > PATH > Windows既定の場所 の順。"""
+    env = os.environ.get('TESSERACT_CMD')
+    if env and os.path.exists(env):
+        return env
+    found = shutil.which('tesseract')
+    if found:
+        return found
+    for p in (r'C:\Program Files\Tesseract-OCR\tesseract.exe',
+              r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe'):
+        if os.path.exists(p):
+            return p
+    return 'tesseract'   # 見つからなければPATHに任せる
+
+
+TESSERACT = _find_tesseract()
 
 # --- 設定 -------------------------------------------------------------
 RENDER_ZOOM = 3.5          # PDF→画像の拡大率
@@ -85,7 +105,7 @@ def preprocess(gray):
 def _tsv_words(img_array):
     """画像をTesseractにかけ、単語ごとの位置リストを返す。"""
     ok, buf = cv2.imencode('.png', img_array)
-    out = subprocess.run(['tesseract', 'stdin', 'stdout', '-l', 'jpn+eng', 'tsv'],
+    out = subprocess.run([TESSERACT, 'stdin', 'stdout', '-l', 'jpn+eng', 'tsv'],
                          input=buf.tobytes(), capture_output=True).stdout.decode('utf-8', 'ignore')
     words = []
     for line in out.splitlines()[1:]:
@@ -180,7 +200,7 @@ def _ocr_column_strip(img, x0, x1, scale=2):
         return []
     strip = cv2.resize(strip, (strip.shape[1] * scale, strip.shape[0] * scale))
     ok, buf = cv2.imencode('.png', strip)
-    out = subprocess.run(['tesseract', 'stdin', 'stdout',
+    out = subprocess.run([TESSERACT, 'stdin', 'stdout',
                           '-c', 'tessedit_char_whitelist=0123456789,.', '--psm', '6', 'tsv'],
                          input=buf.tobytes(), capture_output=True).stdout.decode('utf-8', 'ignore')
     results = []
