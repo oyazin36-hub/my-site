@@ -80,7 +80,7 @@ tbody tr:nth-child(even){background:var(--lblue);}
 .pdf-panel-head{background:var(--navy);color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font-size:14px;}
 .pdf-panel-close{background:transparent;color:#fff;font-size:22px;line-height:1;padding:0 6px;border:none;}
 .pdf-panel-body{flex:1;overflow:auto;padding:10px;text-align:center;}
-.pdf-panel-body canvas{max-width:100%;margin:0 auto 10px;display:block;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.4);}
+.pdf-panel-body img,.pdf-panel-body canvas{max-width:100%;margin:0 auto 10px;display:block;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.4);}
 .pdf-loading{color:#fff;padding:24px;}
 body.pdf-open{padding-right:44vw;}
 body.pdf-open .topbar{padding-right:24px;}
@@ -416,7 +416,8 @@ async function buildArtifacts(file, idx, progress){
       const y1=Math.max(...b.it.map(w=>w.bbox.y1))+3;
       bands.push({key,joined,y0,y1});
     });
-    arts.push({...pre, words, bands, page1Canvas: p===1?canvas:null});
+    // 表示用に各ページの画像(JPEG)を保持（再描画せず確実に見せるため）
+    arts.push({...pre, words, bands, pageImg: canvas.toDataURL('image/jpeg', 0.85)});
   }
   return arts;
 }
@@ -500,23 +501,12 @@ document.getElementById('upload-form').addEventListener('submit', async (e)=>{
 // ====================== 入力UI ======================
 function needCheck(c){return c.rows.filter(r=>!r.flag && (r.price==null||r.conf==='△')).length;}
 // PDF1ページ目の縮小サムネイルを作る（どの会社の見積書か見分ける用）
-function thumbUrl(canvas, maxW){
-  if(!canvas) return '';
-  try{
-    const scale=Math.min(1, maxW/canvas.width);
-    const t=document.createElement('canvas');
-    t.width=Math.max(1,Math.round(canvas.width*scale));
-    t.height=Math.max(1,Math.round(canvas.height*scale));
-    t.getContext('2d').drawImage(canvas,0,0,t.width,t.height);
-    return t.toDataURL('image/png');
-  }catch(e){ return ''; }
-}
 function renderInputs(){
   const box=document.getElementById('company-inputs'); box.innerHTML='';
   COMPANIES.forEach((c,i)=>{
     const priced=c.rows.filter(r=>r.price!=null).length;
     const div=document.createElement('div'); div.className='company-card';
-    const thumb=thumbUrl(c.arts && c.arts[0] ? c.arts[0].page1Canvas : null, 260);
+    const thumb=(c.arts && c.arts[0]) ? c.arts[0].pageImg : '';
     div.innerHTML=`
       <div class="cc-thumb-label">読み取ったPDF（クリックで横に表示）</div>
       ${thumb?`<img class="cc-thumb" src="${thumb}" data-i="${i}" alt="見積書">`:''}
@@ -534,26 +524,20 @@ function renderInputs(){
   box.querySelectorAll('.cc-thumb').forEach(el=>el.addEventListener('click',e=>openPdfPanel(e.target.dataset.i)));
   box.querySelectorAll('.cc-openpdf').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();openPdfPanel(e.target.dataset.i);}));
 }
-// 渡したPDFを画面右に並べて表示（全ページ・スクロール可）。新タブを使わないので確実。
-async function openPdfPanel(i){
-  const c=COMPANIES[i]; if(!c||!c.file) return;
+// 渡したPDFを画面右に並べて表示。読取り時に作った各ページ画像を再利用するので確実。
+function openPdfPanel(i){
+  const c=COMPANIES[i]; if(!c) return;
   document.getElementById('pdf-panel-title').textContent=`${c.name}：${c.filename}`;
   const body=document.getElementById('pdf-panel-body');
-  body.innerHTML='<div class="pdf-loading">PDFを表示中…</div>';
+  body.innerHTML='';
+  (c.arts||[]).forEach((a,pi)=>{
+    if(!a.pageImg) return;
+    const img=document.createElement('img'); img.src=a.pageImg; img.alt=`p${pi+1}`;
+    body.appendChild(img);
+  });
+  if(!body.children.length) body.innerHTML='<div class="pdf-loading">表示できる画像がありません</div>';
   document.getElementById('pdf-panel').classList.remove('hidden');
   document.body.classList.add('pdf-open');
-  try{
-    const buf=await c.file.arrayBuffer();
-    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
-    body.innerHTML='';
-    for(let p=1;p<=pdf.numPages;p++){
-      const page=await pdf.getPage(p);
-      const vp=page.getViewport({scale:1.5});
-      const cnv=document.createElement('canvas'); cnv.width=vp.width; cnv.height=vp.height;
-      await page.render({canvasContext:cnv.getContext('2d'),viewport:vp}).promise;
-      body.appendChild(cnv);
-    }
-  }catch(e){ body.innerHTML='<div class="pdf-loading">表示できませんでした: '+escapeHtml(e.message)+'</div>'; }
 }
 function closePdfPanel(){
   document.getElementById('pdf-panel').classList.add('hidden');
@@ -627,8 +611,8 @@ function openColumnPicker(i){
   document.getElementById('col-apply').disabled=true;
   const stage=document.getElementById('col-stage'); stage.innerHTML='';
   const art=c.arts[0];
-  if(!art||!art.page1Canvas||!c.columns.length){stage.innerHTML='この見積書では列を検出できませんでした。';}
-  else renderStage(art.page1Canvas.toDataURL('image/png'),c.columns);
+  if(!art||!art.pageImg||!c.columns.length){stage.innerHTML='この見積書では列を検出できませんでした。';}
+  else renderStage(art.pageImg,c.columns);
   document.getElementById('col-modal').classList.remove('hidden');
 }
 function renderStage(imgUri,columns){
