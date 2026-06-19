@@ -57,6 +57,22 @@
   </div>
 </section>
 
+<!-- 単価列を指定するモーダル -->
+<div id="col-modal" class="modal hidden no-print">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span id="col-modal-title">単価の列を指定</span>
+      <button class="modal-close" onclick="closeColPicker()" aria-label="閉じる">×</button>
+    </div>
+    <p class="hint">表に重ねた区切りのうち、<b>「単価」の列をクリック</b>してください。選んだ列で読み直します。</p>
+    <div id="col-stage" class="col-stage"></div>
+    <div class="modal-foot">
+      <span id="col-sel-label" class="sel-label">列を選んでください</span>
+      <button id="col-apply" disabled onclick="applyColumn()">この列で読み直す</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const UNIT_ROUND = 100;   // 計算結果は100円単位で切り上げ
 let COMPANIES = [];
@@ -104,7 +120,9 @@ function renderInputs() {
       <label>倍率
         <input type="number" step="0.01" min="0" value="${c.multiplier}" data-i="${i}" class="mult-input">
       </label>
-      <div class="cc-stat">品番 ${c.rows.length} 件 / 単価読取 ${priced} 件</div>
+      <div class="cc-stat">品番 ${c.rows.length} 件 / 単価読取 ${priced} 件
+        ${needCheck(c) ? `<span class="cc-warn">（要確認 ${needCheck(c)} 件）</span>` : ''}</div>
+      <button class="col-btn no-print" data-i="${i}">単価列を指定して読み直す</button>
     `;
     box.appendChild(div);
   });
@@ -112,6 +130,13 @@ function renderInputs() {
     el.addEventListener('input', e => { COMPANIES[e.target.dataset.i].name = e.target.value; renderTable(); }));
   box.querySelectorAll('.mult-input').forEach(el =>
     el.addEventListener('input', e => { COMPANIES[e.target.dataset.i].multiplier = parseFloat(e.target.value) || 0; renderTable(); }));
+  box.querySelectorAll('.col-btn').forEach(el =>
+    el.addEventListener('click', e => openColumnPicker(parseInt(e.target.dataset.i, 10))));
+}
+
+// 要確認(△ or 未読)の件数
+function needCheck(c) {
+  return c.rows.filter(r => !r.flag && (r.price == null || r.conf === '△')).length;
 }
 
 function roundUp(value, unit) { return Math.ceil(value / unit) * unit; }
@@ -202,6 +227,96 @@ function bindEdit() {
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
     });
   });
+}
+
+// --- 単価列を手動指定 ---
+let pickState = { ci: null, columns: [], selected: null };
+
+async function openColumnPicker(i) {
+  const c = COMPANIES[i];
+  pickState = { ci: i, columns: [], selected: null };
+  document.getElementById('col-modal-title').textContent = `${c.name}：単価の列を指定`;
+  document.getElementById('col-sel-label').textContent = '列を選んでください';
+  document.getElementById('col-apply').disabled = true;
+  const stage = document.getElementById('col-stage');
+  stage.innerHTML = '<div class="loading">読み込み中…</div>';
+  document.getElementById('col-modal').classList.remove('hidden');
+  try {
+    const res = await fetch('/preview/' + c.file_id);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '失敗');
+    pickState.columns = data.columns;
+    renderStage(data.image, data.columns);
+  } catch (e) {
+    stage.innerHTML = '<div class="loading">プレビュー取得に失敗: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+function renderStage(imgUri, columns) {
+  const stage = document.getElementById('col-stage');
+  stage.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'col-imgwrap';
+  const img = document.createElement('img');
+  img.className = 'col-img';
+  img.src = imgUri;
+  wrap.appendChild(img);
+  img.onload = () => {
+    columns.forEach(frac => {
+      const line = document.createElement('div');
+      line.className = 'col-line';
+      line.style.left = (frac * 100) + '%';
+      wrap.appendChild(line);
+    });
+    for (let k = 0; k < columns.length - 1; k++) {
+      const band = document.createElement('div');
+      band.className = 'col-band';
+      band.style.left = (columns[k] * 100) + '%';
+      band.style.width = ((columns[k + 1] - columns[k]) * 100) + '%';
+      band.dataset.index = k;
+      band.title = `列 ${k + 1}`;
+      band.addEventListener('click', () => selectBand(k));
+      wrap.appendChild(band);
+    }
+  };
+  stage.appendChild(wrap);
+}
+
+function selectBand(k) {
+  pickState.selected = k;
+  document.querySelectorAll('.col-band').forEach(b =>
+    b.classList.toggle('selected', parseInt(b.dataset.index, 10) === k));
+  document.getElementById('col-sel-label').textContent = `列 ${k + 1} を選択中（ここを単価として読みます）`;
+  document.getElementById('col-apply').disabled = false;
+}
+
+async function applyColumn() {
+  const i = pickState.ci;
+  if (i == null || pickState.selected == null) return;
+  const c = COMPANIES[i];
+  const btn = document.getElementById('col-apply');
+  btn.disabled = true; btn.textContent = '読み直し中…';
+  try {
+    const res = await fetch('/recolumn', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_id: c.file_id, col_index: pickState.selected })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '失敗');
+    c.rows = data.rows;
+    c.columns = data.columns;
+    renderInputs();
+    renderTable();
+    closeColPicker();
+  } catch (e) {
+    alert('エラー: ' + e.message);
+  } finally {
+    btn.textContent = 'この列で読み直す';
+  }
+}
+
+function closeColPicker() {
+  document.getElementById('col-modal').classList.add('hidden');
 }
 </script>
 </body>

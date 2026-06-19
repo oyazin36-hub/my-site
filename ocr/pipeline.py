@@ -285,7 +285,8 @@ def extract_file(pdf_path, tanka_col_index=None):
         g, clean = preprocess(gray)            # g=傾き補正グレー, clean=罫線除去+二値化
         gac = _autocontrast(g)                 # 加工が軽いコントラスト強調版
         columns = detect_columns(g)            # 罫線除去前(g)で列を検出
-        detected_columns = columns
+        if not detected_columns:               # 列指定UI用に1ページ目の列を保持
+            detected_columns = columns
         H, W = g.shape
         words = _tsv_words(clean)
         # 行(品番のある行)を先に拾う
@@ -325,4 +326,19 @@ def extract_file(pdf_path, tanka_col_index=None):
             elif rows[key]['price'] is None and price is not None:
                 rows[key] = entry
     return dict(rows=[rows[k] for k in order],
-                columns=detected_columns, pages=len(pages))
+                columns=[round(c, 4) for c in detected_columns], pages=len(pages))
+
+
+def render_preview(pdf_path, page_index=0, width=900):
+    """列指定UI用に、1ページ目の画像(base64)と検出した列(0..1の割合)を返す。"""
+    pages = render_pages(pdf_path)
+    if not pages:
+        return '', []
+    gray = pages[min(page_index, len(pages) - 1)]
+    g, _clean = preprocess(gray)
+    columns = detect_columns(g)
+    h, w = g.shape
+    small = cv2.resize(g, (width, int(h * width / w)))
+    ok, buf = cv2.imencode('.png', small)
+    uri = 'data:image/png;base64,' + base64.b64encode(buf.tobytes()).decode()
+    return uri, [round(c, 4) for c in columns]
