@@ -10,7 +10,6 @@
 単価は10円きざみ（末尾0）を前提にノイズを除去する。
 金額列(=単価×数量)は使わない。AIビジョンは使わない。
 """
-import io
 import re
 import base64
 import subprocess
@@ -19,7 +18,6 @@ from collections import Counter
 import cv2
 import numpy as np
 import fitz  # PyMuPDF
-from PIL import Image, ImageOps
 
 # --- 設定 -------------------------------------------------------------
 RENDER_ZOOM = 3.5          # PDF→画像の拡大率
@@ -53,8 +51,9 @@ def render_pages(pdf_path, zoom=RENDER_ZOOM):
 
 # --- 2. 前処理(くっきり化) -------------------------------------------
 def _deskew(gray):
-    """スキャンの微妙な傾きをまっすぐに補正する。"""
-    inv = cv2.bitwise_not(gray)
+    """スキャンの微妙な傾きをまっすぐに補正する。角度計算は縮小画像で行い高速化。"""
+    small = cv2.resize(gray, (gray.shape[1] // 3, gray.shape[0] // 3))
+    inv = cv2.bitwise_not(small)
     thr = cv2.threshold(inv, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
     coords = np.column_stack(np.where(thr > 0))
     if len(coords) < 50:
@@ -165,47 +164,58 @@ def _parse_prices(text):
     return out
 
 
-def _read_cell(crop_img, psm, scale, thresh=None):
-    """切り出した単価セルを数字だけ認識して読む。"""
-    pil = Image.fromarray(crop_img)
-    if thresh is not None:
-        pil = pil.point(lambda x: 255 if x > thresh else 0)
-    pil = ImageOps.expand(pil, border=18, fill=255)
-    pil = pil.resize((pil.width * scale, pil.height * scale))
-    bio = io.BytesIO()
-    pil.save(bio, 'PNG')
-    out = subprocess.run(['tesseract', 'stdin', 'stdout', '--psm', str(psm),
-                          '-c', 'tessedit_char_whitelist=0123456789,.'],
-                         input=bio.getvalue(), capture_output=True).stdout.decode('utf-8', 'ignore')
-    return _parse_prices(out)
-
-
-_PASSES = [(7, 3, None), (8, 4, None), (7, 3, 150), (8, 4, 170)]
-
-
-def _vote_price(crops, row_text=''):
-    """複数の画像(加工あり/なし)×4通りで読み、行テキストも加えて多数決。
-    crops: 同じセルを別々の画像から切り出したもののリスト。
-    加工が合う画像の読みが票を集めるので、社ごとに自動で最適化される。"""
-    votes = Counter()
-    for crop in crops:
-        if crop is None or crop.size == 0:
-            continue
-        for psm, scale, th in _PASSES:
-            for v in set(_read_cell(crop, psm, scale, th)):
-                votes[v] += 1
-    for v in set(_parse_prices(row_text)):   # 行全体の読みも1票
-        votes[v] += 1
-    if not votes:
-        return None, ''
-    value, n = votes.most_common(1)[0]
-    conf = '◎' if n >= 4 else ('○' if n >= 2 else '△')
-    return value, conf
-
-
 def _autocontrast(gray_img):
     """コントラストを最大化したグレー画像（加工が軽い版）。"""
     return cv2.normalize(gray_img, None, 0, 255, cv2.NORM_MINMAX)
+
+
+def _ocr_column_strip(img, x0, x1, scale=2):
+    """列(縦長)をまとめて1回でOCRし、(縦中心y, 価格) のリストを返す。
+    1行ずつ何度もtesseractを起動するより桁違いに速い。"""
+    x0 = max(0, x0)
+    if x1 - x0 < 4:
+        return []
+    strip = img[:, x0:x1]
+    if strip.size == 0:
+        return []
+    strip = cv2.resize(strip, (strip.shape[1] * scale, strip.shape[0] * scale))
+    ok, buf = cv2.imencode('.png', strip)
+    out = subprocess.run(['tesseract', 'stdin', 'stdout',
+                          '-c', 'tessedit_char_whitelist=0123456789,.', '--psm', '6', 'tsv'],
+                         input=buf.tobytes(), capture_output=True).stdout.decode('utf-8', 'ignore')
+    results = []
+    for line in out.splitlines()[1:]:
+        c = line.split('\t')
+        if len(c) < 12:
+            continue
+        text = c[11].strip()
+        if not text:
+            continue
+        cy = (int(c[7]) + int(c[9]) / 2) / scale
+        for v in _parse_prices(text):
+            results.append((cy, v))
+    return results
+
+
+def _row_value(strip_gac, strip_clean, y0, y1, row_text=''):
+    """1行の単価を、加工なし/あり(各2スケール)の列OCR結果から多数決で決める。
+    ◎=両画像が一致 or 合計3票以上 / ○=2票 / △=1票(怪しい)。"""
+    gac = [v for (cy, v) in strip_gac if y0 <= cy <= y1]
+    cln = [v for (cy, v) in strip_clean if y0 <= cy <= y1]
+    txt = _parse_prices(row_text)
+    allv = gac + cln + txt
+    if not allv:
+        return None, ''
+    votes = Counter(allv)
+    value, n = votes.most_common(1)[0]
+    cross = (value in set(gac)) and (value in set(cln))   # 加工なし/ありが一致
+    if cross or n >= 3:
+        conf = '◎'
+    elif n == 2:
+        conf = '○'
+    else:
+        conf = '△'
+    return value, conf
 
 
 def _crop_b64(gray_img, x0, x1, y0, y1):
@@ -233,32 +243,29 @@ def _columns_to_gaps(columns):
     return [(columns[i], columns[i + 1]) for i in range(len(columns) - 1)]
 
 
-def _auto_tanka_column(columns, sample_imgs, sample_bands, W):
+def _auto_tanka_column(columns, img, data_bands, W):
     """検出した列の中から「単価列」を自動で選ぶ。
-    数字が入っている列(単価/金額)を見つけ、その右から2番目(=単価。一番右は金額)を返す。
-    数量や金額しか無い場合の保険も込み。"""
+    各列を1回ずつまとめOCRし、価格が入っている列(単価/金額)を見つけ、
+    その右から2番目(=単価。一番右は金額)を返す。"""
     gaps = _columns_to_gaps(columns)
     if not gaps:
-        return None
-    # 各列について、サンプル行で価格が読めた回数を数える
+        return None, None
+    bands = data_bands[:20]
     hits = [0] * len(gaps)
     for gi, (a, b) in enumerate(gaps):
         x0, x1 = int(W * a), int(W * b)
-        if x1 - x0 < W * 0.03:        # 細すぎる列は対象外
+        if x1 - x0 < W * 0.03:            # 細すぎる列は対象外
             continue
-        for img in sample_imgs:
-            for (y0, y1) in sample_bands:
-                crop = img[max(0, y0):y1, x0:x1]
-                if crop.size and _read_cell(crop, 7, 3):
-                    hits[gi] += 1
-                    break
-    n_samples = max(1, len(sample_bands))
-    numeric = [gi for gi, h in enumerate(hits) if h >= n_samples * 0.4]
+        strip = _ocr_column_strip(img, x0, x1)
+        for (_key, _j, y0, y1) in bands:
+            if any(y0 <= cy <= y1 for (cy, _v) in strip):
+                hits[gi] += 1
+    n = max(1, len(bands))
+    numeric = [gi for gi, h in enumerate(hits) if h >= n * 0.4]
     if not numeric:
-        return None
-    # 一番右が金額、その左が単価
+        return None, None
     tanka_gi = numeric[-2] if len(numeric) >= 2 else numeric[-1]
-    return gaps[tanka_gi]
+    return gaps[tanka_gi], tanka_gi
 
 
 def _pick_tanka_column(columns, tanka_col_index):
@@ -303,20 +310,21 @@ def extract_file(pdf_path, tanka_col_index=None):
         # 単価列を決める（手動指定 > 自動推定）
         col = _pick_tanka_column(columns, tanka_col_index)
         if col is None:
-            sample = [(y0, y1) for (_, _, y0, y1) in data_bands[:6]]
-            col = _auto_tanka_column(columns, [gac, clean], sample, W)
+            col, _gi = _auto_tanka_column(columns, gac, data_bands, W)
+        if col is not None:
+            x0, x1 = int(W * col[0]), int(W * col[1])
+        else:                                  # 列が取れない時は右側を広めに
+            x0, x1 = int(W * 0.40), int(W * 0.90)
+
+        # 単価列をまとめてOCR。各画像を2スケールで読み、読み取りを安定させる
+        strip_gac = _ocr_column_strip(gac, x0, x1, 2) + _ocr_column_strip(gac, x0, x1, 3)
+        strip_clean = _ocr_column_strip(clean, x0, x1, 2) + _ocr_column_strip(clean, x0, x1, 3)
 
         for key, joined, y0, y1 in data_bands:
             jflag = '除外' in joined or '樹脂' in joined
             price, conf, cell = None, '', ''
             if not jflag:
-                if col is not None:
-                    x0, x1 = int(W * col[0]), int(W * col[1])
-                else:                          # 列が取れない時は右側を広めに
-                    x0, x1 = int(W * 0.40), int(W * 0.90)
-                # 加工なし(gac)と加工あり(clean)の両方で読んで多数決
-                crops = [gac[max(0, y0):y1, x0:x1], clean[max(0, y0):y1, x0:x1]]
-                price, conf = _vote_price(crops, joined)
+                price, conf = _row_value(strip_gac, strip_clean, y0, y1, joined)
                 cell = _crop_b64(gac, x0, x1, y0, y1)
             entry = dict(key=key, price=price, conf=('除' if jflag else conf),
                          flag='除外' if jflag else '', cell=cell)
