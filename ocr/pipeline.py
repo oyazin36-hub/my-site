@@ -180,25 +180,32 @@ def _read_cell(crop_img, psm, scale, thresh=None):
     return _parse_prices(out)
 
 
-def _vote_price(crop_img, row_text):
-    """4通りの読み + 行テキストの読みを投票。信頼度(◎/○/△)を付ける。"""
-    passes = [
-        _read_cell(crop_img, 7, 3),
-        _read_cell(crop_img, 8, 4),
-        _read_cell(crop_img, 7, 3, 150),
-        _read_cell(crop_img, 8, 4, 170),
-    ]
+_PASSES = [(7, 3, None), (8, 4, None), (7, 3, 150), (8, 4, 170)]
+
+
+def _vote_price(crops, row_text=''):
+    """複数の画像(加工あり/なし)×4通りで読み、行テキストも加えて多数決。
+    crops: 同じセルを別々の画像から切り出したもののリスト。
+    加工が合う画像の読みが票を集めるので、社ごとに自動で最適化される。"""
     votes = Counter()
-    for p in passes:
-        for v in set(p):
-            votes[v] += 1
+    for crop in crops:
+        if crop is None or crop.size == 0:
+            continue
+        for psm, scale, th in _PASSES:
+            for v in set(_read_cell(crop, psm, scale, th)):
+                votes[v] += 1
     for v in set(_parse_prices(row_text)):   # 行全体の読みも1票
         votes[v] += 1
     if not votes:
         return None, ''
     value, n = votes.most_common(1)[0]
-    conf = '◎' if n >= 3 else ('○' if n == 2 else '△')
+    conf = '◎' if n >= 4 else ('○' if n >= 2 else '△')
     return value, conf
+
+
+def _autocontrast(gray_img):
+    """コントラストを最大化したグレー画像（加工が軽い版）。"""
+    return cv2.normalize(gray_img, None, 0, 255, cv2.NORM_MINMAX)
 
 
 def _crop_b64(gray_img, x0, x1, y0, y1):
@@ -222,11 +229,41 @@ def normalize_key(text_joined):
     return None
 
 
-def _pick_tanka_column(columns, tanka_col_index):
-    """単価列の(左,右)割合を返す。tanka_col_index 指定があればそれを使う。"""
-    if len(columns) < 2:
+def _columns_to_gaps(columns):
+    return [(columns[i], columns[i + 1]) for i in range(len(columns) - 1)]
+
+
+def _auto_tanka_column(columns, sample_imgs, sample_bands, W):
+    """検出した列の中から「単価列」を自動で選ぶ。
+    数字が入っている列(単価/金額)を見つけ、その右から2番目(=単価。一番右は金額)を返す。
+    数量や金額しか無い場合の保険も込み。"""
+    gaps = _columns_to_gaps(columns)
+    if not gaps:
         return None
-    gaps = [(columns[i], columns[i + 1]) for i in range(len(columns) - 1)]
+    # 各列について、サンプル行で価格が読めた回数を数える
+    hits = [0] * len(gaps)
+    for gi, (a, b) in enumerate(gaps):
+        x0, x1 = int(W * a), int(W * b)
+        if x1 - x0 < W * 0.03:        # 細すぎる列は対象外
+            continue
+        for img in sample_imgs:
+            for (y0, y1) in sample_bands:
+                crop = img[max(0, y0):y1, x0:x1]
+                if crop.size and _read_cell(crop, 7, 3):
+                    hits[gi] += 1
+                    break
+    n_samples = max(1, len(sample_bands))
+    numeric = [gi for gi, h in enumerate(hits) if h >= n_samples * 0.4]
+    if not numeric:
+        return None
+    # 一番右が金額、その左が単価
+    tanka_gi = numeric[-2] if len(numeric) >= 2 else numeric[-1]
+    return gaps[tanka_gi]
+
+
+def _pick_tanka_column(columns, tanka_col_index):
+    """単価列を手動指定する場合の(左,右)割合。"""
+    gaps = _columns_to_gaps(columns)
     if tanka_col_index is not None and 0 <= tanka_col_index < len(gaps):
         return gaps[tanka_col_index]
     return None
@@ -245,32 +282,41 @@ def extract_file(pdf_path, tanka_col_index=None):
     order = []
     detected_columns = []
     for gray in pages:
-        g, clean = preprocess(gray)
-        columns = detect_columns(g)        # 罫線除去前(g)で列を検出
+        g, clean = preprocess(gray)            # g=傾き補正グレー, clean=罫線除去+二値化
+        gac = _autocontrast(g)                 # 加工が軽いコントラスト強調版
+        columns = detect_columns(g)            # 罫線除去前(g)で列を検出
         detected_columns = columns
-        col = _pick_tanka_column(columns, tanka_col_index)
         H, W = g.shape
         words = _tsv_words(clean)
+        # 行(品番のある行)を先に拾う
+        data_bands = []
         for band in _group_bands(words):
             joined = ''.join(x['text'] for x in band['it'])
             key = normalize_key(joined)
             if not key:
                 continue
-            jflag = '除外' in joined or '樹脂' in joined
             y0 = int(min(x['t'] for x in band['it']) - 3)
             y1 = int(max(x['b'] for x in band['it']) + 3)
+            data_bands.append((key, joined, y0, y1))
+
+        # 単価列を決める（手動指定 > 自動推定）
+        col = _pick_tanka_column(columns, tanka_col_index)
+        if col is None:
+            sample = [(y0, y1) for (_, _, y0, y1) in data_bands[:6]]
+            col = _auto_tanka_column(columns, [gac, clean], sample, W)
+
+        for key, joined, y0, y1 in data_bands:
+            jflag = '除外' in joined or '樹脂' in joined
             price, conf, cell = None, '', ''
             if not jflag:
                 if col is not None:
                     x0, x1 = int(W * col[0]), int(W * col[1])
-                    crop = clean[max(0, y0):y1, max(0, x0):x1]
-                else:
-                    # 列が取れない時は行の右側(品番以降)を広めに読む
+                else:                          # 列が取れない時は右側を広めに
                     x0, x1 = int(W * 0.40), int(W * 0.90)
-                    crop = clean[max(0, y0):y1, x0:x1]
-                if crop.size:
-                    price, conf = _vote_price(crop, joined)
-                cell = _crop_b64(g, x0, x1, y0, y1)
+                # 加工なし(gac)と加工あり(clean)の両方で読んで多数決
+                crops = [gac[max(0, y0):y1, x0:x1], clean[max(0, y0):y1, x0:x1]]
+                price, conf = _vote_price(crops, joined)
+                cell = _crop_b64(gac, x0, x1, y0, y1)
             entry = dict(key=key, price=price, conf=('除' if jflag else conf),
                          flag='除外' if jflag else '', cell=cell)
             if key not in rows:
