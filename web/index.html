@@ -106,7 +106,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-06-19f</span>
+  <span class="tag" style="margin-left:auto">版 2026-06-22g</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -144,6 +144,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
     <table id="compare"><thead id="compare-head"></thead><tbody id="compare-body"></tbody></table>
   </div>
   <div class="legend">
+    <span><b class="ok">✓</b> 文字データから取得（誤読なし・最も確実）</span>
     <span><b class="ok">◎</b> 高信頼（複数回の読みが一致）</span>
     <span><b class="mid">○</b> 2回一致</span>
     <span><b class="warn">△</b> 要確認（読みがバラついた／読めず）</span>
@@ -407,6 +408,38 @@ function autoTankaColumn(columns, words, bands, W){
   return gaps[gi];
 }
 
+// 文字データ(テキスト層)から品番と単価を直接読む（PDF.js）。OCRより確実。
+function extractTextRows(items){
+  const bands=[];
+  items.slice().sort((a,b)=>a.transform[5]-b.transform[5]).forEach(it=>{
+    const y=it.transform[5];
+    let placed=false;
+    for(const b of bands){ if(Math.abs(y-b.y)<=3){b.items.push(it);b.y=(b.y*b.n+y)/(b.n+1);b.n++;placed=true;break;} }
+    if(!placed) bands.push({y,n:1,items:[it]});
+  });
+  const out=[];
+  bands.forEach(b=>{
+    b.items.sort((a,c)=>a.transform[4]-c.transform[4]);
+    const joined=b.items.map(it=>it.str).join('');
+    const key=normalizeKey(joined);
+    if(!key) return;
+    const jflag=joined.includes('除外')||joined.includes('樹脂');
+    const nums=[];
+    b.items.forEach(it=>{
+      const s=(it.str||'').trim();
+      if(/^\d{1,3}(?:,\d{3})+$|^\d{3,7}$/.test(s)){
+        const v=parseInt(s.replace(/,/g,''),10);
+        if(v>=300&&v<=2000000) nums.push({x:it.transform[4],v});
+      }
+    });
+    let price=null;
+    if(!jflag&&nums.length){ nums.sort((a,c)=>a.x-c.x);
+      price = nums.length>=2 ? nums[nums.length-2].v : nums[nums.length-1].v; }
+    out.push({key,price,flag:jflag?'除外':'',conf:jflag?'除':(price!=null?'文':'')});
+  });
+  return out;
+}
+
 // PDFの全ページを処理して artifacts を作る
 async function buildArtifacts(file, idx, progress){
   const buf=await file.arrayBuffer();
@@ -419,10 +452,19 @@ async function buildArtifacts(file, idx, progress){
     const canvas=document.createElement('canvas');
     canvas.width=viewport.width; canvas.height=viewport.height;
     await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+    const pageImg=canvas.toDataURL('image/jpeg', 0.85);
+
+    // 文字データがあれば直接読み取り（誤読なし）。無ければOCR。
+    const tc=await page.getTextContent();
+    const textLen=tc.items.reduce((s,it)=>s+((it.str||'').trim().length),0);
+    if(textLen>20){
+      progress(`${p}/${pdf.numPages}ページ 文字データから読取り…`);
+      arts.push({textRows:extractTextRows(tc.items), columns:[], pageImg});
+      continue;
+    }
 
     progress(`${p}/${pdf.numPages}ページ 画像加工…`);
     const pre=preprocess(canvas);
-
     progress(`${p}/${pdf.numPages}ページ 文字認識…`);
     const {data}=await workerText.recognize(pre.cleanCanvas);
     const words=getWords(data);
@@ -435,8 +477,7 @@ async function buildArtifacts(file, idx, progress){
       const y1=Math.max(...b.it.map(w=>w.bbox.y1))+3;
       bands.push({key,joined,y0,y1});
     });
-    // 表示用に各ページの画像(JPEG)を保持（再描画せず確実に見せるため）
-    arts.push({...pre, words, bands, pageImg: canvas.toDataURL('image/jpeg', 0.85)});
+    arts.push({...pre, words, bands, pageImg});
   }
   return arts;
 }
@@ -446,6 +487,15 @@ async function computeRows(arts, tankaIndex, progress){
   const rows={}; const order=[];
   for(let pi=0; pi<arts.length; pi++){
     const a=arts[pi]; const W=a.W;
+    // 文字データから取得済みのページはそのまま使う（OCR不要・確実）
+    if(a.textRows){
+      for(const t of a.textRows){
+        const entry={key:t.key,price:t.price,conf:t.conf,flag:t.flag,cell:''};
+        if(!(t.key in rows)){ rows[t.key]=entry; order.push(t.key); }
+        else if(rows[t.key].price==null && t.price!=null){ rows[t.key]=entry; }
+      }
+      continue;
+    }
     progress(`${pi+1}/${arts.length}ページ 単価読取り…`);
     let col=null;
     if(tankaIndex!=null && a.columns.length>=2 && tankaIndex<a.columns.length-1){
@@ -634,7 +684,9 @@ function renderTable(){
       if(!r){tr+='<td class="num muted">なし</td><td class="num"></td>';return;}
       if(r.flag){tr+='<td class="num muted">除外</td><td class="num"></td>';return;}
       const conf=r.conf||'';
-      const badge=conf==='◎'?'<span class="ok">◎</span>':conf==='○'?'<span class="mid">○</span>':(r.price!=null?'<span class="warn">△</span>':'');
+      const badge=conf==='文'?'<span class="ok" title="文字データから取得（確実）">✓</span>'
+        :conf==='手'?'<span class="ok" title="手修正">✎</span>'
+        :conf==='◎'?'<span class="ok">◎</span>':conf==='○'?'<span class="mid">○</span>':(r.price!=null?'<span class="warn">△</span>':'');
       const warnCls=(conf==='△'||r.price==null)?' warncell':'';
       const unitTxt=r.price!=null?yen(r.price):'<span class="need">要確認</span>';
       tr+=`<td class="num unit${warnCls}" data-ci="${ci}" data-key="${escapeHtml(key)}" title="クリックで修正">${badge}<span class="uval">${unitTxt}</span>`+(r.cell?`<img class="cell-img" src="${r.cell}">`:'')+'</td>';

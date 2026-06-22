@@ -297,26 +297,98 @@ def _pick_tanka_column(columns, tanka_col_index):
 
 
 # --- メイン: 1ファイルを処理 -----------------------------------------
+def _page_to_gray(page, zoom=RENDER_ZOOM):
+    """fitzのページ1枚をグレースケールnumpy配列にする。"""
+    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
+    img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
+    if pix.n >= 3:
+        return cv2.cvtColor(img[:, :, :3], cv2.COLOR_RGB2GRAY)
+    return img[:, :, 0]
+
+
+_NUMW = re.compile(r'^\d{1,3}(?:,\d{3})+$|^\d{3,7}$')
+
+
+def _extract_text_rows(page):
+    """文字データ(テキスト層)から品番と単価を直接読む。OCRより確実。
+    返り値: [(key, price, jflag), ...] / テキスト層が無ければ None。"""
+    if len(page.get_text().strip()) < 20:
+        return None                       # テキスト層なし(スキャン画像) -> OCRへ
+    words = page.get_text("words")        # (x0,y0,x1,y1, word, block, line, word_no)
+    if not words:
+        return None
+    # 単語を縦位置(行)でまとめる
+    bands = []
+    for w in sorted(words, key=lambda w: (w[1] + w[3]) / 2):
+        cy = (w[1] + w[3]) / 2
+        for b in bands:
+            if abs(cy - b['cy']) <= 3:
+                b['it'].append(w)
+                b['cy'] = (b['cy'] * b['n'] + cy) / (b['n'] + 1)
+                b['n'] += 1
+                break
+        else:
+            bands.append(dict(cy=cy, n=1, it=[w]))
+    out = []
+    for b in bands:
+        items = sorted(b['it'], key=lambda w: w[0])
+        joined = ''.join(w[4] for w in items)
+        key = normalize_key(joined)
+        if not key:
+            continue
+        jflag = '除外' in joined or '樹脂' in joined
+        nums = []
+        for w in items:
+            t = w[4].replace(',', '')
+            if _NUMW.match(w[4]) and t.isdigit():
+                v = int(t)
+                if 300 <= v <= 2000000:
+                    nums.append((w[0], v))
+        price = None
+        if not jflag and nums:
+            nums.sort()
+            price = nums[-2][1] if len(nums) >= 2 else nums[-1][1]   # 右から2番目=単価(一番右は金額)
+        out.append((key, price, jflag))
+    return out
+
+
 def extract_file(pdf_path, tanka_col_index=None):
     """
     PDF1ファイルを処理して部品リストを返す。
-    返り値: { 'rows': [ {key, price, conf, cell_img}, ... ],
-              'columns': [...], 'pages': n }
-    tanka_col_index: 単価列を手動指定する場合の列番号(0始まり)。Noneなら自動推定。
+    文字データ(テキスト層)があれば直接読み取り(誤読なし)、無ければOCRする。
+    返り値: { 'rows': [ {key, price, conf, cell_img}, ... ], 'columns': [...], 'pages': n }
     """
-    pages = render_pages(pdf_path)
+    doc = fitz.open(pdf_path)
     rows = {}
     order = []
     detected_columns = []
-    for gray in pages:
-        g, clean = preprocess(gray)            # g=傾き補正グレー, clean=罫線除去+二値化
-        gac = _autocontrast(g)                 # 加工が軽いコントラスト強調版
-        columns = detect_columns(g)            # 罫線除去前(g)で列を検出
-        if not detected_columns:               # 列指定UI用に1ページ目の列を保持
+
+    def _add(key, price, conf, flag, cell):
+        entry = dict(key=key, price=price, conf=conf, flag=flag, cell=cell)
+        if key not in rows:
+            rows[key] = entry
+            order.append(key)
+        elif rows[key]['price'] is None and price is not None:
+            rows[key] = entry
+
+    for page in doc:
+        text_rows = _extract_text_rows(page)
+        if text_rows is not None:
+            # --- 文字データから直接(確実) ---
+            for key, price, jflag in text_rows:
+                _add(key, price, ('除' if jflag else ('文' if price is not None else '')),
+                     '除外' if jflag else '', '')
+            continue
+
+        # --- スキャン画像 -> OCR ---
+        gray = _page_to_gray(page)
+        g, clean = preprocess(gray)
+        gac = _autocontrast(g)
+        columns = detect_columns(g)
+        if not detected_columns:
             detected_columns = columns
         H, W = g.shape
         words = _tsv_words(clean)
-        # 行(品番のある行)を先に拾う
         data_bands = []
         for band in _group_bands(words):
             joined = ''.join(x['text'] for x in band['it'])
@@ -327,16 +399,14 @@ def extract_file(pdf_path, tanka_col_index=None):
             y1 = int(max(x['b'] for x in band['it']) + 3)
             data_bands.append((key, joined, y0, y1))
 
-        # 単価列を決める（手動指定 > 自動推定）
         col = _pick_tanka_column(columns, tanka_col_index)
         if col is None:
             col, _gi = _auto_tanka_column(columns, gac, data_bands, W)
         if col is not None:
             x0, x1 = int(W * col[0]), int(W * col[1])
-        else:                                  # 列が取れない時は右側を広めに
+        else:
             x0, x1 = int(W * 0.40), int(W * 0.90)
 
-        # 単価列をまとめてOCR。各画像を2スケールで読み、読み取りを安定させる
         strip_gac = _ocr_column_strip(gac, x0, x1, 2) + _ocr_column_strip(gac, x0, x1, 3)
         strip_clean = _ocr_column_strip(clean, x0, x1, 2) + _ocr_column_strip(clean, x0, x1, 3)
 
@@ -346,15 +416,10 @@ def extract_file(pdf_path, tanka_col_index=None):
             if not jflag:
                 price, conf = _row_value(strip_gac, strip_clean, y0, y1, joined)
                 cell = _crop_b64(gac, x0, x1, y0, y1)
-            entry = dict(key=key, price=price, conf=('除' if jflag else conf),
-                         flag='除外' if jflag else '', cell=cell)
-            if key not in rows:
-                rows[key] = entry
-                order.append(key)
-            elif rows[key]['price'] is None and price is not None:
-                rows[key] = entry
+            _add(key, price, ('除' if jflag else conf), '除外' if jflag else '', cell)
+
     return dict(rows=[rows[k] for k in order],
-                columns=[round(c, 4) for c in detected_columns], pages=len(pages))
+                columns=[round(c, 4) for c in detected_columns], pages=len(doc))
 
 
 def render_preview(pdf_path, page_index=0, width=900):
