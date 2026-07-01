@@ -101,7 +101,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-06-22j</span>
+  <span class="tag" style="margin-left:auto">版 2026-06-22k</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -136,7 +136,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
     <span><b class="mid">○</b> 2回一致</span>
     <span><b class="warn">△</b> 要確認（読みがバラついた／読めず）</span>
     <span><b class="min-key">緑</b> 各品番の最安値</span>
-    <span>単価セルはクリックで手修正できます。</span>
+    <span>単価・品番はクリックで手修正できます（品番を直すと自動で突き合わせ）。</span>
   </div>
 </section>
 
@@ -175,7 +175,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 
 <script>
 // ====================== 設定 ======================
-const RENDER_SCALE = 3.0;        // PDF→画像の拡大率
+const RENDER_SCALE = 3.5;        // PDF→画像の拡大率(高いほど数字の誤読が減る)
 const UNIT_READ = 10;            // 単価は10円きざみ
 const UNIT_ROUND = 100;          // 計算結果は100円単位で切り上げ
 const PRICE_MIN = 300, PRICE_MAX = 200000;
@@ -625,7 +625,7 @@ function renderTable(){
     const finals=[];
     COMPANIES.forEach((c,ci)=>{const r=lookup[ci][key];if(r&&r.price!=null)finals.push({ci,val:roundUp(r.price*c.multiplier,UNIT_ROUND)});});
     const min=finals.length?Math.min(...finals.map(f=>f.val)):null;
-    let tr=`<tr><td class="pn">${escapeHtml(key)}</td>`;
+    let tr=`<tr><td class="pn editable-pn" data-key="${escapeHtml(key)}" title="クリックで品番を修正">${escapeHtml(key)}</td>`;
     COMPANIES.forEach((c,ci)=>{
       const r=lookup[ci][key];
       if(!r){tr+='<td class="num muted">なし</td><td class="num"></td>';return;}
@@ -647,6 +647,7 @@ function renderTable(){
   });
   document.getElementById('compare-body').innerHTML=body;
   bindEdit();
+  bindEditPn();
   const sub=COMPANIES.map(c=>`${escapeHtml(c.name)}×${c.multiplier}`).join('　');
   document.getElementById('rep-sub').textContent=`倍率 ${sub} ／ 計算は100円単位で切り上げ ／ 全${keys.length}品番`;
 }
@@ -660,6 +661,26 @@ function bindEdit(){
       td.innerHTML=`<input type="number" step="10" value="${cur}" class="edit-input">`;
       const inp=td.querySelector('input'); inp.focus();
       const commit=()=>{const v=inp.value===''?null:parseInt(inp.value,10);row.price=(v!=null&&!isNaN(v))?v:null;row.conf=row.price!=null?'手':'';renderTable();};
+      inp.addEventListener('blur',commit);
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();});
+    });
+  });
+}
+// 品番の修正（OCRが数字を取り違えた時に手で直す）。直すと同じ品番同士が自動で突き合う。
+function bindEditPn(){
+  document.querySelectorAll('td.editable-pn').forEach(td=>{
+    td.addEventListener('click',()=>{
+      if(td.querySelector('input'))return;
+      const oldKey=td.dataset.key;
+      td.innerHTML=`<input type="text" value="${escapeHtml(oldKey)}" class="edit-input" style="width:130px">`;
+      const inp=td.querySelector('input'); inp.focus(); inp.select();
+      const commit=()=>{
+        const nk=inp.value.trim();
+        if(nk && nk!==oldKey){
+          COMPANIES.forEach(c=>c.rows.forEach(r=>{ if(r.key===oldKey) r.key=nk; }));
+        }
+        renderTable();
+      };
       inp.addEventListener('blur',commit);
       inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();});
     });
