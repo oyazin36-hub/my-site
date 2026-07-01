@@ -373,7 +373,7 @@ def extract_file(pdf_path, tanka_col_index=None):
 
     for page in doc:
         text_rows = _extract_text_rows(page)
-        if text_rows is not None:
+        if text_rows:                          # 文字から品番を拾えた時だけ直読み
             # --- 文字データから直接(確実) ---
             for key, price, jflag in text_rows:
                 _add(key, price, ('除' if jflag else ('文' if price is not None else '')),

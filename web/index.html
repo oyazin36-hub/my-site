@@ -101,7 +101,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-06-22h</span>
+  <span class="tag" style="margin-left:auto">版 2026-06-22i</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -438,12 +438,13 @@ async function buildArtifacts(file, idx, progress){
     await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
     const pageImg=canvas.toDataURL('image/jpeg', 0.85);
 
-    // 文字データがあれば直接読み取り（誤読なし）。無ければOCR。
+    // 文字データがあれば直接読み取り（誤読なし）。拾えなければOCRにフォールバック。
     const tc=await page.getTextContent();
     const textLen=tc.items.reduce((s,it)=>s+((it.str||'').trim().length),0);
-    if(textLen>20){
+    const trows = textLen>20 ? extractTextRows(tc.items) : [];
+    if(trows.length){
       progress(`${p}/${pdf.numPages}ページ 文字データから読取り…`);
-      arts.push({textRows:extractTextRows(tc.items), columns:[], pageImg});
+      arts.push({textRows:trows, columns:[], pageImg});
       continue;
     }
 
