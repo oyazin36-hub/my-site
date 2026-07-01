@@ -45,7 +45,11 @@ PRICE_UNIT = 10            # 単価は10円きざみ
 PRICE_MIN, PRICE_MAX = 300, 200000
 
 # 品番: 任意の接頭辞(WIDRY07-等) + 3桁 + M + 3桁
-_PN = re.compile(r'(?:[A-Za-z]{2,6}\d{0,2}[-_ ]?)?([0-9oOlIzZeg]{3})[-_ ]?M[-_ ]?([0-9oOlIzZeBsSgt]{3})')
+# 品番の形式 (2種類に対応)
+#  ① M形式:   WIDRY07-107-M001 / 107-M001  (末尾が M+3桁)
+#  ② 図番形式: 26041-20-001                (5桁-2桁-3桁, Mなし)
+_PN_M = re.compile(r'(?:[A-Za-z]{2,6}\d{0,2}[-_ ]?)?([0-9oOlIzZeg]{3})[-_ ]?M[-_ ]?([0-9oOlIzZeBsSgt]{3})')
+_PN_FIG = re.compile(r'([0-9oOlIzZeg]{5})[-_ ]([0-9oOlIzZeg]{2})[-_ ]([0-9oOlIzZeg]{3})')
 _PRICE = re.compile(r'\d{1,3}(?:[,.]\d{3})|\d{3,6}')
 # OCRが数字を英字に誤読する分の補正表
 _DIGIT = str.maketrans({'o': '0', 'O': '0', 'Q': '0', 'D': '0', 'l': '1', 'I': '1',
@@ -249,13 +253,19 @@ def _crop_b64(gray_img, x0, x1, y0, y1):
 
 # --- 品番の正規化 -----------------------------------------------------
 def normalize_key(text_joined):
-    m = _PN.search(text_joined)
-    if not m:
-        return None
-    grp = m.group(1).translate(_DIGIT)
-    suf = m.group(2).translate(_DIGIT)
-    if grp.isdigit() and suf.isdigit():
-        return f'{grp}-M{suf}'
+    m = _PN_M.search(text_joined)              # ① M形式を優先
+    if m:
+        grp = m.group(1).translate(_DIGIT)
+        suf = m.group(2).translate(_DIGIT)
+        if grp.isdigit() and suf.isdigit():
+            return f'{grp}-M{suf}'
+    m = _PN_FIG.search(text_joined)            # ② 図番形式 26041-20-001
+    if m:
+        a = m.group(1).translate(_DIGIT)
+        b = m.group(2).translate(_DIGIT)
+        c = m.group(3).translate(_DIGIT)
+        if a.isdigit() and b.isdigit() and c.isdigit():
+            return f'{a}-{b}-{c}'
     return None
 
 
