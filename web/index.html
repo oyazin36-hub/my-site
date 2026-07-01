@@ -31,11 +31,6 @@ border-radius:6px;padding:8px 10px;max-height:160px;overflow:auto;white-space:pr
 .pdf-view-btn{width:100%;background:var(--blue);color:#fff;border:none;border-radius:6px;
   padding:8px;font-size:13px;font-weight:bold;cursor:pointer;margin-bottom:8px;}
 .pdf-view-btn:hover{background:#265d97;}
-#order-panel input[type=file]{font-size:13px;}
-.order-clear{background:#fff;color:#555;border:1px solid var(--line);padding:6px 12px;margin-left:8px;}
-.order-clear:hover{background:#f0f0f0;}
-.order-status{margin-left:12px;font-size:13px;color:var(--green);}
-.extra-sep{background:#f3f4f6;color:#666;font-size:12px;text-align:center;font-weight:bold;}
 .company-card label{display:block;font-size:13px;color:#333;margin-bottom:8px;}
 .company-card input{display:block;width:100%;margin-top:3px;padding:6px 8px;border:1px solid var(--line);border-radius:5px;font-size:14px;}
 .company-card .mult-input{border-color:var(--orange);font-weight:bold;}
@@ -106,7 +101,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-06-22g</span>
+  <span class="tag" style="margin-left:auto">版 2026-06-22h</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -132,14 +127,6 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
     <button class="print-btn no-print" onclick="window.print()">🖨 A4で印刷</button>
   </div>
 
-  <div class="panel no-print" id="order-panel">
-    <h2>③ 並び順（任意）：品番リストのExcel順に並べる</h2>
-    <p class="hint">品番が入ったExcel（.xlsx / .csv）を読み込むと、その<b>上から下の順番</b>で比較表を並べ替えます。
-      リストにあって見積に無い品番は「なし」で表示、見積にあってリストに無い品番は末尾にまとめます。</p>
-    <input type="file" id="orderfile" accept=".xlsx,.xls,.csv">
-    <button id="order-clear" class="order-clear">解除（元の順に戻す）</button>
-    <span id="order-status" class="order-status"></span>
-  </div>
   <div class="table-wrap">
     <table id="compare"><thead id="compare-head"></thead><tbody id="compare-body"></tbody></table>
   </div>
@@ -184,9 +171,6 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <script async id="opencv-script"
         src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"
         integrity="sha384-XsTfGA62I8LzqS3D7IcgiSOCrJuECWLcg4s1M0AnrkDCcJ8lXX+j+qdg+o6t7KZa"
-        crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
-        integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw"
         crossorigin="anonymous"></script>
 
 <script>
@@ -618,63 +602,16 @@ function yen(v){return v==null?'':'¥'+v.toLocaleString();}
 function escapeHtml(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
 
 // ====================== 比較表 ======================
-// ====================== 並び順（Excel/CSV） ======================
-let EXCEL_ORDER=null;   // Excel/CSVで指定された品番の並び
-function setupOrderUI(){
-  const fi=document.getElementById('orderfile');
-  if(fi) fi.addEventListener('change',e=>{ if(e.target.files[0]) parseOrderFile(e.target.files[0]); });
-  const cl=document.getElementById('order-clear');
-  if(cl) cl.addEventListener('click',()=>{ EXCEL_ORDER=null;
-    const f=document.getElementById('orderfile'); if(f) f.value='';
-    document.getElementById('order-status').textContent=''; renderTable(); });
-}
-function parseOrderFile(file){
-  const st=document.getElementById('order-status'); st.textContent='読み込み中…';
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    try{
-      const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
-      const order=[]; const seen=new Set();
-      rows.forEach(r=>{ (r||[]).forEach(cell=>{
-        const k=normalizeKey(String(cell==null?'':cell));
-        if(k && !seen.has(k)){ seen.add(k); order.push(k); }
-      });});
-      if(!order.length){ st.textContent='品番が見つかりませんでした（例: WIDRY07-107-M001 や 107-M001 の列が必要）'; return; }
-      EXCEL_ORDER=order;
-      st.textContent=`「${file.name}」の順に並べ替えました（${order.length}品番）`;
-      renderTable();
-    }catch(err){ st.textContent='読み込み失敗: '+err.message; }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
 function renderTable(){
-  // 表示する品番の並び: Excel指定があればその順、無ければ見積の検出順
-  let keys, extraStart=-1;
-  if(EXCEL_ORDER && EXCEL_ORDER.length){
-    const inExcel=new Set(EXCEL_ORDER);
-    const pdfKeys=[]; const s2=new Set();
-    COMPANIES.forEach(c=>c.rows.forEach(r=>{if(!s2.has(r.key)){s2.add(r.key);pdfKeys.push(r.key);}}));
-    const extras=pdfKeys.filter(k=>!inExcel.has(k));
-    keys=EXCEL_ORDER.concat(extras);
-    if(extras.length) extraStart=EXCEL_ORDER.length;
-  } else {
-    keys=[]; const seen=new Set();
-    COMPANIES.forEach(c=>c.rows.forEach(r=>{if(!seen.has(r.key)){seen.add(r.key);keys.push(r.key);}}));
-  }
+  const keys=[]; const seen=new Set();
+  COMPANIES.forEach(c=>c.rows.forEach(r=>{if(!seen.has(r.key)){seen.add(r.key);keys.push(r.key);}}));
   const lookup=COMPANIES.map(c=>{const m={};c.rows.forEach(r=>m[r.key]=r);return m;});
   let head='<tr><th class="pn-col">品番</th>';
   COMPANIES.forEach(c=>{head+=`<th>${escapeHtml(c.name)}<br><span class="th-sub">単価</span></th><th>${escapeHtml(c.name)}<br><span class="th-sub">×${c.multiplier}</span></th>`;});
   head+='<th>最安</th></tr>';
   document.getElementById('compare-head').innerHTML=head;
   let body='';
-  const colspan=2+COMPANIES.length*2;
-  keys.forEach((key,ki)=>{
-    if(ki===extraStart){
-      body+=`<tr><td class="extra-sep" colspan="${colspan}">― 以下はリストに無い品番（見積側にのみ存在）―</td></tr>`;
-    }
+  keys.forEach(key=>{
     const finals=[];
     COMPANIES.forEach((c,ci)=>{const r=lookup[ci][key];if(r&&r.price!=null)finals.push({ci,val:roundUp(r.price*c.multiplier,UNIT_ROUND)});});
     const min=finals.length?Math.min(...finals.map(f=>f.val)):null;
@@ -766,8 +703,6 @@ async function applyColumn(){
   finally{ btn.textContent='この列で読み直す'; }
 }
 function closeColPicker(){document.getElementById('col-modal').classList.add('hidden');}
-
-setupOrderUI();   // Excel並び替えUIの初期化
 </script>
 </body>
 </html>
