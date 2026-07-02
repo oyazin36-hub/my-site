@@ -101,7 +101,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-06-22k</span>
+  <span class="tag" style="margin-left:auto">版 2026-07-01m</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -136,6 +136,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
     <span><b class="mid">○</b> 2回一致</span>
     <span><b class="warn">△</b> 要確認（読みがバラついた／読めず）</span>
     <span><b class="min-key">緑</b> 各品番の最安値</span>
+    <span><b class="warn">※</b> 品番を自動補正（他の品番と照合して直した行・要確認）</span>
     <span>単価・品番はクリックで手修正できます（品番を直すと自動で突き合わせ）。</span>
   </div>
 </section>
@@ -516,7 +517,33 @@ async function computeRows(arts, tankaIndex, progress){
       else if(rows[b.key].price==null && price!=null){ rows[b.key]=entry; }
     }
   }
-  return order.map(k=>rows[k]);
+  const arr=order.map(k=>rows[k]);
+  fixPrefixOutliers(arr);   // 品番の自動照合・補正
+  return arr;
+}
+
+// 図番形式の品番を同一見積内で照合し、浮いた先頭5桁を自動補正する。
+// 例: 他が全て 26041-… なのに1件だけ 06041-… → 1桁違いなら 26041 に補正。
+// 条件は保守的に: 多数派3件以上・外れ値は1件だけ・差は1桁のみ・補正先と衝突しない。
+function fixPrefixOutliers(rowsArr){
+  const figRe=/^\d{5}-\d{2}-\d{3}$/;
+  const figs=rowsArr.filter(r=>figRe.test(r.key));
+  if(figs.length<4) return;
+  const cnt={};
+  figs.forEach(r=>{const p=r.key.slice(0,5);cnt[p]=(cnt[p]||0)+1;});
+  let dom=null,n=0; for(const p in cnt){ if(cnt[p]>n){n=cnt[p];dom=p;} }
+  if(n<3) return;
+  const keys=new Set(rowsArr.map(r=>r.key));
+  figs.forEach(r=>{
+    const p=r.key.slice(0,5);
+    if(p===dom||cnt[p]!==1) return;
+    let diff=0; for(let i=0;i<5;i++) if(p[i]!==dom[i]) diff++;
+    if(diff!==1) return;
+    const nk=dom+r.key.slice(5);
+    if(keys.has(nk)) return;
+    r.keyFixed=r.key;      // 元の読み値を保持
+    r.key=nk; keys.add(nk);
+  });
 }
 
 function cropDataUrl(canvas,x0,y0,x1,y1){
@@ -625,7 +652,9 @@ function renderTable(){
     const finals=[];
     COMPANIES.forEach((c,ci)=>{const r=lookup[ci][key];if(r&&r.price!=null)finals.push({ci,val:roundUp(r.price*c.multiplier,UNIT_ROUND)});});
     const min=finals.length?Math.min(...finals.map(f=>f.val)):null;
-    let tr=`<tr><td class="pn editable-pn" data-key="${escapeHtml(key)}" title="クリックで品番を修正">${escapeHtml(key)}</td>`;
+    const fixedFrom=COMPANIES.map((c,ci)=>lookup[ci][key]).filter(r=>r&&r.keyFixed).map(r=>r.keyFixed);
+    const fixBadge=fixedFrom.length?`<span class="warn" title="品番を自動補正（読取り値: ${escapeHtml(fixedFrom.join(', '))}）">※</span>`:'';
+    let tr=`<tr><td class="pn editable-pn" data-key="${escapeHtml(key)}" title="クリックで品番を修正">${escapeHtml(key)}${fixBadge}</td>`;
     COMPANIES.forEach((c,ci)=>{
       const r=lookup[ci][key];
       if(!r){tr+='<td class="num muted">なし</td><td class="num"></td>';return;}

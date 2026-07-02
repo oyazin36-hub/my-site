@@ -269,6 +269,35 @@ def normalize_key(text_joined):
     return None
 
 
+_FIG_KEY = re.compile(r'^\d{5}-\d{2}-\d{3}$')
+
+
+def _fix_prefix_outliers(rows, order):
+    """図番形式の品番を同一見積内で照合し、浮いた先頭5桁を自動補正する。
+    例: 他が全て 26041-… なのに1件だけ 06041-… → 1桁違いなら 26041 に補正。
+    条件を保守的に: 多数派が3件以上・外れ値は1件だけ・差は1桁のみ・補正先と衝突しない。"""
+    figs = [k for k in order if _FIG_KEY.match(k)]
+    if len(figs) < 4:
+        return
+    pref = Counter(k[:5] for k in figs)
+    dom, n = pref.most_common(1)[0]
+    if n < 3:
+        return
+    for k in list(order):
+        if not _FIG_KEY.match(k) or k[:5] == dom or pref[k[:5]] != 1:
+            continue
+        if sum(a != b for a, b in zip(k[:5], dom)) != 1:
+            continue
+        nk = dom + k[5:]
+        if nk in rows:
+            continue
+        entry = rows.pop(k)
+        entry['key'] = nk
+        entry['key_fixed'] = k          # 元の読み値を保持
+        rows[nk] = entry
+        order[order.index(k)] = nk
+
+
 def _columns_to_gaps(columns):
     return [(columns[i], columns[i + 1]) for i in range(len(columns) - 1)]
 
@@ -428,6 +457,7 @@ def extract_file(pdf_path, tanka_col_index=None):
                 cell = _crop_b64(gac, x0, x1, y0, y1)
             _add(key, price, ('除' if jflag else conf), '除外' if jflag else '', cell)
 
+    _fix_prefix_outliers(rows, order)      # 品番の自動照合・補正
     return dict(rows=[rows[k] for k in order],
                 columns=[round(c, 4) for c in detected_columns], pages=len(doc))
 
