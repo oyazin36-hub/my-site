@@ -221,6 +221,41 @@ def _ocr_column_strip(img, x0, x1, scale=2):
     return results
 
 
+def _ocr_key_strip(img, x0, x1, scale=2):
+    """品番列(縦1本)をまとめてOCRし、(縦中心y, 正規化済み品番) のリストを返す。
+    数字とM,ハイフンだけを認識させて誤読を減らす。単価と同じ多数決方式に使う。"""
+    x0 = max(0, x0)
+    if x1 - x0 < 4:
+        return []
+    strip = img[:, x0:x1]
+    if strip.size == 0:
+        return []
+    strip = cv2.resize(strip, (strip.shape[1] * scale, strip.shape[0] * scale))
+    ok, buf = cv2.imencode('.png', strip)
+    out = subprocess.run([TESSERACT, 'stdin', 'stdout',
+                          '-c', 'tessedit_char_whitelist=0123456789-M', '--psm', '6', 'tsv'],
+                         input=buf.tobytes(), capture_output=True).stdout.decode('utf-8', 'ignore')
+    lines = {}
+    for line in out.splitlines()[1:]:
+        c = line.split('\t')
+        if len(c) < 12:
+            continue
+        t = c[11].strip()
+        if not t:
+            continue
+        lk = (c[2], c[3], c[4])          # (block, par, line) で行ごとにまとめる
+        cy = (int(c[7]) + int(c[9]) / 2) / scale
+        lines.setdefault(lk, {'cy': [], 'txt': []})
+        lines[lk]['cy'].append(cy)
+        lines[lk]['txt'].append(t)
+    res = []
+    for v in lines.values():
+        k = normalize_key(''.join(v['txt']))
+        if k:
+            res.append((sum(v['cy']) / len(v['cy']), k))
+    return res
+
+
 def _row_value(strip_gac, strip_clean, y0, y1, row_text=''):
     """1行の単価を、加工なし/あり(各2スケール)の列OCR結果から多数決で決める。
     ◎=両画像が一致 or 合計3票以上 / ○=2票 / △=1票(怪しい)。"""
@@ -402,8 +437,8 @@ def extract_file(pdf_path, tanka_col_index=None):
     order = []
     detected_columns = []
 
-    def _add(key, price, conf, flag, cell):
-        entry = dict(key=key, price=price, conf=conf, flag=flag, cell=cell)
+    def _add(key, price, conf, flag, cell, kconf=''):
+        entry = dict(key=key, price=price, conf=conf, flag=flag, cell=cell, kconf=kconf)
         if key not in rows:
             rows[key] = entry
             order.append(key)
@@ -429,6 +464,7 @@ def extract_file(pdf_path, tanka_col_index=None):
         H, W = g.shape
         words = _tsv_words(clean)
         data_bands = []
+        kxs = []                                # 品番列のx範囲を推定するための座標
         for band in _group_bands(words):
             joined = ''.join(x['text'] for x in band['it'])
             key = normalize_key(joined)
@@ -437,6 +473,13 @@ def extract_file(pdf_path, tanka_col_index=None):
             y0 = int(min(x['t'] for x in band['it']) - 3)
             y1 = int(max(x['b'] for x in band['it']) + 3)
             data_bands.append((key, joined, y0, y1))
+            for x in band['it']:
+                if x['l'] < W * 0.45 and sum(ch.isdigit() for ch in x['text']) >= 3:
+                    kxs += [x['l'], x['l'] + x['w']]
+        if kxs:
+            kx0, kx1 = max(0, min(kxs) - 12), min(W, max(kxs) + 12)
+        else:
+            kx0, kx1 = int(W * 0.02), int(W * 0.30)
 
         col = _pick_tanka_column(columns, tanka_col_index)
         if col is None:
@@ -448,14 +491,49 @@ def extract_file(pdf_path, tanka_col_index=None):
 
         strip_gac = _ocr_column_strip(gac, x0, x1, 2) + _ocr_column_strip(gac, x0, x1, 3)
         strip_clean = _ocr_column_strip(clean, x0, x1, 2) + _ocr_column_strip(clean, x0, x1, 3)
+        # 品番列も単価と同じく、加工なし/あり×2スケールで読んで多数決に使う
+        keys_g = _ocr_key_strip(gac, kx0, kx1, 2) + _ocr_key_strip(gac, kx0, kx1, 3)
+        keys_c = _ocr_key_strip(clean, kx0, kx1, 2) + _ocr_key_strip(clean, kx0, kx1, 3)
 
         for key, joined, y0, y1 in data_bands:
             jflag = '除外' in joined or '樹脂' in joined
+            # 品番の多数決: 本文の読み1票 + 品番列の読み(最大4票)
+            votes = Counter([key])
+            for cy, k in keys_g + keys_c:
+                if y0 <= cy <= y1:
+                    votes[k] += 1
+            top, n = votes.most_common(1)[0]
+            if votes[key] == n:                 # 同数なら本文の読みを優先
+                top = key
+            kconf = '◎' if n >= 3 else ('○' if n == 2 else '△')
+            key = top
             price, conf, cell = None, '', ''
             if not jflag:
                 price, conf = _row_value(strip_gac, strip_clean, y0, y1, joined)
                 cell = _crop_b64(gac, x0, x1, y0, y1)
-            _add(key, price, ('除' if jflag else conf), '除外' if jflag else '', cell)
+            _add(key, price, ('除' if jflag else conf), '除外' if jflag else '', cell,
+                 '' if jflag else kconf)
+
+        # 本文OCRが行ごと見落とした品番を、品番列の読みから拾い直す
+        # (加工なし/あり両方の読みで同じ品番・同じ高さに出た時だけ = 保守的)
+        row_hs = [y1 - y0 for _, _, y0, y1 in data_bands]
+        row_h = int(np.median(row_hs)) if row_hs else 40
+        def _covered(cy):
+            return any(by0 - 4 <= cy <= by1 + 4 for _, _, by0, by1 in data_bands)
+        pend = {}
+        for src, hits in (('g', keys_g), ('c', keys_c)):
+            for cy, k in hits:
+                if not _covered(cy):
+                    pend.setdefault(k, []).append((src, cy))
+        for k, hs in pend.items():
+            srcs = {s for s, _ in hs}
+            cys = [cy for _, cy in hs]
+            if len(hs) >= 2 and {'g', 'c'} <= srcs and max(cys) - min(cys) <= row_h:
+                cy = sum(cys) / len(cys)
+                ry0, ry1 = int(cy - row_h / 2), int(cy + row_h / 2)
+                price, conf = _row_value(strip_gac, strip_clean, ry0, ry1, '')
+                cell = _crop_b64(gac, x0, x1, ry0, ry1)
+                _add(k, price, conf, '', cell, '○')
 
     _fix_prefix_outliers(rows, order)      # 品番の自動照合・補正
     return dict(rows=[rows[k] for k in order],

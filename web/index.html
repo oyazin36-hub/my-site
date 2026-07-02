@@ -101,7 +101,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-07-01m</span>
+  <span class="tag" style="margin-left:auto">版 2026-07-02n</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -137,6 +137,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
     <span><b class="warn">△</b> 要確認（読みがバラついた／読めず）</span>
     <span><b class="min-key">緑</b> 各品番の最安値</span>
     <span><b class="warn">※</b> 品番を自動補正（他の品番と照合して直した行・要確認）</span>
+    <span>品番セルが<b class="warn">黄色△</b>＝品番の読みが安定せず要確認</span>
     <span>単価・品番はクリックで手修正できます（品番を直すと自動で突き合わせ）。</span>
   </div>
 </section>
@@ -212,7 +213,7 @@ function waitOpenCV(){
     })();
   });
 }
-let workerText=null, workerNum=null;
+let workerText=null, workerNum=null, workerKey=null;
 async function ensureWorkers(){
   if (!workerText){
     log('読取りエンジンを準備中…（初回は時間がかかります）');
@@ -222,6 +223,13 @@ async function ensureWorkers(){
     workerNum = await Tesseract.createWorker('eng', 1);
     await workerNum.setParameters({
       tessedit_char_whitelist: '0123456789,.',
+      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK
+    });
+  }
+  if (!workerKey){   // 品番列専用(数字・M・ハイフンのみ認識)
+    workerKey = await Tesseract.createWorker('eng', 1);
+    await workerKey.setParameters({
+      tessedit_char_whitelist: '0123456789-M',
       tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK
     });
   }
@@ -256,6 +264,13 @@ function getWords(data){
   const out=[];
   (data.blocks||[]).forEach(b=>(b.paragraphs||[]).forEach(p=>(p.lines||[]).forEach(l=>
     (l.words||[]).forEach(w=>out.push(w)))));
+  return out;
+}
+// 行(line)単位で取り出す（品番列の読み取り用）
+function getLines(data){
+  if (data.lines && data.lines.length) return data.lines;
+  const out=[];
+  (data.blocks||[]).forEach(b=>(b.paragraphs||[]).forEach(p=>(p.lines||[]).forEach(l=>out.push(l))));
   return out;
 }
 function groupBands(words, tol){
@@ -369,6 +384,22 @@ async function ocrColumnStrip(canvas, x0, x1, scale){
   return res;
 }
 
+// 品番列(縦1本)をまとめてOCRし [{cy,key}] を返す。単価と同じ多数決に使う。
+async function ocrKeyStrip(canvas, x0, x1, scale){
+  x0=Math.max(0,x0|0); x1=x1|0;
+  const sw=x1-x0; if(sw<4) return [];
+  const tmp=document.createElement('canvas');
+  tmp.width=sw*scale; tmp.height=canvas.height*scale;
+  tmp.getContext('2d').drawImage(canvas, x0,0,sw,canvas.height, 0,0,tmp.width,tmp.height);
+  const {data}=await workerKey.recognize(tmp);
+  const res=[];
+  getLines(data).forEach(l=>{
+    const k=normalizeKey(l.text||'');
+    if(k) res.push({cy:(l.bbox.y0+l.bbox.y1)/2/scale, key:k});
+  });
+  return res;
+}
+
 function rowValue(gacList, clnList, y0, y1, rowText){
   const inRange=a=>a.filter(r=>r.cy>=y0&&r.cy<=y1).map(r=>r.value);
   const gac=inRange(gacList), cln=inRange(clnList), txt=parsePrices(rowText||'');
@@ -463,7 +494,7 @@ async function buildArtifacts(file, idx, progress){
     progress(`${p}/${pdf.numPages}ページ 文字認識…`);
     const {data}=await workerText.recognize(pre.cleanCanvas);
     const words=getWords(data);
-    const bands=[];
+    const bands=[]; const kxs=[];
     groupBands(words,16).forEach(b=>{
       const joined=b.it.map(w=>w.text).join('');
       const key=normalizeKey(joined);
@@ -471,8 +502,14 @@ async function buildArtifacts(file, idx, progress){
       const y0=Math.min(...b.it.map(w=>w.bbox.y0))-3;
       const y1=Math.max(...b.it.map(w=>w.bbox.y1))+3;
       bands.push({key,joined,y0,y1});
+      b.it.forEach(w=>{
+        const nd=((w.text||'').match(/\d/g)||[]).length;
+        if(nd>=3 && w.bbox.x0 < pre.W*0.45){ kxs.push(w.bbox.x0, w.bbox.x1); }
+      });
     });
-    arts.push({...pre, words, bands, pageImg});
+    const kx0=kxs.length?Math.max(0,Math.min(...kxs)-12):(pre.W*0.02|0);
+    const kx1=kxs.length?Math.min(pre.W,Math.max(...kxs)+12):(pre.W*0.30|0);
+    arts.push({...pre, words, bands, kx0, kx1, pageImg});
   }
   return arts;
 }
@@ -485,7 +522,7 @@ async function computeRows(arts, tankaIndex, progress){
     // 文字データから取得済みのページはそのまま使う（OCR不要・確実）
     if(a.textRows){
       for(const t of a.textRows){
-        const entry={key:t.key,price:t.price,conf:t.conf,flag:t.flag,cell:''};
+        const entry={key:t.key,price:t.price,conf:t.conf,flag:t.flag,cell:'',kconf:''};
         if(!(t.key in rows)){ rows[t.key]=entry; order.push(t.key); }
         else if(rows[t.key].price==null && t.price!=null){ rows[t.key]=entry; }
       }
@@ -503,18 +540,50 @@ async function computeRows(arts, tankaIndex, progress){
 
     const gacList=(await ocrColumnStrip(a.gacCanvas,x0,x1,2)).concat(await ocrColumnStrip(a.gacCanvas,x0,x1,3));
     const clnList=(await ocrColumnStrip(a.cleanCanvas,x0,x1,2)).concat(await ocrColumnStrip(a.cleanCanvas,x0,x1,3));
+    // 品番列も加工なし/あり×2スケールで読んで多数決に使う
+    const keysG=(await ocrKeyStrip(a.gacCanvas,a.kx0,a.kx1,2)).concat(await ocrKeyStrip(a.gacCanvas,a.kx0,a.kx1,3));
+    const keysC=(await ocrKeyStrip(a.cleanCanvas,a.kx0,a.kx1,2)).concat(await ocrKeyStrip(a.cleanCanvas,a.kx0,a.kx1,3));
 
     for(const b of a.bands){
       const jflag = b.joined.includes('除外')||b.joined.includes('樹脂');
+      // 品番の多数決: 本文の読み1票 + 品番列の読み(最大4票)
+      const votes={}; votes[b.key]=1;
+      keysG.concat(keysC).forEach(h=>{ if(h.cy>=b.y0&&h.cy<=b.y1) votes[h.key]=(votes[h.key]||0)+1; });
+      let top=b.key, n=votes[b.key];
+      for(const k in votes){ if(votes[k]>n){n=votes[k];top=k;} }
+      if(votes[b.key]===n) top=b.key;          // 同数なら本文の読みを優先
+      const kconf=n>=3?'◎':(n===2?'○':'△');
       let price=null, conf='', cell='';
       if(!jflag){
         const rv=rowValue(gacList,clnList,b.y0,b.y1,b.joined);
         price=rv.price; conf=rv.conf;
         cell=cropDataUrl(a.gacCanvas,x0,b.y0,x1,b.y1);
       }
-      const entry={key:b.key,price,conf:(jflag?'除':conf),flag:(jflag?'除外':''),cell};
-      if(!(b.key in rows)){ rows[b.key]=entry; order.push(b.key); }
-      else if(rows[b.key].price==null && price!=null){ rows[b.key]=entry; }
+      const entry={key:top,price,conf:(jflag?'除':conf),flag:(jflag?'除外':''),cell,kconf:(jflag?'':kconf)};
+      if(!(top in rows)){ rows[top]=entry; order.push(top); }
+      else if(rows[top].price==null && price!=null){ rows[top]=entry; }
+    }
+
+    // 本文OCRが行ごと見落とした品番を、品番列の読みから拾い直す
+    // (加工なし/あり両方で同じ品番・同じ高さに出た時だけ = 保守的)
+    const rowHs=a.bands.map(b=>b.y1-b.y0).sort((p,q)=>p-q);
+    const rowH=rowHs.length?rowHs[(rowHs.length/2)|0]:40;
+    const covered=cy=>a.bands.some(b=>b.y0-4<=cy&&cy<=b.y1+4);
+    const pend={};
+    keysG.forEach(h=>{ if(!covered(h.cy)) (pend[h.key]=pend[h.key]||[]).push({s:'g',cy:h.cy}); });
+    keysC.forEach(h=>{ if(!covered(h.cy)) (pend[h.key]=pend[h.key]||[]).push({s:'c',cy:h.cy}); });
+    for(const k in pend){
+      const hs=pend[k]; const srcs=new Set(hs.map(h=>h.s));
+      const cys=hs.map(h=>h.cy);
+      if(hs.length>=2 && srcs.has('g') && srcs.has('c') && Math.max(...cys)-Math.min(...cys)<=rowH){
+        const cy=cys.reduce((s,v)=>s+v,0)/cys.length;
+        const ry0=cy-rowH/2, ry1=cy+rowH/2;
+        const rv=rowValue(gacList,clnList,ry0,ry1,'');
+        const entry={key:k,price:rv.price,conf:rv.conf,flag:'',
+                     cell:cropDataUrl(a.gacCanvas,x0,ry0,x1,ry1),kconf:'○'};
+        if(!(k in rows)){ rows[k]=entry; order.push(k); }
+        else if(rows[k].price==null && rv.price!=null){ rows[k]=entry; }
+      }
     }
   }
   const arr=order.map(k=>rows[k]);
@@ -652,9 +721,11 @@ function renderTable(){
     const finals=[];
     COMPANIES.forEach((c,ci)=>{const r=lookup[ci][key];if(r&&r.price!=null)finals.push({ci,val:roundUp(r.price*c.multiplier,UNIT_ROUND)});});
     const min=finals.length?Math.min(...finals.map(f=>f.val)):null;
-    const fixedFrom=COMPANIES.map((c,ci)=>lookup[ci][key]).filter(r=>r&&r.keyFixed).map(r=>r.keyFixed);
+    const crows=COMPANIES.map((c,ci)=>lookup[ci][key]);
+    const fixedFrom=crows.filter(r=>r&&r.keyFixed).map(r=>r.keyFixed);
     const fixBadge=fixedFrom.length?`<span class="warn" title="品番を自動補正（読取り値: ${escapeHtml(fixedFrom.join(', '))}）">※</span>`:'';
-    let tr=`<tr><td class="pn editable-pn" data-key="${escapeHtml(key)}" title="クリックで品番を修正">${escapeHtml(key)}${fixBadge}</td>`;
+    const kWarn=crows.some(r=>r&&r.kconf==='△');
+    let tr=`<tr><td class="pn editable-pn${kWarn?' warncell':''}" data-key="${escapeHtml(key)}" title="${kWarn?'品番の読みが安定せず要確認。':''}クリックで品番を修正">${escapeHtml(key)}${kWarn?'<span class="warn">△</span>':''}${fixBadge}</td>`;
     COMPANIES.forEach((c,ci)=>{
       const r=lookup[ci][key];
       if(!r){tr+='<td class="num muted">なし</td><td class="num"></td>';return;}
