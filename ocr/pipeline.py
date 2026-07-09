@@ -221,9 +221,10 @@ def _ocr_column_strip(img, x0, x1, scale=2):
     return results
 
 
-def _ocr_key_strip(img, x0, x1, scale=2):
+def _ocr_key_strip(img, x0, x1, scale=2, whitelist='0123456789-M', parser=None):
     """品番列(縦1本)をまとめてOCRし、(縦中心y, 正規化済み品番) のリストを返す。
-    数字とM,ハイフンだけを認識させて誤読を減らす。単価と同じ多数決方式に使う。"""
+    品番に使われる文字だけを認識させて誤読を減らす。単価と同じ多数決方式に使う。"""
+    parser = parser or normalize_key
     x0 = max(0, x0)
     if x1 - x0 < 4:
         return []
@@ -233,7 +234,7 @@ def _ocr_key_strip(img, x0, x1, scale=2):
     strip = cv2.resize(strip, (strip.shape[1] * scale, strip.shape[0] * scale))
     ok, buf = cv2.imencode('.png', strip)
     out = subprocess.run([TESSERACT, 'stdin', 'stdout',
-                          '-c', 'tessedit_char_whitelist=0123456789-M', '--psm', '6', 'tsv'],
+                          '-c', 'tessedit_char_whitelist=' + whitelist, '--psm', '6', 'tsv'],
                          input=buf.tobytes(), capture_output=True).stdout.decode('utf-8', 'ignore')
     lines = {}
     for line in out.splitlines()[1:]:
@@ -250,7 +251,7 @@ def _ocr_key_strip(img, x0, x1, scale=2):
         lines[lk]['txt'].append(t)
     res = []
     for v in lines.values():
-        k = normalize_key(''.join(v['txt']))
+        k = parser(''.join(v['txt'])) or parser(' '.join(v['txt']))
         if k:
             res.append((sum(v['cy']) / len(v['cy']), k))
     return res
@@ -304,26 +305,94 @@ def normalize_key(text_joined):
     return None
 
 
+# ---- 汎用品番検出(形状学習) ------------------------------------------
+# 会社ごとに品番の形式が違うため、既知の2形式に当てはまらない時は
+# 「この見積書の品番はどんな形か」を書面内から学習する。
+# 例: OM6283-08-001 (英2+数4-数2-数3) / OM6283 07 002 (空白区切り) など。
+_CAND_HYPHEN = re.compile(r'[A-Za-z0-9]{2,8}(?:-[A-Za-z0-9]{1,4}){1,3}')
+_CAND_SPACE = re.compile(r'[A-Za-z0-9]{4,8}(?: [A-Za-z0-9]{1,4}){1,3}')
+_DITTO = re.compile(r'^[^A-Za-z0-9]{0,4}(\d{3})$')   # 「〃 007」のような同上行
+
+
+def _clean_key(tok):
+    tok = re.sub(r'[ _/]+', '-', tok.strip().upper())
+    return tok.strip('-')
+
+
+def _shape_of(tok):
+    """品番の「形」: 数字(とO等の紛らわしい字)をD、英字をAに置換。学習・照合用。"""
+    out = []
+    for ch in tok:
+        if ch in '-_ ':
+            out.append('-')
+        elif ch in '0123456789oO':
+            out.append('D')
+        elif ch.isalpha():
+            out.append('A')
+        else:
+            out.append('?')
+    return ''.join(out)
+
+
+def _candidates(text, allow_space):
+    pats = [_CAND_HYPHEN] + ([_CAND_SPACE] if allow_space else [])
+    found = []
+    for p in pats:
+        for m in p.finditer(text):
+            t = m.group()
+            if sum(c.isdigit() for c in t) >= 4 and 6 <= len(t) <= 20:
+                found.append(t)
+    return found
+
+
+def _learn_shape(texts):
+    """行テキスト群から品番の形を学習。(shape, allow_space) か None。
+    同じ形が3行以上出てくれば品番とみなす(電話番号や日付は形が揃わない)。"""
+    for allow_space in (False, True):
+        shapes = Counter()
+        for t in texts:
+            cands = _candidates(t, allow_space)
+            if cands:
+                shapes[_shape_of(_clean_key(cands[0]))] += 1
+        if shapes:
+            top, n = shapes.most_common(1)[0]
+            if n >= 3:
+                return top, allow_space
+    return None
+
+
+def _generic_key(text, shape, allow_space):
+    for t in _candidates(text, allow_space):
+        k = _clean_key(t)
+        if _shape_of(k) == shape:
+            return k
+    return None
+
+
 _FIG_KEY = re.compile(r'^\d{5}-\d{2}-\d{3}$')
 
 
 def _fix_prefix_outliers(rows, order):
-    """図番形式の品番を同一見積内で照合し、浮いた先頭5桁を自動補正する。
-    例: 他が全て 26041-… なのに1件だけ 06041-… → 1桁違いなら 26041 に補正。
-    条件を保守的に: 多数派が3件以上・外れ値は1件だけ・差は1桁のみ・補正先と衝突しない。"""
-    figs = [k for k in order if _FIG_KEY.match(k)]
-    if len(figs) < 4:
+    """品番の先頭グループ(例: 26041 / OM6283)を同一見積内で照合し、
+    浮いた1件を自動補正する。例: 他が全て 26041-… で1件だけ 06041-… → 26041 に補正。
+    条件を保守的に: 先頭グループ5文字以上・多数派3件以上・外れ値1件のみ・
+    差は1文字のみ・補正先と衝突しない。(107-M001等の短い先頭は対象外)"""
+    elig = [k for k in order if '-' in k and len(k.split('-', 1)[0]) >= 5]
+    if len(elig) < 4:
         return
-    pref = Counter(k[:5] for k in figs)
+    pref = Counter(k.split('-', 1)[0] for k in elig)
     dom, n = pref.most_common(1)[0]
     if n < 3:
         return
     for k in list(order):
-        if not _FIG_KEY.match(k) or k[:5] == dom or pref[k[:5]] != 1:
+        if '-' not in k:
             continue
-        if sum(a != b for a, b in zip(k[:5], dom)) != 1:
+        p = k.split('-', 1)[0]
+        if len(p) < 5 or p == dom or pref.get(p, 0) != 1 or len(p) != len(dom):
             continue
-        nk = dom + k[5:]
+        if sum(a != b for a, b in zip(p, dom)) != 1:
+            continue
+        nk = dom + k[len(p):]
         if nk in rows:
             continue
         entry = rows.pop(k)
@@ -337,10 +406,13 @@ def _columns_to_gaps(columns):
     return [(columns[i], columns[i + 1]) for i in range(len(columns) - 1)]
 
 
-def _auto_tanka_column(columns, img, data_bands, W):
+def _auto_tanka_column(columns, img, data_bands, W, key_x=None):
     """検出した列の中から「単価列」を自動で選ぶ。
-    各列を1回ずつまとめOCRし、価格が入っている列(単価/金額)を見つけ、
-    その右から2番目(=単価。一番右は金額)を返す。"""
+    価格が入っている列が2つ以上 → 右から2番目が単価(一番右は金額)。
+    1つだけ(単価列がほぼ空欄で金額列だけの見積) → その左隣を単価、
+    その列を金額としてフォールバック用に返す。
+    key_x=(kx0,kx1): 品番列の範囲。品番の数字を価格と誤認しないよう候補から除外。
+    返り値: (単価gap or None, フォールバック用の金額gap or None)"""
     gaps = _columns_to_gaps(columns)
     if not gaps:
         return None, None
@@ -350,16 +422,24 @@ def _auto_tanka_column(columns, img, data_bands, W):
         x0, x1 = int(W * a), int(W * b)
         if x1 - x0 < W * 0.03:            # 細すぎる列は対象外
             continue
+        if key_x is not None:             # 品番列と半分以上重なる列は対象外
+            ov = min(x1, key_x[1]) - max(x0, key_x[0])
+            if ov > (x1 - x0) * 0.5:
+                continue
         strip = _ocr_column_strip(img, x0, x1)
-        for (_key, _j, y0, y1) in bands:
+        for band in bands:
+            y0, y1 = band[2], band[3]
             if any(y0 <= cy <= y1 for (cy, _v) in strip):
                 hits[gi] += 1
     n = max(1, len(bands))
     numeric = [gi for gi, h in enumerate(hits) if h >= n * 0.4]
     if not numeric:
         return None, None
-    tanka_gi = numeric[-2] if len(numeric) >= 2 else numeric[-1]
-    return gaps[tanka_gi], tanka_gi
+    if len(numeric) >= 2:
+        return gaps[numeric[-2]], None
+    gi = numeric[0]
+    tanka = gaps[gi - 1] if gi >= 1 else None
+    return tanka, gaps[gi]
 
 
 def _pick_tanka_column(columns, tanka_col_index):
@@ -383,14 +463,15 @@ def _page_to_gray(page, zoom=RENDER_ZOOM):
 _NUMW = re.compile(r'^\d{1,3}(?:,\d{3})+$|^\d{3,7}$')
 
 
-def _extract_text_rows(page):
-    """文字データ(テキスト層)から品番と単価を直接読む。OCRより確実。
-    返り値: [(key, price, jflag), ...] / テキスト層が無ければ None。"""
+def _extract_text_lines(page):
+    """文字データ(テキスト層)を行ごとに取り出す。OCRより確実。
+    返り値: [{'joined','left','nums'}, ...] / テキスト層が無ければ None。"""
     if len(page.get_text().strip()) < 20:
         return None                       # テキスト層なし(スキャン画像) -> OCRへ
     words = page.get_text("words")        # (x0,y0,x1,y1, word, block, line, word_no)
     if not words:
         return None
+    wp = page.rect.width
     # 単語を縦位置(行)でまとめる
     bands = []
     for w in sorted(words, key=lambda w: (w[1] + w[3]) / 2):
@@ -407,10 +488,7 @@ def _extract_text_rows(page):
     for b in bands:
         items = sorted(b['it'], key=lambda w: w[0])
         joined = ''.join(w[4] for w in items)
-        key = normalize_key(joined)
-        if not key:
-            continue
-        jflag = '除外' in joined or '樹脂' in joined
+        left = ' '.join(w[4] for w in items if w[0] < wp * 0.5)
         nums = []
         for w in items:
             t = w[4].replace(',', '')
@@ -418,11 +496,8 @@ def _extract_text_rows(page):
                 v = int(t)
                 if 300 <= v <= 2000000:
                     nums.append((w[0], v))
-        price = None
-        if not jflag and nums:
-            nums.sort()
-            price = nums[-2][1] if len(nums) >= 2 else nums[-1][1]   # 右から2番目=単価(一番右は金額)
-        out.append((key, price, jflag))
+        nums.sort()
+        out.append(dict(joined=joined, left=left, nums=nums))
     return out
 
 
@@ -445,16 +520,13 @@ def extract_file(pdf_path, tanka_col_index=None):
         elif rows[key]['price'] is None and price is not None:
             rows[key] = entry
 
+    # ---- 第1段: 各ページの下ごしらえ(テキスト層 or OCR素材) ----
+    arts = []
     for page in doc:
-        text_rows = _extract_text_rows(page)
-        if text_rows:                          # 文字から品番を拾えた時だけ直読み
-            # --- 文字データから直接(確実) ---
-            for key, price, jflag in text_rows:
-                _add(key, price, ('除' if jflag else ('文' if price is not None else '')),
-                     '除外' if jflag else '', '')
+        lines = _extract_text_lines(page)
+        if lines is not None:
+            arts.append(dict(kind='text', lines=lines))
             continue
-
-        # --- スキャン画像 -> OCR ---
         gray = _page_to_gray(page)
         g, clean = preprocess(gray)
         gac = _autocontrast(g)
@@ -463,17 +535,73 @@ def extract_file(pdf_path, tanka_col_index=None):
             detected_columns = columns
         H, W = g.shape
         words = _tsv_words(clean)
-        data_bands = []
-        kxs = []                                # 品番列のx範囲を推定するための座標
+        raw_bands = []
         for band in _group_bands(words):
-            joined = ''.join(x['text'] for x in band['it'])
-            key = normalize_key(joined)
-            if not key:
-                continue
-            y0 = int(min(x['t'] for x in band['it']) - 3)
-            y1 = int(max(x['b'] for x in band['it']) + 3)
-            data_bands.append((key, joined, y0, y1))
-            for x in band['it']:
+            raw_bands.append(dict(
+                joined=''.join(x['text'] for x in band['it']),
+                left=' '.join(x['text'] for x in band['it'] if x['l'] < W * 0.5),
+                y0=int(min(x['t'] for x in band['it']) - 3),
+                y1=int(max(x['b'] for x in band['it']) + 3),
+                items=band['it']))
+        arts.append(dict(kind='ocr', g=g, clean=clean, gac=gac,
+                         columns=columns, W=W, raw=raw_bands))
+
+    # ---- 第2段: 品番の方式を決める(既知形式 or 書類全体から形を学習) ----
+    known_count = 0
+    for a in arts:
+        src = a['lines'] if a['kind'] == 'text' else a['raw']
+        known_count += sum(1 for x in src if normalize_key(x['joined']))
+    generic = None                              # (shape, allow_space)
+    if known_count < 3:
+        corpus = []
+        for a in arts:
+            src = a['lines'] if a['kind'] == 'text' else a['raw']
+            corpus += [x['left'] for x in src]
+        generic = _learn_shape(corpus)
+
+    last_full = [None]                          # 「〃(同上)」行はページをまたいで直前の品番を継承
+    def _key_of(left, joined):
+        if generic:
+            shape, asp = generic
+            k = _generic_key(left, shape, asp)
+            if k:
+                last_full[0] = k
+                return k
+            m = _DITTO.match(left.strip())
+            if m and last_full[0] and '-' in last_full[0]:
+                return last_full[0].rsplit('-', 1)[0] + '-' + m.group(1)
+            return None
+        return normalize_key(joined)
+
+    # ---- 第3段: ページごとに読み取り ----
+    for a in arts:
+        if a['kind'] == 'text':                 # 文字データから直接(確実)
+            for ln in a['lines']:
+                key = _key_of(ln['left'], ln['joined'])
+                if not key:
+                    continue
+                jflag = '除外' in ln['joined'] or '樹脂' in ln['joined']
+                price = None
+                if not jflag and ln['nums']:
+                    nums = ln['nums']
+                    price = nums[-2][1] if len(nums) >= 2 else nums[-1][1]
+                _add(key, price, ('除' if jflag else ('文' if price is not None else '')),
+                     '除外' if jflag else '', '')
+            continue
+
+        # --- スキャン画像ページ ---
+        g, clean, gac = a['g'], a['clean'], a['gac']
+        columns, W, raw_bands = a['columns'], a['W'], a['raw']
+        data_bands = []
+        for rb in raw_bands:
+            key = _key_of(rb['left'], rb['joined'])
+            if key:
+                data_bands.append((key, rb['joined'], rb['y0'], rb['y1'], rb['items']))
+
+        # 品番列のx範囲を推定
+        kxs = []
+        for _key, _j, _y0, _y1, items in data_bands:
+            for x in items:
                 if x['l'] < W * 0.45 and sum(ch.isdigit() for ch in x['text']) >= 3:
                     kxs += [x['l'], x['l'] + x['w']]
         if kxs:
@@ -482,8 +610,11 @@ def extract_file(pdf_path, tanka_col_index=None):
             kx0, kx1 = int(W * 0.02), int(W * 0.30)
 
         col = _pick_tanka_column(columns, tanka_col_index)
+        kcol = None                             # 単価が空欄の見積用: 金額列フォールバック
         if col is None:
-            col, _gi = _auto_tanka_column(columns, gac, data_bands, W)
+            col, kcol = _auto_tanka_column(columns, gac, data_bands, W, (kx0, kx1))
+        if col is None and kcol is not None:    # 金額列しか無い場合はそれを単価扱い
+            col, kcol = kcol, None
         if col is not None:
             x0, x1 = int(W * col[0]), int(W * col[1])
         else:
@@ -491,11 +622,36 @@ def extract_file(pdf_path, tanka_col_index=None):
 
         strip_gac = _ocr_column_strip(gac, x0, x1, 2) + _ocr_column_strip(gac, x0, x1, 3)
         strip_clean = _ocr_column_strip(clean, x0, x1, 2) + _ocr_column_strip(clean, x0, x1, 3)
-        # 品番列も単価と同じく、加工なし/あり×2スケールで読んで多数決に使う
-        keys_g = _ocr_key_strip(gac, kx0, kx1, 2) + _ocr_key_strip(gac, kx0, kx1, 3)
-        keys_c = _ocr_key_strip(clean, kx0, kx1, 2) + _ocr_key_strip(clean, kx0, kx1, 3)
+        kstrip_gac = kstrip_clean = []
+        cx1 = x1
+        if kcol is not None:
+            kxx0, kxx1 = int(W * kcol[0]), int(W * kcol[1])
+            kstrip_gac = _ocr_column_strip(gac, kxx0, kxx1, 2) + _ocr_column_strip(gac, kxx0, kxx1, 3)
+            kstrip_clean = _ocr_column_strip(clean, kxx0, kxx1, 2) + _ocr_column_strip(clean, kxx0, kxx1, 3)
+            cx1 = kxx1                          # 確認用画像は金額列まで含めて切り出す
 
-        for key, joined, y0, y1 in data_bands:
+        def _read_price(y0, y1, row_text):
+            price, conf = _row_value(strip_gac, strip_clean, y0, y1, row_text)
+            if price is None and kcol is not None:
+                # 単価欄が空欄 → 金額欄を読む(数量1なら金額=単価)。信頼度は1段下げる
+                price, conf = _row_value(kstrip_gac, kstrip_clean, y0, y1, '')
+                conf = {'◎': '○', '○': '△'}.get(conf, conf)
+            return price, conf
+
+        # 品番列も単価と同じく、加工なし/あり×2スケールで読んで多数決に使う
+        if generic:
+            shape, asp = generic
+            letters = ''.join(sorted({c for k, *_ in data_bands for c in k if c.isalpha()}))
+            wl = '0123456789-' + letters
+            parser = lambda t: _generic_key(t, shape, asp)   # noqa: E731
+        else:
+            wl, parser = '0123456789-M', None
+        keys_g = (_ocr_key_strip(gac, kx0, kx1, 2, wl, parser)
+                  + _ocr_key_strip(gac, kx0, kx1, 3, wl, parser))
+        keys_c = (_ocr_key_strip(clean, kx0, kx1, 2, wl, parser)
+                  + _ocr_key_strip(clean, kx0, kx1, 3, wl, parser))
+
+        for key, joined, y0, y1, _items in data_bands:
             jflag = '除外' in joined or '樹脂' in joined
             # 品番の多数決: 本文の読み1票 + 品番列の読み(最大4票)
             votes = Counter([key])
@@ -509,17 +665,17 @@ def extract_file(pdf_path, tanka_col_index=None):
             key = top
             price, conf, cell = None, '', ''
             if not jflag:
-                price, conf = _row_value(strip_gac, strip_clean, y0, y1, joined)
-                cell = _crop_b64(gac, x0, x1, y0, y1)
+                price, conf = _read_price(y0, y1, joined)
+                cell = _crop_b64(gac, x0, cx1, y0, y1)
             _add(key, price, ('除' if jflag else conf), '除外' if jflag else '', cell,
                  '' if jflag else kconf)
 
         # 本文OCRが行ごと見落とした品番を、品番列の読みから拾い直す
         # (加工なし/あり両方の読みで同じ品番・同じ高さに出た時だけ = 保守的)
-        row_hs = [y1 - y0 for _, _, y0, y1 in data_bands]
+        row_hs = [y1 - y0 for _, _, y0, y1, _i in data_bands]
         row_h = int(np.median(row_hs)) if row_hs else 40
         def _covered(cy):
-            return any(by0 - 4 <= cy <= by1 + 4 for _, _, by0, by1 in data_bands)
+            return any(by0 - 4 <= cy <= by1 + 4 for _, _, by0, by1, _i in data_bands)
         pend = {}
         for src, hits in (('g', keys_g), ('c', keys_c)):
             for cy, k in hits:
@@ -531,8 +687,8 @@ def extract_file(pdf_path, tanka_col_index=None):
             if len(hs) >= 2 and {'g', 'c'} <= srcs and max(cys) - min(cys) <= row_h:
                 cy = sum(cys) / len(cys)
                 ry0, ry1 = int(cy - row_h / 2), int(cy + row_h / 2)
-                price, conf = _row_value(strip_gac, strip_clean, ry0, ry1, '')
-                cell = _crop_b64(gac, x0, x1, ry0, ry1)
+                price, conf = _read_price(ry0, ry1, '')
+                cell = _crop_b64(gac, x0, cx1, ry0, ry1)
                 _add(k, price, conf, '', cell, '○')
 
     _fix_prefix_outliers(rows, order)      # 品番の自動照合・補正

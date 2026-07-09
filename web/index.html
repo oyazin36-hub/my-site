@@ -37,6 +37,8 @@ border-radius:6px;padding:8px 10px;max-height:160px;overflow:auto;white-space:pr
 .cc-stat{font-size:12px;color:#777;}.cc-warn{color:var(--orange);}
 .col-btn{margin-top:8px;width:100%;background:#fff;color:var(--orange);border:1px solid var(--orange);padding:7px;font-size:13px;}
 .col-btn:hover{background:#fff1e2;}
+.addrow-btn{margin-top:8px;width:100%;background:#fff;color:var(--blue);border:1px solid var(--blue);padding:7px;font-size:13px;}
+.addrow-btn:hover{background:#eef4fb;}
 .report-head{max-width:1180px;margin:16px auto 6px;padding:0 8px;display:flex;justify-content:space-between;align-items:flex-end;}
 .rep-title{font-size:20px;color:var(--navy);margin:0;}.rep-sub{font-size:12px;color:#555;margin-top:4px;}
 .print-btn{background:var(--green);}.print-btn:hover{background:#11652f;}
@@ -101,7 +103,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-07-02n</span>
+  <span class="tag" style="margin-left:auto">版 2026-07-09p</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -258,6 +260,57 @@ function normalizeKey(joined){
   }
   return null;
 }
+
+// ---- 汎用品番検出(形状学習) ----
+// 会社ごとに品番の形式が違うため、既知の形式に当てはまらない時は
+// 「この見積書の品番はどんな形か」を書面全体から学習する。
+const CAND_HYPHEN=/[A-Za-z0-9]{2,8}(?:-[A-Za-z0-9]{1,4}){1,3}/g;
+const CAND_SPACE=/[A-Za-z0-9]{4,8}(?: [A-Za-z0-9]{1,4}){1,3}/g;
+const DITTO_RE=/^[^A-Za-z0-9]{0,4}(\d{3})$/;
+function cleanKeyTok(t){return t.trim().toUpperCase().replace(/[ _\/]+/g,'-').replace(/^-+|-+$/g,'');}
+function shapeOf(t){
+  let out='';
+  for(const ch of t){
+    if(ch==='-'||ch==='_'||ch===' ') out+='-';
+    else if('0123456789oO'.includes(ch)) out+='D';
+    else if(/[A-Za-z]/.test(ch)) out+='A';
+    else out+='?';
+  }
+  return out;
+}
+function keyCandidates(text, allowSpace){
+  const found=[];
+  const pats=[CAND_HYPHEN].concat(allowSpace?[CAND_SPACE]:[]);
+  for(const p of pats){
+    p.lastIndex=0; let m;
+    while((m=p.exec(text))!==null){
+      const t=m[0];
+      const nd=(t.match(/\d/g)||[]).length;
+      if(nd>=4 && t.length>=6 && t.length<=20) found.push(t);
+    }
+  }
+  return found;
+}
+function learnShape(texts){
+  for(const allowSpace of [false,true]){
+    const shapes={};
+    texts.forEach(t=>{
+      const c=keyCandidates(t,allowSpace);
+      if(c.length){const s=shapeOf(cleanKeyTok(c[0]));shapes[s]=(shapes[s]||0)+1;}
+    });
+    let top=null,n=0;
+    for(const s in shapes){ if(shapes[s]>n){n=shapes[s];top=s;} }
+    if(n>=3) return {shape:top,allowSpace};
+  }
+  return null;
+}
+function genericKey(text, shape, allowSpace){
+  for(const t of keyCandidates(text,allowSpace)){
+    const k=cleanKeyTok(t);
+    if(shapeOf(k)===shape) return k;
+  }
+  return null;
+}
 // Tesseractの結果から単語配列(bbox付き)を取り出す（v5の差異に対応）
 function getWords(data){
   if (data.words && data.words.length) return data.words;
@@ -385,7 +438,8 @@ async function ocrColumnStrip(canvas, x0, x1, scale){
 }
 
 // 品番列(縦1本)をまとめてOCRし [{cy,key}] を返す。単価と同じ多数決に使う。
-async function ocrKeyStrip(canvas, x0, x1, scale){
+async function ocrKeyStrip(canvas, x0, x1, scale, parser){
+  parser=parser||normalizeKey;
   x0=Math.max(0,x0|0); x1=x1|0;
   const sw=x1-x0; if(sw<4) return [];
   const tmp=document.createElement('canvas');
@@ -394,7 +448,8 @@ async function ocrKeyStrip(canvas, x0, x1, scale){
   const {data}=await workerKey.recognize(tmp);
   const res=[];
   getLines(data).forEach(l=>{
-    const k=normalizeKey(l.text||'');
+    const t=l.text||'';
+    const k=parser(t.replace(/\s+/g,'')) || parser(t);
     if(k) res.push({cy:(l.bbox.y0+l.bbox.y1)/2/scale, key:k});
   });
   return res;
@@ -412,29 +467,37 @@ function rowValue(gacList, clnList, y0, y1, rowText){
   return {price:best,conf};
 }
 
-function autoTankaColumn(columns, words, bands, W){
-  if(columns.length<2) return null;
+// 単価列の自動選択。数値列が2つ以上→右から2番目が単価(一番右は金額)。
+// 1つだけ(単価欄がほぼ空欄の見積)→左隣を単価、その列を金額フォールバックに。
+// keyX=[kx0,kx1]: 品番列の範囲。品番の数字を価格と誤認しないよう除外。
+function autoTankaColumn(columns, words, bands, W, keyX){
+  if(columns.length<2) return {tanka:null,kingaku:null};
   const gaps=[]; for(let i=0;i<columns.length-1;i++) gaps.push([columns[i],columns[i+1]]);
-  // 数字を含む単語の位置
   const numWords=words.filter(w=>/\d{3,}/.test((w.text||'').replace(/[,.]/g,'')))
     .map(w=>({cx:(w.bbox.x0+w.bbox.x1)/2/W, cy:(w.bbox.y0+w.bbox.y1)/2}));
   const hits=gaps.map(()=>0);
   const sample=bands.slice(0,20);
   gaps.forEach((g,gi)=>{
     if(g[1]-g[0] < 0.03) return;
+    if(keyX){ // 品番列と半分以上重なる列は対象外
+      const gx0=g[0]*W, gx1=g[1]*W;
+      const ov=Math.min(gx1,keyX[1])-Math.max(gx0,keyX[0]);
+      if(ov>(gx1-gx0)*0.5) return;
+    }
     sample.forEach(b=>{
       if(numWords.some(nw=>nw.cx>=g[0]&&nw.cx<=g[1]&&nw.cy>=b.y0&&nw.cy<=b.y1)) hits[gi]++;
     });
   });
   const n=Math.max(1,sample.length);
   const numeric=[]; hits.forEach((h,gi)=>{if(h>=n*0.4) numeric.push(gi);});
-  if(numeric.length===0) return null;
-  const gi = numeric.length>=2 ? numeric[numeric.length-2] : numeric[numeric.length-1];
-  return gaps[gi];
+  if(numeric.length===0) return {tanka:null,kingaku:null};
+  if(numeric.length>=2) return {tanka:gaps[numeric[numeric.length-2]],kingaku:null};
+  const gi=numeric[0];
+  return {tanka:(gi>=1?gaps[gi-1]:null), kingaku:gaps[gi]};
 }
 
-// 文字データ(テキスト層)から品番と単価を直接読む（PDF.js）。OCRより確実。
-function extractTextRows(items){
+// 文字データ(テキスト層)を行ごとに取り出す（PDF.js）。OCRより確実。
+function extractTextLines(items, pageW){
   const bands=[];
   items.slice().sort((a,b)=>a.transform[5]-b.transform[5]).forEach(it=>{
     const y=it.transform[5];
@@ -446,9 +509,7 @@ function extractTextRows(items){
   bands.forEach(b=>{
     b.items.sort((a,c)=>a.transform[4]-c.transform[4]);
     const joined=b.items.map(it=>it.str).join('');
-    const key=normalizeKey(joined);
-    if(!key) return;
-    const jflag=joined.includes('除外')||joined.includes('樹脂');
+    const left=b.items.filter(it=>it.transform[4]<pageW*0.5).map(it=>it.str).join(' ');
     const nums=[];
     b.items.forEach(it=>{
       const s=(it.str||'').trim();
@@ -457,10 +518,8 @@ function extractTextRows(items){
         if(v>=300&&v<=2000000) nums.push({x:it.transform[4],v});
       }
     });
-    let price=null;
-    if(!jflag&&nums.length){ nums.sort((a,c)=>a.x-c.x);
-      price = nums.length>=2 ? nums[nums.length-2].v : nums[nums.length-1].v; }
-    out.push({key,price,flag:jflag?'除外':'',conf:jflag?'除':(price!=null?'文':'')});
+    nums.sort((a,c)=>a.x-c.x);
+    out.push({joined,left,nums});
   });
   return out;
 }
@@ -479,13 +538,12 @@ async function buildArtifacts(file, idx, progress){
     await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
     const pageImg=canvas.toDataURL('image/jpeg', 0.85);
 
-    // 文字データがあれば直接読み取り（誤読なし）。拾えなければOCRにフォールバック。
+    // 文字データがあれば行構造を取り出す（品番方式の判定はcomputeRowsで書類全体から行う）
     const tc=await page.getTextContent();
     const textLen=tc.items.reduce((s,it)=>s+((it.str||'').trim().length),0);
-    const trows = textLen>20 ? extractTextRows(tc.items) : [];
-    if(trows.length){
+    if(textLen>20){
       progress(`${p}/${pdf.numPages}ページ 文字データから読取り…`);
-      arts.push({textRows:trows, columns:[], pageImg});
+      arts.push({kind:'text', lines:extractTextLines(tc.items, viewport.width/RENDER_SCALE), columns:[], pageImg});
       continue;
     }
 
@@ -494,57 +552,130 @@ async function buildArtifacts(file, idx, progress){
     progress(`${p}/${pdf.numPages}ページ 文字認識…`);
     const {data}=await workerText.recognize(pre.cleanCanvas);
     const words=getWords(data);
-    const bands=[]; const kxs=[];
+    const raw=[];
     groupBands(words,16).forEach(b=>{
-      const joined=b.it.map(w=>w.text).join('');
-      const key=normalizeKey(joined);
-      if(!key) return;
-      const y0=Math.min(...b.it.map(w=>w.bbox.y0))-3;
-      const y1=Math.max(...b.it.map(w=>w.bbox.y1))+3;
-      bands.push({key,joined,y0,y1});
+      const digXs=[];
       b.it.forEach(w=>{
         const nd=((w.text||'').match(/\d/g)||[]).length;
-        if(nd>=3 && w.bbox.x0 < pre.W*0.45){ kxs.push(w.bbox.x0, w.bbox.x1); }
+        if(nd>=3 && w.bbox.x0 < pre.W*0.45){ digXs.push(w.bbox.x0, w.bbox.x1); }
       });
+      raw.push({
+        joined:b.it.map(w=>w.text).join(''),
+        left:b.it.filter(w=>w.bbox.x0<pre.W*0.5).map(w=>w.text).join(' '),
+        y0:Math.min(...b.it.map(w=>w.bbox.y0))-3,
+        y1:Math.max(...b.it.map(w=>w.bbox.y1))+3,
+        digXs});
     });
-    const kx0=kxs.length?Math.max(0,Math.min(...kxs)-12):(pre.W*0.02|0);
-    const kx1=kxs.length?Math.min(pre.W,Math.max(...kxs)+12):(pre.W*0.30|0);
-    arts.push({...pre, words, bands, kx0, kx1, pageImg});
+    arts.push({kind:'ocr', ...pre, words, raw, pageImg});
   }
   return arts;
 }
 
-// artifacts から単価を読み出して行リストにする（tankaIndex=null で自動）
+// artifacts から品番・単価を読み出して行リストにする（tankaIndex=null で自動）
 async function computeRows(arts, tankaIndex, progress){
   const rows={}; const order=[];
+  const put=(entry)=>{
+    const k=entry.key;
+    if(!(k in rows)){ rows[k]=entry; order.push(k); }
+    else if(rows[k].price==null && entry.price!=null){ rows[k]=entry; }
+  };
+
+  // ---- 品番の方式を書類全体から決める(既知形式 or 形状学習) ----
+  let knownCount=0;
+  arts.forEach(a=>{
+    const src=(a.kind==='text')?a.lines:a.raw;
+    (src||[]).forEach(x=>{ if(normalizeKey(x.joined)) knownCount++; });
+  });
+  let generic=null;
+  if(knownCount<3){
+    const corpus=[];
+    arts.forEach(a=>{ const src=(a.kind==='text')?a.lines:a.raw; (src||[]).forEach(x=>corpus.push(x.left)); });
+    generic=learnShape(corpus);
+  }
+  let lastFull=null;   // 「〃(同上)」行はページをまたいで直前の品番を継承
+  const keyOf=(left,joined)=>{
+    if(generic){
+      const k=genericKey(left,generic.shape,generic.allowSpace);
+      if(k){ lastFull=k; return k; }
+      const m=(left||'').trim().match(DITTO_RE);
+      if(m && lastFull && lastFull.includes('-')) return lastFull.slice(0,lastFull.lastIndexOf('-'))+'-'+m[1];
+      return null;
+    }
+    return normalizeKey(joined);
+  };
+  const stripParser = generic ? (t=>genericKey(t,generic.shape,generic.allowSpace)) : null;
+  if(generic){ // 品番列OCRの認識文字を学習した形に合わせる
+    const letters=generic.shape.includes('A')?corpusLetters(arts,generic):'';
+    await workerKey.setParameters({tessedit_char_whitelist:'0123456789-'+letters});
+  } else {
+    await workerKey.setParameters({tessedit_char_whitelist:'0123456789-M'});
+  }
+
   for(let pi=0; pi<arts.length; pi++){
     const a=arts[pi]; const W=a.W;
-    // 文字データから取得済みのページはそのまま使う（OCR不要・確実）
-    if(a.textRows){
-      for(const t of a.textRows){
-        const entry={key:t.key,price:t.price,conf:t.conf,flag:t.flag,cell:'',kconf:''};
-        if(!(t.key in rows)){ rows[t.key]=entry; order.push(t.key); }
-        else if(rows[t.key].price==null && t.price!=null){ rows[t.key]=entry; }
+    // --- 文字データのページ(確実) ---
+    if(a.kind==='text'){
+      for(const ln of a.lines){
+        const key=keyOf(ln.left,ln.joined);
+        if(!key) continue;
+        const jflag=ln.joined.includes('除外')||ln.joined.includes('樹脂');
+        let price=null;
+        if(!jflag && ln.nums.length){
+          price = ln.nums.length>=2 ? ln.nums[ln.nums.length-2].v : ln.nums[ln.nums.length-1].v;
+        }
+        put({key,price,conf:(jflag?'除':(price!=null?'文':'')),flag:(jflag?'除外':''),cell:'',kconf:''});
       }
       continue;
     }
-    progress(`${pi+1}/${arts.length}ページ 単価読取り…`);
-    let col=null;
+    progress(`${pi+1}/${arts.length}ページ 読取り…`);
+
+    // --- スキャンページ: 品番の行を決める ---
+    const bands=[]; const kxs=[];
+    for(const rb of a.raw){
+      const key=keyOf(rb.left,rb.joined);
+      if(!key) continue;
+      bands.push({key,joined:rb.joined,y0:rb.y0,y1:rb.y1});
+      (rb.digXs||[]).forEach(x=>kxs.push(x));
+    }
+    const kx0=kxs.length?Math.max(0,Math.min(...kxs)-12):(W*0.02|0);
+    const kx1=kxs.length?Math.min(W,Math.max(...kxs)+12):(W*0.30|0);
+
+    // --- 単価列(+単価が空欄の見積用の金額列フォールバック) ---
+    let col=null, kcol=null;
     if(tankaIndex!=null && a.columns.length>=2 && tankaIndex<a.columns.length-1){
       col=[a.columns[tankaIndex], a.columns[tankaIndex+1]];
     } else {
-      col=autoTankaColumn(a.columns,a.words,a.bands,W);
+      const r=autoTankaColumn(a.columns,a.words,bands,W,[kx0,kx1]);
+      col=r.tanka; kcol=r.kingaku;
+      if(!col && kcol){ col=kcol; kcol=null; }
     }
     let x0,x1;
     if(col){ x0=(W*col[0])|0; x1=(W*col[1])|0; } else { x0=(W*0.40)|0; x1=(W*0.90)|0; }
+    let cx1=x1;
 
     const gacList=(await ocrColumnStrip(a.gacCanvas,x0,x1,2)).concat(await ocrColumnStrip(a.gacCanvas,x0,x1,3));
     const clnList=(await ocrColumnStrip(a.cleanCanvas,x0,x1,2)).concat(await ocrColumnStrip(a.cleanCanvas,x0,x1,3));
-    // 品番列も加工なし/あり×2スケールで読んで多数決に使う
-    const keysG=(await ocrKeyStrip(a.gacCanvas,a.kx0,a.kx1,2)).concat(await ocrKeyStrip(a.gacCanvas,a.kx0,a.kx1,3));
-    const keysC=(await ocrKeyStrip(a.cleanCanvas,a.kx0,a.kx1,2)).concat(await ocrKeyStrip(a.cleanCanvas,a.kx0,a.kx1,3));
+    let kgacList=[], kclnList=[];
+    if(kcol){
+      const kxx0=(W*kcol[0])|0, kxx1=(W*kcol[1])|0; cx1=kxx1;
+      kgacList=(await ocrColumnStrip(a.gacCanvas,kxx0,kxx1,2)).concat(await ocrColumnStrip(a.gacCanvas,kxx0,kxx1,3));
+      kclnList=(await ocrColumnStrip(a.cleanCanvas,kxx0,kxx1,2)).concat(await ocrColumnStrip(a.cleanCanvas,kxx0,kxx1,3));
+    }
+    const readPrice=(y0,y1,rowText)=>{
+      let rv=rowValue(gacList,clnList,y0,y1,rowText);
+      if(rv.price==null && kcol){
+        // 単価欄が空欄 → 金額欄を読む(数量1なら金額=単価)。信頼度は1段下げる
+        rv=rowValue(kgacList,kclnList,y0,y1,'');
+        rv.conf={'◎':'○','○':'△'}[rv.conf]||rv.conf;
+      }
+      return rv;
+    };
 
-    for(const b of a.bands){
+    // --- 品番列も加工なし/あり×2スケールで読んで多数決 ---
+    const keysG=(await ocrKeyStrip(a.gacCanvas,kx0,kx1,2,stripParser)).concat(await ocrKeyStrip(a.gacCanvas,kx0,kx1,3,stripParser));
+    const keysC=(await ocrKeyStrip(a.cleanCanvas,kx0,kx1,2,stripParser)).concat(await ocrKeyStrip(a.cleanCanvas,kx0,kx1,3,stripParser));
+
+    for(const b of bands){
       const jflag = b.joined.includes('除外')||b.joined.includes('樹脂');
       // 品番の多数決: 本文の読み1票 + 品番列の読み(最大4票)
       const votes={}; votes[b.key]=1;
@@ -555,20 +686,18 @@ async function computeRows(arts, tankaIndex, progress){
       const kconf=n>=3?'◎':(n===2?'○':'△');
       let price=null, conf='', cell='';
       if(!jflag){
-        const rv=rowValue(gacList,clnList,b.y0,b.y1,b.joined);
+        const rv=readPrice(b.y0,b.y1,b.joined);
         price=rv.price; conf=rv.conf;
-        cell=cropDataUrl(a.gacCanvas,x0,b.y0,x1,b.y1);
+        cell=cropDataUrl(a.gacCanvas,x0,b.y0,cx1,b.y1);
       }
-      const entry={key:top,price,conf:(jflag?'除':conf),flag:(jflag?'除外':''),cell,kconf:(jflag?'':kconf)};
-      if(!(top in rows)){ rows[top]=entry; order.push(top); }
-      else if(rows[top].price==null && price!=null){ rows[top]=entry; }
+      put({key:top,price,conf:(jflag?'除':conf),flag:(jflag?'除外':''),cell,kconf:(jflag?'':kconf)});
     }
 
-    // 本文OCRが行ごと見落とした品番を、品番列の読みから拾い直す
+    // --- 本文OCRが行ごと見落とした品番を、品番列の読みから拾い直す ---
     // (加工なし/あり両方で同じ品番・同じ高さに出た時だけ = 保守的)
-    const rowHs=a.bands.map(b=>b.y1-b.y0).sort((p,q)=>p-q);
+    const rowHs=bands.map(b=>b.y1-b.y0).sort((p,q)=>p-q);
     const rowH=rowHs.length?rowHs[(rowHs.length/2)|0]:40;
-    const covered=cy=>a.bands.some(b=>b.y0-4<=cy&&cy<=b.y1+4);
+    const covered=cy=>bands.some(b=>b.y0-4<=cy&&cy<=b.y1+4);
     const pend={};
     keysG.forEach(h=>{ if(!covered(h.cy)) (pend[h.key]=pend[h.key]||[]).push({s:'g',cy:h.cy}); });
     keysC.forEach(h=>{ if(!covered(h.cy)) (pend[h.key]=pend[h.key]||[]).push({s:'c',cy:h.cy}); });
@@ -578,11 +707,9 @@ async function computeRows(arts, tankaIndex, progress){
       if(hs.length>=2 && srcs.has('g') && srcs.has('c') && Math.max(...cys)-Math.min(...cys)<=rowH){
         const cy=cys.reduce((s,v)=>s+v,0)/cys.length;
         const ry0=cy-rowH/2, ry1=cy+rowH/2;
-        const rv=rowValue(gacList,clnList,ry0,ry1,'');
-        const entry={key:k,price:rv.price,conf:rv.conf,flag:'',
-                     cell:cropDataUrl(a.gacCanvas,x0,ry0,x1,ry1),kconf:'○'};
-        if(!(k in rows)){ rows[k]=entry; order.push(k); }
-        else if(rows[k].price==null && rv.price!=null){ rows[k]=entry; }
+        const rv=readPrice(ry0,ry1,'');
+        put({key:k,price:rv.price,conf:rv.conf,flag:'',
+             cell:cropDataUrl(a.gacCanvas,x0,ry0,cx1,ry1),kconf:'○'});
       }
     }
   }
@@ -590,25 +717,37 @@ async function computeRows(arts, tankaIndex, progress){
   fixPrefixOutliers(arr);   // 品番の自動照合・補正
   return arr;
 }
+// 学習した品番に含まれる英字を集める(品番列OCRの認識対象文字に使う)
+function corpusLetters(arts, generic){
+  const set=new Set();
+  arts.forEach(a=>{
+    const src=(a.kind==='text')?a.lines:a.raw;
+    (src||[]).forEach(x=>{
+      const k=genericKey(x.left,generic.shape,generic.allowSpace);
+      if(k) for(const c of k){ if(/[A-Z]/.test(c)) set.add(c); }
+    });
+  });
+  return [...set].join('');
+}
 
-// 図番形式の品番を同一見積内で照合し、浮いた先頭5桁を自動補正する。
-// 例: 他が全て 26041-… なのに1件だけ 06041-… → 1桁違いなら 26041 に補正。
-// 条件は保守的に: 多数派3件以上・外れ値は1件だけ・差は1桁のみ・補正先と衝突しない。
+// 品番の先頭グループ(例: 26041 / OM6283)を同一見積内で照合し、浮いた1件を自動補正。
+// 条件は保守的: 先頭5文字以上・多数派3件以上・外れ値1件のみ・差1文字・衝突しない。
+// (107-M001等の短い先頭は対象外)
 function fixPrefixOutliers(rowsArr){
-  const figRe=/^\d{5}-\d{2}-\d{3}$/;
-  const figs=rowsArr.filter(r=>figRe.test(r.key));
-  if(figs.length<4) return;
+  const first=k=>k.split('-')[0];
+  const elig=rowsArr.filter(r=>r.key.includes('-') && first(r.key).length>=5);
+  if(elig.length<4) return;
   const cnt={};
-  figs.forEach(r=>{const p=r.key.slice(0,5);cnt[p]=(cnt[p]||0)+1;});
+  elig.forEach(r=>{const p=first(r.key);cnt[p]=(cnt[p]||0)+1;});
   let dom=null,n=0; for(const p in cnt){ if(cnt[p]>n){n=cnt[p];dom=p;} }
   if(n<3) return;
   const keys=new Set(rowsArr.map(r=>r.key));
-  figs.forEach(r=>{
-    const p=r.key.slice(0,5);
-    if(p===dom||cnt[p]!==1) return;
-    let diff=0; for(let i=0;i<5;i++) if(p[i]!==dom[i]) diff++;
+  elig.forEach(r=>{
+    const p=first(r.key);
+    if(p===dom||cnt[p]!==1||p.length!==dom.length) return;
+    let diff=0; for(let i=0;i<p.length;i++) if(p[i]!==dom[i]) diff++;
     if(diff!==1) return;
-    const nk=dom+r.key.slice(5);
+    const nk=dom+r.key.slice(p.length);
     if(keys.has(nk)) return;
     r.keyFixed=r.key;      // 元の読み値を保持
     r.key=nk; keys.add(nk);
@@ -674,12 +813,23 @@ function renderInputs(){
       <label>倍率<input type="number" step="0.01" min="0" value="${c.multiplier}" data-i="${i}" class="mult-input"></label>
       <div class="cc-stat">品番 ${c.rows.length} 件 / 単価読取 ${priced} 件
         ${needCheck(c)?`<span class="cc-warn">（要確認 ${needCheck(c)} 件）</span>`:''}</div>
+      ${c.rows.length===0?`<div class="cc-warn" style="font-size:12px;margin:6px 0">
+        品番を自動検出できませんでした（手書きの見積書などはOCRで読めません）。<br>
+        下のボタンで行を手入力すると、比較・倍率計算・印刷は使えます。</div>`:''}
+      <button class="addrow-btn no-print" data-i="${i}">＋ 行を手入力で追加</button>
       <button class="col-btn no-print" data-i="${i}">単価列を指定して読み直す</button>`;
     box.appendChild(div);
   });
   box.querySelectorAll('.name-input').forEach(el=>el.addEventListener('input',e=>{COMPANIES[e.target.dataset.i].name=e.target.value;renderTable();}));
   box.querySelectorAll('.mult-input').forEach(el=>el.addEventListener('input',e=>{COMPANIES[e.target.dataset.i].multiplier=parseFloat(e.target.value)||0;renderTable();}));
   box.querySelectorAll('.col-btn').forEach(el=>el.addEventListener('click',e=>openColumnPicker(parseInt(e.target.dataset.i,10))));
+  box.querySelectorAll('.addrow-btn').forEach(el=>el.addEventListener('click',e=>{
+    const c=COMPANIES[parseInt(e.target.dataset.i,10)];
+    const key=(prompt('品番を入力してください（例: OM6283-08-001）')||'').trim();
+    if(!key) return;
+    if(!c.rows.some(r=>r.key===key)) c.rows.push({key,price:null,conf:'',flag:'',cell:'',kconf:''});
+    renderInputs(); renderTable();
+  }));
   box.querySelectorAll('.cc-thumb').forEach(el=>el.addEventListener('click',e=>openPdfPanel(e.target.dataset.i)));
   box.querySelectorAll('.pdf-view-btn').forEach(el=>el.addEventListener('click',e=>openPdfPanel(e.target.dataset.i)));
 }
