@@ -103,7 +103,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-07-09p</span>
+  <span class="tag" style="margin-left:auto">版 2026-07-09q</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -455,9 +455,12 @@ async function ocrKeyStrip(canvas, x0, x1, scale, parser){
   return res;
 }
 
-function rowValue(gacList, clnList, y0, y1, rowText){
-  const inRange=a=>a.filter(r=>r.cy>=y0&&r.cy<=y1).map(r=>r.value);
-  const gac=inRange(gacList), cln=inRange(clnList), txt=parsePrices(rowText||'');
+function rowValue(gacList, clnList, y0, y1, rowText, ban){
+  // ban: その行の品番の数字列。品番の先頭数字を価格と誤認した票を弾く
+  // (例: OM6283-… の行で 62830 が価格として読まれた場合)
+  const ok=v=>{const s=String(v);return !(ban && s.length>=4 && ban.indexOf(s)===0);};
+  const inRange=a=>a.filter(r=>r.cy>=y0&&r.cy<=y1&&ok(r.value)).map(r=>r.value);
+  const gac=inRange(gacList), cln=inRange(clnList), txt=parsePrices(rowText||'').filter(ok);
   const all=gac.concat(cln,txt);
   if(all.length===0) return {price:null,conf:''};
   const votes={}; all.forEach(v=>votes[v]=(votes[v]||0)+1);
@@ -474,7 +477,8 @@ function autoTankaColumn(columns, words, bands, W, keyX){
   if(columns.length<2) return {tanka:null,kingaku:null};
   const gaps=[]; for(let i=0;i<columns.length-1;i++) gaps.push([columns[i],columns[i+1]]);
   const numWords=words.filter(w=>/\d{3,}/.test((w.text||'').replace(/[,.]/g,'')))
-    .map(w=>({cx:(w.bbox.x0+w.bbox.x1)/2/W, cy:(w.bbox.y0+w.bbox.y1)/2}));
+    .map(w=>({cx:(w.bbox.x0+w.bbox.x1)/2/W, cy:(w.bbox.y0+w.bbox.y1)/2, px:(w.bbox.x0+w.bbox.x1)/2}))
+    .filter(nw=>!(keyX && nw.px>=keyX[0] && nw.px<=keyX[1]));   // 品番列内の数字は除外
   const hits=gaps.map(()=>0);
   const sample=bands.slice(0,20);
   gaps.forEach((g,gi)=>{
@@ -482,7 +486,7 @@ function autoTankaColumn(columns, words, bands, W, keyX){
     if(keyX){ // 品番列と半分以上重なる列は対象外
       const gx0=g[0]*W, gx1=g[1]*W;
       const ov=Math.min(gx1,keyX[1])-Math.max(gx0,keyX[0]);
-      if(ov>(gx1-gx0)*0.5) return;
+      if(ov>(gx1-gx0)*0.3) return;
     }
     sample.forEach(b=>{
       if(numWords.some(nw=>nw.cx>=g[0]&&nw.cx<=g[1]&&nw.cy>=b.y0&&nw.cy<=b.y1)) hits[gi]++;
@@ -661,11 +665,11 @@ async function computeRows(arts, tankaIndex, progress){
       kgacList=(await ocrColumnStrip(a.gacCanvas,kxx0,kxx1,2)).concat(await ocrColumnStrip(a.gacCanvas,kxx0,kxx1,3));
       kclnList=(await ocrColumnStrip(a.cleanCanvas,kxx0,kxx1,2)).concat(await ocrColumnStrip(a.cleanCanvas,kxx0,kxx1,3));
     }
-    const readPrice=(y0,y1,rowText)=>{
-      let rv=rowValue(gacList,clnList,y0,y1,rowText);
+    const readPrice=(y0,y1,rowText,ban)=>{
+      let rv=rowValue(gacList,clnList,y0,y1,rowText,ban);
       if(rv.price==null && kcol){
         // 単価欄が空欄 → 金額欄を読む(数量1なら金額=単価)。信頼度は1段下げる
-        rv=rowValue(kgacList,kclnList,y0,y1,'');
+        rv=rowValue(kgacList,kclnList,y0,y1,'',ban);
         rv.conf={'◎':'○','○':'△'}[rv.conf]||rv.conf;
       }
       return rv;
@@ -686,7 +690,7 @@ async function computeRows(arts, tankaIndex, progress){
       const kconf=n>=3?'◎':(n===2?'○':'△');
       let price=null, conf='', cell='';
       if(!jflag){
-        const rv=readPrice(b.y0,b.y1,b.joined);
+        const rv=readPrice(b.y0,b.y1,b.joined,top.replace(/\D/g,''));
         price=rv.price; conf=rv.conf;
         cell=cropDataUrl(a.gacCanvas,x0,b.y0,cx1,b.y1);
       }
@@ -707,7 +711,7 @@ async function computeRows(arts, tankaIndex, progress){
       if(hs.length>=2 && srcs.has('g') && srcs.has('c') && Math.max(...cys)-Math.min(...cys)<=rowH){
         const cy=cys.reduce((s,v)=>s+v,0)/cys.length;
         const ry0=cy-rowH/2, ry1=cy+rowH/2;
-        const rv=readPrice(ry0,ry1,'');
+        const rv=readPrice(ry0,ry1,'',k.replace(/\D/g,''));
         put({key:k,price:rv.price,conf:rv.conf,flag:'',
              cell:cropDataUrl(a.gacCanvas,x0,ry0,cx1,ry1),kconf:'○'});
       }

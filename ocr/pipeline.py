@@ -257,12 +257,17 @@ def _ocr_key_strip(img, x0, x1, scale=2, whitelist='0123456789-M', parser=None):
     return res
 
 
-def _row_value(strip_gac, strip_clean, y0, y1, row_text=''):
+def _row_value(strip_gac, strip_clean, y0, y1, row_text='', ban=''):
     """1行の単価を、加工なし/あり(各2スケール)の列OCR結果から多数決で決める。
-    ◎=両画像が一致 or 合計3票以上 / ○=2票 / △=1票(怪しい)。"""
-    gac = [v for (cy, v) in strip_gac if y0 <= cy <= y1]
-    cln = [v for (cy, v) in strip_clean if y0 <= cy <= y1]
-    txt = _parse_prices(row_text)
+    ◎=両画像が一致 or 合計3票以上 / ○=2票 / △=1票(怪しい)。
+    ban: その行の品番の数字列。品番の先頭数字を価格と誤認した票を弾く
+    (例: OM6283-… の行で 62830 が価格として読まれた場合)。"""
+    def _ok(v):
+        s = str(v)
+        return not (ban and len(s) >= 4 and ban.startswith(s))
+    gac = [v for (cy, v) in strip_gac if y0 <= cy <= y1 and _ok(v)]
+    cln = [v for (cy, v) in strip_clean if y0 <= cy <= y1 and _ok(v)]
+    txt = [v for v in _parse_prices(row_text) if _ok(v)]
     allv = gac + cln + txt
     if not allv:
         return None, ''
@@ -422,9 +427,9 @@ def _auto_tanka_column(columns, img, data_bands, W, key_x=None):
         x0, x1 = int(W * a), int(W * b)
         if x1 - x0 < W * 0.03:            # 細すぎる列は対象外
             continue
-        if key_x is not None:             # 品番列と半分以上重なる列は対象外
+        if key_x is not None:             # 品番列と3割以上重なる列は対象外
             ov = min(x1, key_x[1]) - max(x0, key_x[0])
-            if ov > (x1 - x0) * 0.5:
+            if ov > (x1 - x0) * 0.3:
                 continue
         strip = _ocr_column_strip(img, x0, x1)
         for band in bands:
@@ -630,11 +635,11 @@ def extract_file(pdf_path, tanka_col_index=None):
             kstrip_clean = _ocr_column_strip(clean, kxx0, kxx1, 2) + _ocr_column_strip(clean, kxx0, kxx1, 3)
             cx1 = kxx1                          # 確認用画像は金額列まで含めて切り出す
 
-        def _read_price(y0, y1, row_text):
-            price, conf = _row_value(strip_gac, strip_clean, y0, y1, row_text)
+        def _read_price(y0, y1, row_text, ban=''):
+            price, conf = _row_value(strip_gac, strip_clean, y0, y1, row_text, ban)
             if price is None and kcol is not None:
                 # 単価欄が空欄 → 金額欄を読む(数量1なら金額=単価)。信頼度は1段下げる
-                price, conf = _row_value(kstrip_gac, kstrip_clean, y0, y1, '')
+                price, conf = _row_value(kstrip_gac, kstrip_clean, y0, y1, '', ban)
                 conf = {'◎': '○', '○': '△'}.get(conf, conf)
             return price, conf
 
@@ -665,7 +670,7 @@ def extract_file(pdf_path, tanka_col_index=None):
             key = top
             price, conf, cell = None, '', ''
             if not jflag:
-                price, conf = _read_price(y0, y1, joined)
+                price, conf = _read_price(y0, y1, joined, re.sub(r'\D', '', key))
                 cell = _crop_b64(gac, x0, cx1, y0, y1)
             _add(key, price, ('除' if jflag else conf), '除外' if jflag else '', cell,
                  '' if jflag else kconf)
@@ -687,7 +692,7 @@ def extract_file(pdf_path, tanka_col_index=None):
             if len(hs) >= 2 and {'g', 'c'} <= srcs and max(cys) - min(cys) <= row_h:
                 cy = sum(cys) / len(cys)
                 ry0, ry1 = int(cy - row_h / 2), int(cy + row_h / 2)
-                price, conf = _read_price(ry0, ry1, '')
+                price, conf = _read_price(ry0, ry1, '', re.sub(r'\D', '', k))
                 cell = _crop_b64(gac, x0, cx1, ry0, ry1)
                 _add(k, price, conf, '', cell, '○')
 
