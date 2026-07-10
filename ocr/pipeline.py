@@ -411,13 +411,16 @@ def _columns_to_gaps(columns):
     return [(columns[i], columns[i + 1]) for i in range(len(columns) - 1)]
 
 
-def _auto_tanka_column(columns, img, data_bands, W, key_x=None):
+def _auto_tanka_column(columns, imgs, data_bands, W, key_x=None):
     """検出した列の中から「単価列」を自動で選ぶ。
     価格が入っている列が2つ以上 → 右から2番目が単価(一番右は金額)。
     1つだけ(単価列がほぼ空欄で金額列だけの見積) → その左隣を単価、
     その列を金額としてフォールバック用に返す。
+    imgs: 判定に使う画像のリスト(加工なし/あり両方を渡すと薄いFAXでも安定)。
     key_x=(kx0,kx1): 品番列の範囲。品番の数字を価格と誤認しないよう候補から除外。
     返り値: (単価gap or None, フォールバック用の金額gap or None)"""
+    if not isinstance(imgs, (list, tuple)):
+        imgs = [imgs]
     gaps = _columns_to_gaps(columns)
     if not gaps:
         return None, None
@@ -431,11 +434,16 @@ def _auto_tanka_column(columns, img, data_bands, W, key_x=None):
             ov = min(x1, key_x[1]) - max(x0, key_x[0])
             if ov > (x1 - x0) * 0.3:
                 continue
-        strip = _ocr_column_strip(img, x0, x1)
-        for band in bands:
-            y0, y1 = band[2], band[3]
-            if any(y0 <= cy <= y1 for (cy, _v) in strip):
-                hits[gi] += 1
+        best = 0
+        for img in imgs:                  # 画像ごとにヒット数を数え、良い方を採用
+            strip = _ocr_column_strip(img, x0, x1)
+            h = 0
+            for band in bands:
+                y0, y1 = band[2], band[3]
+                if any(y0 <= cy <= y1 for (cy, _v) in strip):
+                    h += 1
+            best = max(best, h)
+        hits[gi] = best
     n = max(1, len(bands))
     numeric = [gi for gi, h in enumerate(hits) if h >= n * 0.4]
     if not numeric:
@@ -578,13 +586,56 @@ def extract_file(pdf_path, tanka_col_index=None):
             return None
         return normalize_key(joined)
 
-    # ---- 第3段: ページごとに読み取り ----
+    # ---- 第3段a: 各ページの品番行と列選択を決める ----
     for a in arts:
-        if a['kind'] == 'text':                 # 文字データから直接(確実)
+        if a['kind'] == 'text':
+            a['rows2'] = []
             for ln in a['lines']:
                 key = _key_of(ln['left'], ln['joined'])
-                if not key:
-                    continue
+                if key:
+                    a['rows2'].append((key, ln))
+            continue
+        W, raw_bands = a['W'], a['raw']
+        data_bands = []
+        for rb in raw_bands:
+            key = _key_of(rb['left'], rb['joined'])
+            if key:
+                data_bands.append((key, rb['joined'], rb['y0'], rb['y1'], rb['items']))
+        # 品番列のx範囲を推定
+        kxs = []
+        for _key, _j, _y0, _y1, items in data_bands:
+            for x in items:
+                if x['l'] < W * 0.45 and sum(ch.isdigit() for ch in x['text']) >= 3:
+                    kxs += [x['l'], x['l'] + x['w']]
+        if kxs:
+            kx = (max(0, min(kxs) - 12), min(W, max(kxs) + 12))
+        else:
+            kx = (int(W * 0.02), int(W * 0.30))
+        col = _pick_tanka_column(a['columns'], tanka_col_index)
+        kcol = None                             # 単価が空欄の見積用: 金額列フォールバック
+        if col is None:
+            col, kcol = _auto_tanka_column(a['columns'], [a['gac'], a['clean']],
+                                           data_bands, W, kx)
+        a['bands2'], a['kx'], a['col'], a['kcol'] = data_bands, kx, col, kcol
+
+    # 列のコンセンサス: 同じ書類はレイアウトが同じなので、
+    # 列選択に失敗したページには成功したページの選択(最頻値)を使う
+    picked = [(a['col'], a['kcol']) for a in arts
+              if a['kind'] == 'ocr' and a['col'] is not None]
+    if picked:
+        rounded = Counter((tuple(round(v, 3) for v in c),
+                           tuple(round(v, 3) for v in k) if k else None)
+                          for c, k in picked)
+        (bc, bk), _n = rounded.most_common(1)[0]
+        for a in arts:
+            if a['kind'] == 'ocr' and a['col'] is None:
+                a['col'] = list(bc)
+                a['kcol'] = list(bk) if bk else None
+
+    # ---- 第3段b: ページごとに読み取り ----
+    for a in arts:
+        if a['kind'] == 'text':                 # 文字データから直接(確実)
+            for key, ln in a['rows2']:
                 jflag = '除外' in ln['joined'] or '樹脂' in ln['joined']
                 price = None
                 if not jflag and ln['nums']:
@@ -596,28 +647,8 @@ def extract_file(pdf_path, tanka_col_index=None):
 
         # --- スキャン画像ページ ---
         g, clean, gac = a['g'], a['clean'], a['gac']
-        columns, W, raw_bands = a['columns'], a['W'], a['raw']
-        data_bands = []
-        for rb in raw_bands:
-            key = _key_of(rb['left'], rb['joined'])
-            if key:
-                data_bands.append((key, rb['joined'], rb['y0'], rb['y1'], rb['items']))
-
-        # 品番列のx範囲を推定
-        kxs = []
-        for _key, _j, _y0, _y1, items in data_bands:
-            for x in items:
-                if x['l'] < W * 0.45 and sum(ch.isdigit() for ch in x['text']) >= 3:
-                    kxs += [x['l'], x['l'] + x['w']]
-        if kxs:
-            kx0, kx1 = max(0, min(kxs) - 12), min(W, max(kxs) + 12)
-        else:
-            kx0, kx1 = int(W * 0.02), int(W * 0.30)
-
-        col = _pick_tanka_column(columns, tanka_col_index)
-        kcol = None                             # 単価が空欄の見積用: 金額列フォールバック
-        if col is None:
-            col, kcol = _auto_tanka_column(columns, gac, data_bands, W, (kx0, kx1))
+        W, data_bands = a['W'], a['bands2']
+        (kx0, kx1), col, kcol = a['kx'], a['col'], a['kcol']
         if col is None and kcol is not None:    # 金額列しか無い場合はそれを単価扱い
             col, kcol = kcol, None
         if col is not None:
@@ -636,7 +667,10 @@ def extract_file(pdf_path, tanka_col_index=None):
             cx1 = kxx1                          # 確認用画像は金額列まで含めて切り出す
 
         def _read_price(y0, y1, row_text, ban=''):
-            price, conf = _row_value(strip_gac, strip_clean, y0, y1, row_text, ban)
+            # 金額フォールバックがある時は、行テキストの票(数量が癒着しやすい)は使わず
+            # 列の読みだけで判定する
+            price, conf = _row_value(strip_gac, strip_clean, y0, y1,
+                                     '' if kcol is not None else row_text, ban)
             if price is None and kcol is not None:
                 # 単価欄が空欄 → 金額欄を読む(数量1なら金額=単価)。信頼度は1段下げる
                 price, conf = _row_value(kstrip_gac, kstrip_clean, y0, y1, '', ban)
@@ -656,13 +690,36 @@ def extract_file(pdf_path, tanka_col_index=None):
         keys_c = (_ocr_key_strip(clean, kx0, kx1, 2, wl, parser)
                   + _ocr_key_strip(clean, kx0, kx1, 3, wl, parser))
 
-        for key, joined, y0, y1, _items in data_bands:
+        # 列読みの各ヒットは「最も近い行」1つだけに割り当てる。
+        # (行の縦範囲が広がった時に隣の行の値を取り込む誤りを防ぐ)
+        row_hs = [y1 - y0 for _, _, y0, y1, _i in data_bands]
+        row_h = int(np.median(row_hs)) if row_hs else 40
+        centers = [((y0 + y1) / 2) for _, _, y0, y1, _i in data_bands]
+        def _assign(hits):
+            per = [[] for _ in data_bands]
+            for cy, v in hits:
+                best, bd = None, 1e18
+                for idx, c in enumerate(centers):
+                    d = abs(cy - c)
+                    if d < bd:
+                        bd, best = d, idx
+                if best is not None and bd <= row_h * 0.7:
+                    per[best].append((centers[best], v))
+                # どの行にも近くないヒットは行帰属なし(拾い直しの候補になる)
+            return per
+        per_sg = _assign(strip_gac)
+        per_sc = _assign(strip_clean)
+        per_ksg = _assign(kstrip_gac)
+        per_ksc = _assign(kstrip_clean)
+        per_kg = _assign(keys_g)
+        per_kc = _assign(keys_c)
+
+        for bi, (key, joined, y0, y1, _items) in enumerate(data_bands):
             jflag = '除外' in joined or '樹脂' in joined
             # 品番の多数決: 本文の読み1票 + 品番列の読み(最大4票)
             votes = Counter([key])
-            for cy, k in keys_g + keys_c:
-                if y0 <= cy <= y1:
-                    votes[k] += 1
+            for _cy, k in per_kg[bi] + per_kc[bi]:
+                votes[k] += 1
             top, n = votes.most_common(1)[0]
             if votes[key] == n:                 # 同数なら本文の読みを優先
                 top = key
@@ -670,15 +727,19 @@ def extract_file(pdf_path, tanka_col_index=None):
             key = top
             price, conf, cell = None, '', ''
             if not jflag:
-                price, conf = _read_price(y0, y1, joined, re.sub(r'\D', '', key))
+                ban = re.sub(r'\D', '', key)
+                cy0, cy1 = centers[bi] - 1, centers[bi] + 1
+                price, conf = _row_value(per_sg[bi], per_sc[bi], cy0, cy1,
+                                         '' if kcol is not None else joined, ban)
+                if price is None and kcol is not None:
+                    price, conf = _row_value(per_ksg[bi], per_ksc[bi], cy0, cy1, '', ban)
+                    conf = {'◎': '○', '○': '△'}.get(conf, conf)
                 cell = _crop_b64(gac, x0, cx1, y0, y1)
             _add(key, price, ('除' if jflag else conf), '除外' if jflag else '', cell,
                  '' if jflag else kconf)
 
         # 本文OCRが行ごと見落とした品番を、品番列の読みから拾い直す
         # (加工なし/あり両方の読みで同じ品番・同じ高さに出た時だけ = 保守的)
-        row_hs = [y1 - y0 for _, _, y0, y1, _i in data_bands]
-        row_h = int(np.median(row_hs)) if row_hs else 40
         def _covered(cy):
             return any(by0 - 4 <= cy <= by1 + 4 for _, _, by0, by1, _i in data_bands)
         pend = {}
