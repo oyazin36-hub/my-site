@@ -52,6 +52,8 @@ tbody tr:nth-child(even){background:var(--lblue);}
 .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .muted{color:#999;}.min{background:var(--green-bg);color:var(--green);font-weight:bold;}
 .cheap{text-align:center;color:var(--green);font-weight:bold;white-space:nowrap;}
+.total-row td{background:var(--navy);color:#fff;font-weight:bold;border-color:#3a577f;}
+.total-row .tot-sub{font-size:10px;color:#bcd3ee;font-weight:normal;}
 .need{color:var(--orange);}.warncell{background:var(--yellow);}
 .unit{position:relative;cursor:pointer;}
 .unit .ok{color:var(--green);font-size:11px;float:left;}.unit .mid{color:var(--blue);font-size:11px;float:left;}
@@ -95,6 +97,7 @@ th,td{padding:3px 5px;font-size:10px;}.cell-img{display:none!important;}
 tbody tr:nth-child(even){background:#eef4fb!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 .min{background:#e3f6ea!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.total-row td{background:#1f3a5f!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
 </style>
 </head>
@@ -103,7 +106,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-07-10r</span>
+  <span class="tag" style="margin-left:auto">版 2026-07-10s</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -919,10 +922,18 @@ function renderTable(){
   head+='<th>最安</th></tr>';
   document.getElementById('compare-head').innerHTML=head;
   let body='';
+  // 各社の合計(単価がある行のみ) と 最安合計
+  const sumUnit=COMPANIES.map(()=>0), sumFin=COMPANIES.map(()=>0), cnt=COMPANIES.map(()=>0);
+  let sumMin=0, cntMin=0;
   keys.forEach(key=>{
     const finals=[];
     COMPANIES.forEach((c,ci)=>{const r=lookup[ci][key];if(r&&r.price!=null)finals.push({ci,val:roundUp(r.price*c.multiplier,UNIT_ROUND)});});
     const min=finals.length?Math.min(...finals.map(f=>f.val)):null;
+    COMPANIES.forEach((c,ci)=>{
+      const r=lookup[ci][key];
+      if(r&&r.price!=null){ sumUnit[ci]+=r.price; sumFin[ci]+=roundUp(r.price*c.multiplier,UNIT_ROUND); cnt[ci]++; }
+    });
+    if(min!=null){ sumMin+=min; cntMin++; }
     const crows=COMPANIES.map((c,ci)=>lookup[ci][key]);
     const fixedFrom=crows.filter(r=>r&&r.keyFixed).map(r=>r.keyFixed);
     const fixBadge=fixedFrom.length?`<span class="warn" title="品番を自動補正（読取り値: ${escapeHtml(fixedFrom.join(', '))}）">※</span>`:'';
@@ -947,6 +958,16 @@ function renderTable(){
     tr+=`<td class="cheap">${min!=null?escapeHtml(minCompanies.join(', ')):'—'}</td></tr>`;
     body+=tr;
   });
+  // ---- 合計行(単価がある行だけの合計。件数が違う社同士は単純比較できない点に注意) ----
+  if(keys.length){
+    let tot=`<tr class="total-row"><td>合計</td>`;
+    COMPANIES.forEach((c,ci)=>{
+      tot+=`<td class="num">${cnt[ci]?yen(sumUnit[ci]):''}<br><span class="tot-sub">${cnt[ci]?cnt[ci]+'件':'—'}</span></td>`;
+      tot+=`<td class="num">${cnt[ci]?yen(sumFin[ci]):''}<br><span class="tot-sub">×${c.multiplier}</span></td>`;
+    });
+    tot+=`<td class="num">${cntMin?yen(sumMin):''}<br><span class="tot-sub">${cntMin?'最安計('+cntMin+'件)':''}</span></td></tr>`;
+    body+=tot;
+  }
   document.getElementById('compare-body').innerHTML=body;
   bindEdit();
   bindEditPn();
