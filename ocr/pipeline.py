@@ -583,7 +583,8 @@ def extract_file(pdf_path, tanka_col_index=None):
             m = _DITTO.match(left.strip())
             if m and last_full[0] and '-' in last_full[0]:
                 return last_full[0].rsplit('-', 1)[0] + '-' + m.group(1)
-            return None
+            # 学習した形に合わなくても、既知形式ならば拾う(検出が減る事故の保険)
+            return normalize_key(joined)
         return normalize_key(joined)
 
     # ---- 第3段a: 各ページの品番行と列選択を決める ----

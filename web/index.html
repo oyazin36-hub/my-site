@@ -106,7 +106,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-07-10s</span>
+  <span class="tag" style="margin-left:auto">版 2026-07-11t</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -606,7 +606,8 @@ async function computeRows(arts, tankaIndex, progress){
       if(k){ lastFull=k; return k; }
       const m=(left||'').trim().match(DITTO_RE);
       if(m && lastFull && lastFull.includes('-')) return lastFull.slice(0,lastFull.lastIndexOf('-'))+'-'+m[1];
-      return null;
+      // 学習した形に合わなくても、既知形式ならば拾う(検出が減る事故の保険)
+      return normalizeKey(joined);
     }
     return normalizeKey(joined);
   };
@@ -836,6 +837,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e)=>{
       log(`--- ${name}: ${f.name} ---`);
       const arts=await buildArtifacts(f,i,(s)=>setStatus(`${name}: ${s}`));
       const rows=await computeRows(arts,null,(s)=>setStatus(`${name}: ${s}`));
+      releaseArts(arts);   // 高解像度画像を解放(複数社読むとメモリ不足で後の会社の認識が落ちるのを防ぐ)
       const priced=rows.filter(r=>r.price!=null).length;
       log(`${name}: 品番${rows.length}件 / 単価読取${priced}件`);
       COMPANIES.push({id:i, file:f, arts, filename:f.name, name, multiplier:1.0,
@@ -1051,10 +1053,21 @@ async function applyColumn(){
   const c=COMPANIES[i]; const btn=document.getElementById('col-apply');
   btn.disabled=true; btn.textContent='読み直し中…';
   try{
-    c.rows=await computeRows(c.arts, pickState.selected, ()=>{});
+    // 高解像度画像は読取り後に解放しているので、元のPDFから作り直して読む
+    const arts=await buildArtifacts(c.file, pickState.ci, ()=>{});
+    c.rows=await computeRows(arts, pickState.selected, ()=>{});
+    releaseArts(arts);
+    c.arts=arts; c.columns=arts[0]?arts[0].columns:[];
     renderInputs(); renderTable(); closeColPicker();
   }catch(e){ alert('エラー: '+e.message); }
   finally{ btn.textContent='この列で読み直す'; }
+}
+// 読取りが終わったページの高解像度キャンバス等を解放する(表示用のpageImgは残す)
+function releaseArts(arts){
+  (arts||[]).forEach(a=>{
+    a.gacCanvas=null; a.cleanCanvas=null; a.words=null; a.raw=null; a.lines=null;
+    a.bands2=null; a.rows2=null;
+  });
 }
 function closeColPicker(){document.getElementById('col-modal').classList.add('hidden');}
 </script>
