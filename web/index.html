@@ -106,7 +106,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-07-11t</span>
+  <span class="tag" style="margin-left:auto">版 2026-07-16u</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -185,10 +185,10 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 const RENDER_SCALE = 3.5;        // PDF→画像の拡大率(高いほど数字の誤読が減る)
 const UNIT_READ = 10;            // 単価は10円きざみ
 const UNIT_ROUND = 100;          // 計算結果は100円単位で切り上げ
-const PRICE_MIN = 300, PRICE_MAX = 200000;
+const PRICE_MIN = 300, PRICE_MAX = 999999;
 
 // 品番の形式(2種): ①M形式 WIDRY07-107-M001 / 107-M001  ②図番形式 26041-20-001
-const PN_RE = /(?:[A-Za-z]{2,6}\d{0,2}[-_ ]?)?([0-9oOlIzZeg]{3})[-_ ]?M[-_ ]?([0-9oOlIzZeBsSgt]{3})/;
+const PN_RE = /(?:[A-Za-z]{2,6}\d{0,2}[-_ ]?)?([0-9oOlIzZeg]{3})[-_ ]?M[-_ ]?([0-9oOlIzZeBsSgt]{3})(?![A-Za-z0-9])/;
 const PN_FIG_RE = /([0-9oOlIzZeg]{5})[-_ ]([0-9oOlIzZeg]{2})[-_ ]([0-9oOlIzZeg]{3})/;
 const PRICE_RE = /\d{1,3}(?:[,.]\d{3})|\d{3,6}/g;
 const DIGIT_MAP = {o:'0',O:'0',Q:'0',D:'0',l:'1',I:'1',i:'1',z:'2',Z:'2',S:'5',s:'5',B:'8',e:'6',g:'9',t:'1'};
@@ -241,12 +241,13 @@ async function ensureWorkers(){
 }
 
 // ====================== 共通ユーティリティ ======================
-function parsePrices(text){
+function parsePrices(text, unit){
+  unit=unit||UNIT_READ;
   const out=[]; let m;
   PRICE_RE.lastIndex=0;
   while((m=PRICE_RE.exec(text))!==null){
     const v=parseInt(m[0].replace(/[,.]/g,''),10);
-    if(v>=PRICE_MIN && v<=PRICE_MAX && v%UNIT_READ===0) out.push(v);
+    if(v>=PRICE_MIN && v<=PRICE_MAX && v%unit===0) out.push(v);
   }
   return out;
 }
@@ -267,7 +268,8 @@ function normalizeKey(joined){
 // ---- 汎用品番検出(形状学習) ----
 // 会社ごとに品番の形式が違うため、既知の形式に当てはまらない時は
 // 「この見積書の品番はどんな形か」を書面全体から学習する。
-const CAND_HYPHEN=/[A-Za-z0-9]{2,8}(?:-[A-Za-z0-9]{1,4}){1,3}/g;
+const CAND_HYPHEN=/[A-Za-z0-9]{2,8}(?:-[A-Za-z0-9]{1,10}){1,3}/g;
+const CONTACT_RE=/TEL|FAX|ＴＥＬ|ＦＡＸ|電話|携帯|〒/i;
 const CAND_SPACE=/[A-Za-z0-9]{4,8}(?: [A-Za-z0-9]{1,4}){1,3}/g;
 const DITTO_RE=/^[^A-Za-z0-9]{0,4}(\d{3})$/;
 function cleanKeyTok(t){return t.trim().toUpperCase().replace(/[ _\/]+/g,'-').replace(/^-+|-+$/g,'');}
@@ -281,18 +283,32 @@ function shapeOf(t){
   }
   return out;
 }
-function keyCandidates(text, allowSpace){
+function keyCandidates(text, allowSpace, minDigits){
+  minDigits=minDigits||4;
   const found=[];
+  const contact=CONTACT_RE.test(text);
   const pats=[CAND_HYPHEN].concat(allowSpace?[CAND_SPACE]:[]);
   for(const p of pats){
     p.lastIndex=0; let m;
     while((m=p.exec(text))!==null){
       const t=m[0];
       const nd=(t.match(/\d/g)||[]).length;
-      if(nd>=4 && t.length>=6 && t.length<=20) found.push(t);
+      if(!(nd>=minDigits && t.length>=5 && t.length<=24)) continue;
+      // 電話/FAX/郵便番号の行にある数字だけのトークンは品番候補にしない
+      if(contact && !/[A-Za-z]/.test(t)) continue;
+      found.push(t);
     }
   }
   return found;
+}
+// 型式アンカー方式: 英字を含み数字2つ以上・ハイフン入りのトークンを品番として拾う
+function anchoredKey(text){
+  for(const t of keyCandidates(text,false,2)){
+    const k=cleanKeyTok(t);
+    const nd=(k.match(/\d/g)||[]).length;
+    if(k.includes('-') && nd>=2 && /[A-Za-z]/.test(k) && k.length>=5 && k.length<=24) return k;
+  }
+  return null;
 }
 function learnShape(texts){
   for(const allowSpace of [false,true]){
@@ -434,8 +450,12 @@ async function ocrColumnStrip(canvas, x0, x1, scale){
   const {data}=await workerNum.recognize(tmp);
   const res=[];
   getWords(data).forEach(w=>{
-    const vals=parsePrices(w.text||'');
-    if(vals.length){ const cy=(w.bbox.y0+w.bbox.y1)/2/scale; vals.forEach(v=>res.push({cy,value:v})); }
+    const vals=parsePrices(w.text||'', 1);
+    if(vals.length){
+      const cy=(w.bbox.y0+w.bbox.y1)/2/scale;
+      const x=x0 + w.bbox.x0/scale;
+      vals.forEach(v=>res.push({cy,value:v,x}));
+    }
   });
   return res;
 }
@@ -459,18 +479,39 @@ async function ocrKeyStrip(canvas, x0, x1, scale, parser){
 }
 
 function rowValue(gacList, clnList, y0, y1, rowText, ban){
-  // ban: その行の品番の数字列。品番の先頭数字を価格と誤認した票を弾く
-  // (例: OM6283-… の行で 62830 が価格として読まれた場合)
+  // ヒットは {cy,value,x}。10円きざみ候補を優先し、無い時だけ1円単位(信頼度1段下げ)。
+  // 票が拮抗(差1以内)している時は左の列(単価は金額の左)を優先。
+  // ban: その行の品番の数字列(品番の先頭数字を価格と誤認した票を弾く)。
   const ok=v=>{const s=String(v);return !(ban && s.length>=4 && ban.indexOf(s)===0);};
-  const inRange=a=>a.filter(r=>r.cy>=y0&&r.cy<=y1&&ok(r.value)).map(r=>r.value);
-  const gac=inRange(gacList), cln=inRange(clnList), txt=parsePrices(rowText||'').filter(ok);
-  const all=gac.concat(cln,txt);
-  if(all.length===0) return {price:null,conf:''};
-  const votes={}; all.forEach(v=>votes[v]=(votes[v]||0)+1);
-  let best=null,bn=-1; for(const k in votes){ if(votes[k]>bn){bn=votes[k];best=parseInt(k,10);} }
-  const cross = gac.indexOf(best)>=0 && cln.indexOf(best)>=0;
-  let conf = (cross||bn>=3)?'◎':(bn===2?'○':'△');
-  return {price:best,conf};
+  const inR=a=>a.filter(r=>r.cy>=y0&&r.cy<=y1&&ok(r.value));
+  const gac=inR(gacList), cln=inR(clnList);
+  const txt=parsePrices(rowText||'',1).filter(ok).map(v=>({cy:y0,value:v,x:1e9}));
+  const allh=gac.concat(cln,txt);
+  if(allh.length===0) return {price:null,conf:''};
+  const votes={}; allh.forEach(h=>votes[h.value]=(votes[h.value]||0)+1);
+  const gset=new Set(gac.map(h=>h.value)), cset=new Set(cln.map(h=>h.value));
+  const minx=v=>Math.min(...allh.filter(h=>h.value===v).map(h=>h.x));
+  const pick=cands=>{
+    let mx=0; cands.forEach(v=>{if(votes[v]>mx)mx=votes[v];});
+    let best=cands.filter(v=>votes[v]===mx);
+    if(best.length>1) best.sort((a,b)=>minx(a)-minx(b));   // 同数なら左(単価)優先
+    let v=best[0];
+    // vが他候補の整数倍(2〜9倍)なら金額(=単価×数量)の可能性が高い。
+    // 票が拮抗(差1以内)なら左にある方(単価)へ切り替える。
+    for(const w of cands){
+      if(w!==v && votes[w]>=votes[v]-1 && minx(w)<minx(v)
+         && w>0 && v%w===0 && v/w>=2 && v/w<=9){ v=w; break; }
+    }
+    const n=votes[v];
+    const cross=gset.has(v)&&cset.has(v);
+    return {price:v, conf:(cross||n>=3)?'◎':(n===2?'○':'△')};
+  };
+  const keys=Object.keys(votes).map(Number);
+  const tens=keys.filter(v=>v%UNIT_READ===0);
+  if(tens.length) return pick(tens);
+  const r=pick(keys);                          // 1円単位しか無い見積(例: ¥96,016)
+  r.conf={'◎':'○','○':'△'}[r.conf]||r.conf;
+  return r;
 }
 
 // 単価列の自動選択。数値列が2つ以上→右から2番目が単価(一番右は金額)。
@@ -593,11 +634,12 @@ async function computeRows(arts, tankaIndex, progress){
     const src=(a.kind==='text')?a.lines:a.raw;
     (src||[]).forEach(x=>{ if(normalizeKey(x.joined)) knownCount++; });
   });
-  let generic=null;
+  let generic=null, anchored=false;
   if(knownCount<3){
     const corpus=[];
     arts.forEach(a=>{ const src=(a.kind==='text')?a.lines:a.raw; (src||[]).forEach(x=>corpus.push(x.left)); });
     generic=learnShape(corpus);
+    if(!generic) anchored=true;   // 型式アンカー方式(型番の形が行ごとに違う見積)
   }
   let lastFull=null;   // 「〃(同上)」行はページをまたいで直前の品番を継承
   const keyOf=(left,joined)=>{
@@ -609,12 +651,18 @@ async function computeRows(arts, tankaIndex, progress){
       // 学習した形に合わなくても、既知形式ならば拾う(検出が減る事故の保険)
       return normalizeKey(joined);
     }
+    if(anchored){
+      const k=anchoredKey(left);
+      if(k) return k;
+    }
     return normalizeKey(joined);
   };
-  const stripParser = generic ? (t=>genericKey(t,generic.shape,generic.allowSpace)) : null;
+  const stripParser = generic ? (t=>genericKey(t,generic.shape,generic.allowSpace)) : (anchored ? anchoredKey : null);
   if(generic){ // 品番列OCRの認識文字を学習した形に合わせる
     const letters=generic.shape.includes('A')?corpusLetters(arts,generic):'';
     await workerKey.setParameters({tessedit_char_whitelist:'0123456789-'+letters});
+  } else if(anchored){
+    await workerKey.setParameters({tessedit_char_whitelist:'0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ'});
   } else {
     await workerKey.setParameters({tessedit_char_whitelist:'0123456789-M'});
   }
@@ -673,6 +721,7 @@ async function computeRows(arts, tankaIndex, progress){
         if(!jflag && ln.nums.length){
           price = ln.nums.length>=2 ? ln.nums[ln.nums.length-2].v : ln.nums[ln.nums.length-1].v;
         }
+        if(anchored && price==null && !jflag) continue;
         put({key,price,conf:(jflag?'除':(price!=null?'文':'')),flag:(jflag?'除外':''),cell:'',kconf:''});
       }
       continue;
@@ -686,8 +735,10 @@ async function computeRows(arts, tankaIndex, progress){
     if(col){ x0=(W*col[0])|0; x1=(W*col[1])|0; } else { x0=(W*0.40)|0; x1=(W*0.90)|0; }
     let cx1=x1;
 
-    const gacList=(await ocrColumnStrip(a.gacCanvas,x0,x1,2)).concat(await ocrColumnStrip(a.gacCanvas,x0,x1,3));
-    const clnList=(await ocrColumnStrip(a.cleanCanvas,x0,x1,2)).concat(await ocrColumnStrip(a.cleanCanvas,x0,x1,3));
+    let gacList=(await ocrColumnStrip(a.gacCanvas,x0,x1,2)).concat(await ocrColumnStrip(a.gacCanvas,x0,x1,3));
+    let clnList=(await ocrColumnStrip(a.cleanCanvas,x0,x1,2)).concat(await ocrColumnStrip(a.cleanCanvas,x0,x1,3));
+    // 品番・品名領域(kx1より左)の数字は型番の断片なので単価票に使わない
+    gacList=gacList.filter(h=>h.x>kx1+6); clnList=clnList.filter(h=>h.x>kx1+6);
     let kgacList=[], kclnList=[];
     if(kcol){
       const kxx0=(W*kcol[0])|0, kxx1=(W*kcol[1])|0; cx1=kxx1;
@@ -713,6 +764,26 @@ async function computeRows(arts, tankaIndex, progress){
     // (行の縦範囲が広がった時に隣の行の値を取り込む誤りを防ぐ)
     const rowHs=bands.map(b=>b.y1-b.y0).sort((p,q)=>p-q);
     const rowH=rowHs.length?rowHs[(rowHs.length/2)|0]:40;
+    // 同じセルに品番が2行書かれ、OCRの揺れで別品番に見える行を統合する。
+    // 紛らわしい文字(1≡I,B≡8,C≡G,O≡0,5≡S,2≡Z)を同一視。数字同士の違いは統合しない。
+    const confNorm=k=>k.replace(/[IlOQBSZC]/g,c=>({I:'1',l:'1',O:'0',Q:'0',B:'8',S:'5',Z:'2',C:'G'}[c]));
+    const sameCell=(k1,k2)=>{
+      const n1=confNorm(k1),n2=confNorm(k2);
+      if(Math.abs(n1.length-n2.length)===1) return n1.startsWith(n2)||n2.startsWith(n1);
+      return n1===n2;
+    };
+    const mergedB=[];
+    for(const b of bands){
+      if(mergedB.length){
+        const p=mergedB[mergedB.length-1];
+        if((b.y0+b.y1)/2-(p.y0+p.y1)/2<=rowH*2.2 && sameCell(p.key,b.key)){
+          p.joined+=b.joined; p.y1=Math.max(p.y1,b.y1);
+          continue;
+        }
+      }
+      mergedB.push({key:b.key,joined:b.joined,y0:b.y0,y1:b.y1});
+    }
+    bands.length=0; mergedB.forEach(b=>bands.push(b));
     const centers=bands.map(b=>(b.y0+b.y1)/2);
     const assign=(hits)=>{
       const per=bands.map(()=>[]);
@@ -737,17 +808,32 @@ async function computeRows(arts, tankaIndex, progress){
       if(votes[b.key]===n) top=b.key;          // 同数なら本文の読みを優先
       const kconf=n>=3?'◎':(n===2?'○':'△');
       let price=null, conf='', cell='';
+      let cellY1=b.y1;
       if(!jflag){
         const ban=top.replace(/\D/g,'');
         const cy0=centers[bi]-1, cy1=centers[bi]+1;
-        let rv=rowValue(perSG[bi],perSC[bi],cy0,cy1,kcol?'':b.joined,ban);
+        let rv=rowValue(perSG[bi],perSC[bi],cy0,cy1,(kcol||anchored)?'':b.joined,ban);
         if(rv.price==null && kcol){
           rv=rowValue(perKSG[bi],perKSC[bi],cy0,cy1,'',ban);
           rv.conf={'◎':'○','○':'△'}[rv.conf]||rv.conf;
         }
+        if(rv.price==null){
+          // 自分の行に単価が無い → 品番の下の行を探す
+          // (型式と単価が別の行にあるブロック様式の見積に対応)
+          const nxts=centers.filter(c=>c>centers[bi]+rowH*0.5);
+          let lo=centers[bi]+rowH*0.5, hi=centers[bi]+rowH*3.0;
+          if(nxts.length) hi=Math.min(hi, Math.min(...nxts)-rowH*0.4);
+          if(hi>lo){
+            rv=rowValue(gacList,clnList,lo,hi,'',ban);
+            if(rv.price==null && kcol) rv=rowValue(kgacList,kclnList,lo,hi,'',ban);
+            if(rv.conf==='◎') rv.conf='○';   // 行の対応が推定なので上限○
+            if(rv.price!=null) cellY1=hi|0;
+          }
+        }
         price=rv.price; conf=rv.conf;
-        cell=cropDataUrl(a.gacCanvas,x0,b.y0,cx1,b.y1);
+        cell=cropDataUrl(a.gacCanvas,x0,b.y0,cx1,cellY1);
       }
+      if(anchored && price==null && !jflag) return;  // 型式アンカーでは単価なし行を出さない
       put({key:top,price,conf:(jflag?'除':conf),flag:(jflag?'除外':''),cell,kconf:(jflag?'':kconf)});
     });
 
@@ -764,6 +850,7 @@ async function computeRows(arts, tankaIndex, progress){
         const cy=cys.reduce((s,v)=>s+v,0)/cys.length;
         const ry0=cy-rowH/2, ry1=cy+rowH/2;
         const rv=readPrice(ry0,ry1,'',k.replace(/\D/g,''));
+        if(anchored && rv.price==null) continue;
         put({key:k,price:rv.price,conf:rv.conf,flag:'',
              cell:cropDataUrl(a.gacCanvas,x0,ry0,cx1,ry1),kconf:'○'});
       }
