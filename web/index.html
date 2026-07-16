@@ -110,7 +110,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-07-16v</span>
+  <span class="tag" style="margin-left:auto">版 2026-07-16w</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -199,6 +199,7 @@ const DIGIT_MAP = {o:'0',O:'0',Q:'0',D:'0',l:'1',I:'1',i:'1',z:'2',Z:'2',S:'5',s
 function normDigits(s){return s.split('').map(c=>DIGIT_MAP[c]!==undefined?DIGIT_MAP[c]:c).join('');}
 
 let COMPANIES = [];
+let ORDER_CI = null;   // PDFを横に表示中の会社(比較表をその見積の並び順にする)
 
 // ====================== ログ ======================
 function log(msg){
@@ -984,7 +985,8 @@ function renderInputs(){
 // 渡したPDFを画面右に並べて表示。読取り時に作った各ページ画像を再利用するので確実。
 function openPdfPanel(i){
   const c=COMPANIES[i]; if(!c) return;
-  document.getElementById('pdf-panel-title').textContent=`${c.name}：${c.filename}`;
+  ORDER_CI=Number(i); renderTable();   // 比較表をこの会社の見積の並び順に
+  document.getElementById('pdf-panel-title').textContent=`${c.name}：${c.filename}（比較表を${c.name}の並び順で表示中）`;
   const body=document.getElementById('pdf-panel-body');
   body.innerHTML='';
   (c.arts||[]).forEach((a,pi)=>{
@@ -1000,6 +1002,7 @@ function closePdfPanel(){
   document.getElementById('pdf-panel').classList.add('hidden');
   document.body.classList.remove('pdf-open');
   document.getElementById('pdf-panel-body').innerHTML='';
+  ORDER_CI=null; renderTable();        // 並び順を元に戻す
 }
 function roundUp(v,u){return Math.ceil(v/u)*u;}
 function yen(v){return v==null?'':'¥'+v.toLocaleString();}
@@ -1008,6 +1011,10 @@ function escapeHtml(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'
 // ====================== 比較表 ======================
 function renderTable(){
   const keys=[]; const seen=new Set();
+  // PDFを横に表示中は、その会社の見積に出てくる順で並べる(残りは末尾)
+  if(ORDER_CI!=null && COMPANIES[ORDER_CI]){
+    COMPANIES[ORDER_CI].rows.forEach(r=>{if(!seen.has(r.key)){seen.add(r.key);keys.push(r.key);}});
+  }
   COMPANIES.forEach(c=>c.rows.forEach(r=>{if(!seen.has(r.key)){seen.add(r.key);keys.push(r.key);}}));
   const lookup=COMPANIES.map(c=>{const m={};c.rows.forEach(r=>m[r.key]=r);return m;});
   let head='<tr><th class="pn-col">品番</th>';
@@ -1074,7 +1081,8 @@ function renderTable(){
     });
   });
   const sub=COMPANIES.map(c=>`${escapeHtml(c.name)}×${c.multiplier}`).join('　');
-  document.getElementById('rep-sub').textContent=`倍率 ${sub} ／ 計算は100円単位で切り上げ ／ 全${keys.length}品番`;
+  const ord=(ORDER_CI!=null && COMPANIES[ORDER_CI])?` ／ 並び順: ${COMPANIES[ORDER_CI].name}の見積順`:'';
+  document.getElementById('rep-sub').textContent=`倍率 ${sub} ／ 計算は100円単位で切り上げ ／ 全${keys.length}品番${ord}`;
 }
 function bindEdit(){
   document.querySelectorAll('td.unit').forEach(td=>{
