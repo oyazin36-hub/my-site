@@ -61,6 +61,10 @@ tbody tr:nth-child(even){background:var(--lblue);}
 .cell-img{display:none;position:absolute;right:0;top:100%;z-index:5;border:1px solid #888;background:#fff;max-width:240px;box-shadow:0 2px 6px rgba(0,0,0,.3);}
 .unit:hover .cell-img{display:block;}
 .edit-input{width:90px;text-align:right;padding:2px 4px;}
+.del-col{width:44px;}
+.del-cell{text-align:center;}
+.rowdel{background:#fff;color:#b91c1c;border:1px solid #e5b4b4;border-radius:5px;padding:1px 9px;font-size:14px;font-weight:bold;line-height:1.4;}
+.rowdel:hover{background:#fee2e2;}
 .legend{max-width:1180px;margin:10px auto 30px;padding:0 8px;font-size:12px;color:#555;display:flex;gap:18px;flex-wrap:wrap;}
 .legend .ok{color:var(--green);}.legend .mid{color:var(--blue);}.legend .warn{color:var(--orange);}.legend .min-key{color:var(--green);}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;}
@@ -106,7 +110,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-07-16u</span>
+  <span class="tag" style="margin-left:auto">版 2026-07-16v</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -143,7 +147,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
     <span><b class="min-key">緑</b> 各品番の最安値</span>
     <span><b class="warn">※</b> 品番を自動補正（他の品番と照合して直した行・要確認）</span>
     <span>品番セルが<b class="warn">黄色△</b>＝品番の読みが安定せず要確認</span>
-    <span>単価・品番はクリックで手修正できます（品番を直すと自動で突き合わせ）。</span>
+    <span>単価・品番はクリックで手修正できます（「なし」「除外」のセルも入力可）。×で行を削除。</span>
   </div>
 </section>
 
@@ -1008,7 +1012,7 @@ function renderTable(){
   const lookup=COMPANIES.map(c=>{const m={};c.rows.forEach(r=>m[r.key]=r);return m;});
   let head='<tr><th class="pn-col">品番</th>';
   COMPANIES.forEach(c=>{head+=`<th>${escapeHtml(c.name)}<br><span class="th-sub">単価</span></th><th>${escapeHtml(c.name)}<br><span class="th-sub">×${c.multiplier}</span></th>`;});
-  head+='<th>最安</th></tr>';
+  head+='<th>最安</th><th class="no-print del-col">削除</th></tr>';
   document.getElementById('compare-head').innerHTML=head;
   let body='';
   // 各社の合計(単価がある行のみ) と 最安合計
@@ -1030,8 +1034,8 @@ function renderTable(){
     let tr=`<tr><td class="pn editable-pn${kWarn?' warncell':''}" data-key="${escapeHtml(key)}" title="${kWarn?'品番の読みが安定せず要確認。':''}クリックで品番を修正">${escapeHtml(key)}${kWarn?'<span class="warn">△</span>':''}${fixBadge}</td>`;
     COMPANIES.forEach((c,ci)=>{
       const r=lookup[ci][key];
-      if(!r){tr+='<td class="num muted">なし</td><td class="num"></td>';return;}
-      if(r.flag){tr+='<td class="num muted">除外</td><td class="num"></td>';return;}
+      if(!r){tr+=`<td class="num unit muted" data-ci="${ci}" data-key="${escapeHtml(key)}" title="クリックで単価を入力"><span class="uval">なし</span></td><td class="num"></td>`;return;}
+      if(r.flag){tr+=`<td class="num unit muted" data-ci="${ci}" data-key="${escapeHtml(key)}" title="クリックで単価を入力"><span class="uval">除外</span></td><td class="num"></td>`;return;}
       const conf=r.conf||'';
       const badge=conf==='文'?'<span class="ok" title="文字データから取得（確実）">✓</span>'
         :conf==='手'?'<span class="ok" title="手修正">✎</span>'
@@ -1044,7 +1048,8 @@ function renderTable(){
       tr+=`<td class="num ${isMin?'min':''}">${fin!=null?yen(fin):''}</td>`;
     });
     const minCompanies=finals.filter(f=>f.val===min).map(f=>COMPANIES[f.ci].name);
-    tr+=`<td class="cheap">${min!=null?escapeHtml(minCompanies.join(', ')):'—'}</td></tr>`;
+    tr+=`<td class="cheap">${min!=null?escapeHtml(minCompanies.join(', ')):'—'}</td>`;
+    tr+=`<td class="no-print del-cell"><button class="rowdel" data-key="${escapeHtml(key)}" title="この行を削除">×</button></td></tr>`;
     body+=tr;
   });
   // ---- 合計行(単価がある行だけの合計。件数が違う社同士は単純比較できない点に注意) ----
@@ -1054,12 +1059,20 @@ function renderTable(){
       tot+=`<td class="num">${cnt[ci]?yen(sumUnit[ci]):''}<br><span class="tot-sub">${cnt[ci]?cnt[ci]+'件':'—'}</span></td>`;
       tot+=`<td class="num">${cnt[ci]?yen(sumFin[ci]):''}<br><span class="tot-sub">×${c.multiplier}</span></td>`;
     });
-    tot+=`<td class="num">${cntMin?yen(sumMin):''}<br><span class="tot-sub">${cntMin?'最安計('+cntMin+'件)':''}</span></td></tr>`;
+    tot+=`<td class="num">${cntMin?yen(sumMin):''}<br><span class="tot-sub">${cntMin?'最安計('+cntMin+'件)':''}</span></td><td class="no-print del-cell"></td></tr>`;
     body+=tot;
   }
   document.getElementById('compare-body').innerHTML=body;
   bindEdit();
   bindEditPn();
+  document.querySelectorAll('button.rowdel').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const key=btn.dataset.key;
+      if(!confirm('品番 '+key+' の行を削除しますか？')) return;
+      COMPANIES.forEach(c=>{c.rows=c.rows.filter(r=>r.key!==key);});
+      renderInputs(); renderTable();
+    });
+  });
   const sub=COMPANIES.map(c=>`${escapeHtml(c.name)}×${c.multiplier}`).join('　');
   document.getElementById('rep-sub').textContent=`倍率 ${sub} ／ 計算は100円単位で切り上げ ／ 全${keys.length}品番`;
 }
@@ -1068,11 +1081,21 @@ function bindEdit(){
     td.addEventListener('click',()=>{
       if(td.querySelector('input'))return;
       const ci=td.dataset.ci,key=td.dataset.key;
-      const row=COMPANIES[ci].rows.find(r=>r.key===key);
+      let row=COMPANIES[ci].rows.find(r=>r.key===key);
       const cur=row&&row.price!=null?row.price:'';
       td.innerHTML=`<input type="number" step="10" value="${cur}" class="edit-input">`;
       const inp=td.querySelector('input'); inp.focus();
-      const commit=()=>{const v=inp.value===''?null:parseInt(inp.value,10);row.price=(v!=null&&!isNaN(v))?v:null;row.conf=row.price!=null?'手':'';renderTable();};
+      const commit=()=>{
+        const v=inp.value===''?null:parseInt(inp.value,10);
+        const val=(v!=null&&!isNaN(v))?v:null;
+        if(!row){
+          if(val!=null){COMPANIES[ci].rows.push({key,price:val,conf:'手',flag:'',cell:'',kconf:''});}
+        }else{
+          row.price=val; row.conf=val!=null?'手':'';
+          if(row.flag&&val!=null) row.flag='';   // 除外行に単価を入れたら除外解除
+        }
+        renderInputs(); renderTable();
+      };
       inp.addEventListener('blur',commit);
       inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();});
     });
