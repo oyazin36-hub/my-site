@@ -60,6 +60,12 @@ tbody tr:nth-child(even){background:var(--lblue);}
 .unit .warn{color:var(--orange);font-size:11px;float:left;}
 .cell-img{display:none;position:absolute;right:0;top:100%;z-index:5;border:1px solid #888;background:#fff;max-width:240px;box-shadow:0 2px 6px rgba(0,0,0,.3);}
 .unit:hover .cell-img{display:block;}
+.editable-pn{position:relative;cursor:pointer;}
+.pn .cell-img{left:0;right:auto;max-width:380px;padding:3px;white-space:normal;}
+td.pn:hover .cell-img{display:block;}
+.kimg-name{display:block;font-size:10px;color:#555;font-weight:normal;text-align:left;padding:1px 2px 0;}
+.kimg-img{display:block;max-width:100%;}
+.pend-sep td{background:#fff7e6;color:#8a5a00;font-size:11px;text-align:center;padding:3px;}
 .edit-input{width:90px;text-align:right;padding:2px 4px;}
 .del-col{width:44px;}
 .del-cell{text-align:center;}
@@ -110,7 +116,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-07-16w</span>
+  <span class="tag" style="margin-left:auto">版 2026-07-18a</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -148,6 +154,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
     <span><b class="warn">※</b> 品番を自動補正（他の品番と照合して直した行・要確認）</span>
     <span>品番セルが<b class="warn">黄色△</b>＝品番の読みが安定せず要確認</span>
     <span>単価・品番はクリックで手修正できます（「なし」「除外」のセルも入力可）。×で行を削除。</span>
+    <span>単価・品番のセルにマウスを乗せると、原本（スキャン画像）のその部分が拡大表示されます。</span>
   </div>
 </section>
 
@@ -167,6 +174,21 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
     <div id="col-stage" class="col-stage"></div>
     <div class="modal-foot"><span id="col-sel-label" class="sel-label">列を選んでください</span>
       <button id="col-apply" disabled onclick="applyColumn()">この列で読み直す</button></div>
+  </div>
+</div>
+
+<div id="add-modal" class="modal hidden no-print">
+  <div class="modal-box" style="width:min(460px,94vw)">
+    <div class="modal-head"><span id="add-modal-title">行を手入力で追加</span>
+      <button class="modal-close" onclick="closeAddRow()">×</button></div>
+    <div style="padding:14px 18px;display:flex;flex-direction:column;gap:12px;font-size:14px">
+      <label>品番<br><input id="add-key" type="text" placeholder="例: OM6283-08-001" style="width:100%"></label>
+      <label>単価（円）　※空欄でもOK。後から表のセルをクリックして入力できます<br>
+        <input id="add-price" type="number" step="10" min="0" style="width:100%"></label>
+      <label>追加する場所<br><select id="add-pos" style="width:100%"></select></label>
+    </div>
+    <div class="modal-foot"><span class="sel-label" id="add-err"></span>
+      <button id="add-apply" onclick="applyAddRow()">この場所に追加する</button></div>
   </div>
 </div>
 
@@ -630,7 +652,11 @@ async function computeRows(arts, tankaIndex, progress){
   const put=(entry)=>{
     const k=entry.key;
     if(!(k in rows)){ rows[k]=entry; order.push(k); }
-    else if(rows[k].price==null && entry.price!=null){ rows[k]=entry; }
+    else if(rows[k].price==null && entry.price!=null){
+      if(!entry.kcell) entry.kcell=rows[k].kcell;   // 品番の拡大画像は引き継ぐ
+      if(!entry.cell) entry.cell=rows[k].cell;
+      rows[k]=entry;
+    }
   };
 
   // ---- 品番の方式を書類全体から決める(既知形式 or 形状学習) ----
@@ -727,7 +753,7 @@ async function computeRows(arts, tankaIndex, progress){
           price = ln.nums.length>=2 ? ln.nums[ln.nums.length-2].v : ln.nums[ln.nums.length-1].v;
         }
         if(anchored && price==null && !jflag) continue;
-        put({key,price,conf:(jflag?'除':(price!=null?'文':'')),flag:(jflag?'除外':''),cell:'',kconf:''});
+        put({key,price,conf:(jflag?'除':(price!=null?'文':'')),flag:(jflag?'除外':''),cell:'',kcell:'',kconf:''});
       }
       continue;
     }
@@ -839,7 +865,8 @@ async function computeRows(arts, tankaIndex, progress){
         cell=cropDataUrl(a.gacCanvas,x0,b.y0,cx1,cellY1);
       }
       if(anchored && price==null && !jflag) return;  // 型式アンカーでは単価なし行を出さない
-      put({key:top,price,conf:(jflag?'除':conf),flag:(jflag?'除外':''),cell,kconf:(jflag?'':kconf)});
+      const kcell=cropDataUrl(a.gacCanvas,Math.max(0,kx0-4),b.y0,Math.min(W,kx1+10),b.y1);
+      put({key:top,price,conf:(jflag?'除':conf),flag:(jflag?'除外':''),cell,kcell,kconf:(jflag?'':kconf)});
     });
 
     // --- 本文OCRが行ごと見落とした品番を、品番列の読みから拾い直す ---
@@ -857,7 +884,8 @@ async function computeRows(arts, tankaIndex, progress){
         const rv=readPrice(ry0,ry1,'',k.replace(/\D/g,''));
         if(anchored && rv.price==null) continue;
         put({key:k,price:rv.price,conf:rv.conf,flag:'',
-             cell:cropDataUrl(a.gacCanvas,x0,ry0,cx1,ry1),kconf:'○'});
+             cell:cropDataUrl(a.gacCanvas,x0,ry0,cx1,ry1),
+             kcell:cropDataUrl(a.gacCanvas,Math.max(0,kx0-4),ry0,Math.min(W,kx1+10),ry1),kconf:'○'});
       }
     }
   }
@@ -972,13 +1000,7 @@ function renderInputs(){
   box.querySelectorAll('.name-input').forEach(el=>el.addEventListener('input',e=>{COMPANIES[e.target.dataset.i].name=e.target.value;renderTable();}));
   box.querySelectorAll('.mult-input').forEach(el=>el.addEventListener('input',e=>{COMPANIES[e.target.dataset.i].multiplier=parseFloat(e.target.value)||0;renderTable();}));
   box.querySelectorAll('.col-btn').forEach(el=>el.addEventListener('click',e=>openColumnPicker(parseInt(e.target.dataset.i,10))));
-  box.querySelectorAll('.addrow-btn').forEach(el=>el.addEventListener('click',e=>{
-    const c=COMPANIES[parseInt(e.target.dataset.i,10)];
-    const key=(prompt('品番を入力してください（例: OM6283-08-001）')||'').trim();
-    if(!key) return;
-    if(!c.rows.some(r=>r.key===key)) c.rows.push({key,price:null,conf:'',flag:'',cell:'',kconf:''});
-    renderInputs(); renderTable();
-  }));
+  box.querySelectorAll('.addrow-btn').forEach(el=>el.addEventListener('click',e=>openAddRow(parseInt(e.target.dataset.i,10))));
   box.querySelectorAll('.cc-thumb').forEach(el=>el.addEventListener('click',e=>openPdfPanel(e.target.dataset.i)));
   box.querySelectorAll('.pdf-view-btn').forEach(el=>el.addEventListener('click',e=>openPdfPanel(e.target.dataset.i)));
 }
@@ -1009,14 +1031,41 @@ function yen(v){return v==null?'':'¥'+v.toLocaleString();}
 function escapeHtml(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
 
 // ====================== 比較表 ======================
-function renderTable(){
+// 比較表の基本の並び(手入力行の場所選択リストにも使う)
+function tableKeys(){
   const keys=[]; const seen=new Set();
   // PDFを横に表示中は、その会社の見積に出てくる順で並べる(残りは末尾)
   if(ORDER_CI!=null && COMPANIES[ORDER_CI]){
     COMPANIES[ORDER_CI].rows.forEach(r=>{if(!seen.has(r.key)){seen.add(r.key);keys.push(r.key);}});
   }
   COMPANIES.forEach(c=>c.rows.forEach(r=>{if(!seen.has(r.key)){seen.add(r.key);keys.push(r.key);}}));
+  return keys;
+}
+function renderTable(){
+  let keys=tableKeys();
   const lookup=COMPANIES.map(c=>{const m={};c.rows.forEach(r=>m[r.key]=r);return m;});
+  // 手入力で場所を指定した行(row.after)
+  const placed={};
+  COMPANIES.forEach(c=>c.rows.forEach(r=>{if(r.after&&!(r.key in placed))placed[r.key]=r.after;}));
+  // 品番はあるのに単価が未入力(要確認)の行は下にまとめて、埋まった行を上に詰める。
+  // 見積順表示中(PDFを横に表示中)は原本と突き合わせるため詰めない。
+  let PEND=null;
+  if(ORDER_CI==null){
+    const pending=key=>COMPANIES.some((c,ci)=>{const r=lookup[ci][key];return r&&!r.flag&&r.price==null;});
+    const todo=keys.filter(k=>!(k in placed)&&pending(k));
+    if(todo.length){ PEND=new Set(todo); keys=keys.filter(k=>!PEND.has(k)).concat(todo); }
+  }
+  // 場所指定を反映(一番上 or 指定品番のすぐ下。同じ場所への複数追加は追加順)
+  {
+    const nAt={};
+    Object.keys(placed).forEach(k=>{
+      const i=keys.indexOf(k); if(i<0)return; keys.splice(i,1);
+      const anc=placed[k]; const n=nAt[anc]||0;
+      if(anc==='__TOP__') keys.splice(n,0,k);
+      else{ const j=keys.indexOf(anc); keys.splice(j<0?keys.length:j+1+n,0,k); }
+      nAt[anc]=n+1;
+    });
+  }
   let head='<tr><th class="pn-col">品番</th>';
   COMPANIES.forEach(c=>{head+=`<th>${escapeHtml(c.name)}<br><span class="th-sub">単価</span></th><th>${escapeHtml(c.name)}<br><span class="th-sub">×${c.multiplier}</span></th>`;});
   head+='<th>最安</th><th class="no-print del-col">削除</th></tr>';
@@ -1025,7 +1074,12 @@ function renderTable(){
   // 各社の合計(単価がある行のみ) と 最安合計
   const sumUnit=COMPANIES.map(()=>0), sumFin=COMPANIES.map(()=>0), cnt=COMPANIES.map(()=>0);
   let sumMin=0, cntMin=0;
+  let sepDone=false;
   keys.forEach(key=>{
+    if(PEND && PEND.has(key) && !sepDone){
+      body+=`<tr class="pend-sep no-print"><td colspan="${COMPANIES.length*2+3}">▼ ここから下は単価が未入力（要確認）の行 ─ セルをクリックすると入力できます</td></tr>`;
+      sepDone=true;
+    }
     const finals=[];
     COMPANIES.forEach((c,ci)=>{const r=lookup[ci][key];if(r&&r.price!=null)finals.push({ci,val:roundUp(r.price*c.multiplier,UNIT_ROUND)});});
     const min=finals.length?Math.min(...finals.map(f=>f.val)):null;
@@ -1038,7 +1092,9 @@ function renderTable(){
     const fixedFrom=crows.filter(r=>r&&r.keyFixed).map(r=>r.keyFixed);
     const fixBadge=fixedFrom.length?`<span class="warn" title="品番を自動補正（読取り値: ${escapeHtml(fixedFrom.join(', '))}）">※</span>`:'';
     const kWarn=crows.some(r=>r&&r.kconf==='△');
-    let tr=`<tr><td class="pn editable-pn${kWarn?' warncell':''}" data-key="${escapeHtml(key)}" title="${kWarn?'品番の読みが安定せず要確認。':''}クリックで品番を修正">${escapeHtml(key)}${kWarn?'<span class="warn">△</span>':''}${fixBadge}</td>`;
+    // マウスを乗せると原本の品番部分を拡大表示(読める会社すべて分)
+    const kimgs=crows.map((r,ci)=>r&&r.kcell?`<span class="kimg-name">${escapeHtml(COMPANIES[ci].name)}</span><img class="kimg-img" src="${r.kcell}">`:'').join('');
+    let tr=`<tr><td class="pn editable-pn${kWarn?' warncell':''}" data-key="${escapeHtml(key)}" title="${kWarn?'品番の読みが安定せず要確認。':''}クリックで品番を修正">${escapeHtml(key)}${kWarn?'<span class="warn">△</span>':''}${fixBadge}${kimgs?`<span class="cell-img">${kimgs}</span>`:''}</td>`;
     COMPANIES.forEach((c,ci)=>{
       const r=lookup[ci][key];
       if(!r){tr+=`<td class="num unit muted" data-ci="${ci}" data-key="${escapeHtml(key)}" title="クリックで単価を入力"><span class="uval">なし</span></td><td class="num"></td>`;return;}
@@ -1097,7 +1153,7 @@ function bindEdit(){
         const v=inp.value===''?null:parseInt(inp.value,10);
         const val=(v!=null&&!isNaN(v))?v:null;
         if(!row){
-          if(val!=null){COMPANIES[ci].rows.push({key,price:val,conf:'手',flag:'',cell:'',kconf:''});}
+          if(val!=null){COMPANIES[ci].rows.push({key,price:val,conf:'手',flag:'',cell:'',kcell:'',kconf:''});}
         }else{
           row.price=val; row.conf=val!=null?'手':'';
           if(row.flag&&val!=null) row.flag='';   // 除外行に単価を入れたら除外解除
@@ -1120,7 +1176,10 @@ function bindEditPn(){
       const commit=()=>{
         const nk=inp.value.trim();
         if(nk && nk!==oldKey){
-          COMPANIES.forEach(c=>c.rows.forEach(r=>{ if(r.key===oldKey) r.key=nk; }));
+          COMPANIES.forEach(c=>c.rows.forEach(r=>{
+            if(r.key===oldKey) r.key=nk;
+            if(r.after===oldKey) r.after=nk;   // この品番の下に追加した行の場所指定も追従
+          }));
         }
         renderTable();
       };
@@ -1128,6 +1187,41 @@ function bindEditPn(){
       inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();});
     });
   });
+}
+
+// ====================== 行の手入力追加(場所を選べる) ======================
+let addCi=null;
+function openAddRow(i){
+  addCi=i;
+  document.getElementById('add-modal-title').textContent=`${COMPANIES[i].name}：行を手入力で追加`;
+  document.getElementById('add-key').value='';
+  document.getElementById('add-price').value='';
+  const sel=document.getElementById('add-pos');
+  sel.innerHTML='<option value="__BOTTOM__">表の一番下（今まで通り）</option><option value="__TOP__">表の一番上</option>'+
+    tableKeys().map(k=>`<option value="${escapeHtml(k)}">「${escapeHtml(k)}」のすぐ下</option>`).join('');
+  document.getElementById('add-err').textContent='';
+  document.getElementById('add-modal').classList.remove('hidden');
+  document.getElementById('add-key').focus();
+}
+function closeAddRow(){document.getElementById('add-modal').classList.add('hidden');}
+function applyAddRow(){
+  const c=COMPANIES[addCi]; if(!c) return;
+  const key=document.getElementById('add-key').value.trim();
+  if(!key){document.getElementById('add-err').textContent='品番を入力してください';return;}
+  const pv=document.getElementById('add-price').value;
+  const price=pv===''?null:parseInt(pv,10);
+  const pos=document.getElementById('add-pos').value;
+  let row=c.rows.find(r=>r.key===key);
+  if(!row){ row={key,price:null,conf:'',flag:'',cell:'',kcell:'',kconf:''}; c.rows.push(row); }
+  if(price!=null&&!isNaN(price)){ row.price=price; row.conf='手'; row.flag=''; }
+  // 表での場所: __TOP__=一番上 / 品番=その品番のすぐ下 / __BOTTOM__=指定なし(一番下)
+  if(pos==='__BOTTOM__') delete row.after; else row.after=pos;
+  // 会社内の並び(見積順表示で使う)も同じ場所に合わせる
+  c.rows=c.rows.filter(r=>r!==row);
+  if(pos==='__TOP__') c.rows.unshift(row);
+  else if(pos==='__BOTTOM__') c.rows.push(row);
+  else{ const j=c.rows.findIndex(r=>r.key===pos); if(j>=0)c.rows.splice(j+1,0,row); else c.rows.push(row); }
+  closeAddRow(); renderInputs(); renderTable();
 }
 
 // ====================== 単価列の手動指定 ======================
