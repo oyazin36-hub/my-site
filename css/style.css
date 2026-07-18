@@ -400,3 +400,52 @@ body {
   .field-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
   .field-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 }
+
+/* ===== 必須マーク・エラー表示 ===== */
+.req { color: var(--red); font-weight: 700; }
+.field input.invalid,
+.field select.invalid,
+.field textarea.invalid {
+  border-color: var(--red);
+  background: #fff5f5;
+}
+.field-error {
+  color: var(--red); font-size: .8rem; font-weight: 600; margin-top: 6px;
+}
+
+/* ===== 下書き復元バナー ===== */
+.draft-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--orange-l); border: 1px solid var(--orange);
+  border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
+  font-size: .88rem; color: #92400e;
+}
+.draft-banner button {
+  background: var(--white); border: 1px solid var(--orange);
+  color: var(--orange); border-radius: 8px; padding: 6px 12px;
+  font-size: .82rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+  font-family: inherit;
+}
+
+/* ===== 承認アクション・差戻し ===== */
+.approval-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.approval-result {
+  margin-top: 16px; padding: 14px; border-radius: 10px;
+  font-weight: 700; text-align: center;
+}
+.approval-result.done     { background: var(--green-l);  color: var(--green); }
+.approval-result.rejected { background: var(--red-l);    color: var(--red); }
+.reject-comment {
+  margin-top: 10px; padding: 12px 14px; border-radius: 10px;
+  background: var(--red-l); color: #991b1b; font-size: .9rem;
+}
+.reject-box {
+  margin-top: 12px; padding: 16px; border-radius: 10px;
+  background: var(--gray-bg); border: 1px solid var(--gray-b);
+}
+.reject-box label { display: block; font-size: .85rem; font-weight: 600; color: var(--slate); margin-bottom: 6px; }
+.reject-box textarea {
+  width: 100%; min-height: 70px; padding: 10px 12px;
+  border: 2px solid var(--gray-b); border-radius: 8px;
+  font-family: inherit; font-size: .95rem; resize: vertical; margin-bottom: 10px;
+}

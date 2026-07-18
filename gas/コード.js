@@ -6,17 +6,43 @@
 // 2. メニュー「拡張機能」→「Apps Script」を開く
 // 3. このファイルの内容を貼り付けて保存
 // 4. 「デプロイ」→「新しいデプロイ」→「種類: ウェブアプリ」
-//    アクセスできるユーザー: 全員  で公開
+//    次のユーザーとして実行: 自分 / アクセスできるユーザー: 全員  で公開
 // 5. 発行されたURLを js/config.js の GAS_URL に貼る
 // ============================================================
 
 const SHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
 
+// ▼▼ 通知設定(任意) ▼▼
+// 承認担当者にメールで通知したい場合、ここにメールアドレスを設定してください。
+// 空のままなら通知は送られません(アプリは問題なく動きます)。
+const EMAIL_MAP = {
+  '総務':   '',   // 例: 'somu@example.com'
+  '課長':   '',
+  '副社長': '',
+  '社長':   '',
+};
+// アプリのURL(メール文面のリンク用・任意)。GitHub PagesのURLなどを入れる。
+const APP_URL = '';
+// ▲▲ 通知設定ここまで ▲▲
+
+const HEADERS = [
+  'id', '申請日', '申請者名', '先行発注済',
+  ...[...Array(10)].flatMap((_, i) => [
+    `品名${i+1}`, `数量${i+1}`, `単位${i+1}`,
+    `単価${i+1}`, `希望納期${i+1}`, `科目番号${i+1}`, `購入理由${i+1}`
+  ]),
+  '進捗', '総務承認日', '課長承認日', '副社長承認日', '社長承認日', '差戻しコメント',
+];
+
+const APPROVAL_STEPS = ['総務', '課長', '副社長', '社長'];
+const STEP_DATE = { '総務': '総務承認日', '課長': '課長承認日', '副社長': '副社長承認日', '社長': '社長承認日' };
+
 function doGet(e) {
-  const action = e.parameter.action;
-  if (action === 'list') return listAll();
-  if (action === 'detail') return getDetail(e.parameter.id);
-  if (action === 'approve') return approve(e.parameter.id, e.parameter.step, e.parameter.user);
+  const p = e.parameter;
+  if (p.action === 'list')    return listAll();
+  if (p.action === 'detail')  return getDetail(p.id);
+  if (p.action === 'approve') return approve(p.id);
+  if (p.action === 'reject')  return reject(p.id, p.comment);
   return json({ error: 'unknown action' });
 }
 
@@ -25,7 +51,7 @@ function doPost(e) {
     const payload = JSON.parse(e.postData.contents);
     if (payload.action === 'submit') return submitRow(payload);
     return json({ error: 'unknown action' });
-  } catch(err) {
+  } catch (err) {
     return json({ error: err.message });
   }
 }
@@ -45,12 +71,10 @@ function listAll() {
       results.push(obj);
     });
   });
-  // 申請日降順
-  results.sort((a, b) => b.申請日.localeCompare(a.申請日));
+  results.sort((a, b) => String(b.申請日).localeCompare(String(a.申請日)));
   return json(results);
 }
 
-// ===== 詳細取得 =====
 function getDetail(id) {
   const row = findRow(id);
   return json(row || { error: 'not found' });
@@ -62,60 +86,72 @@ function submitRow(payload) {
   const sheetName = payload.sheetName || '購入依頼';
   let sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
-    // シートがなければ自動作成(ヘッダー行を書く)
     sheet = ss.insertSheet(sheetName);
-    // 購入依頼の列ヘッダー
-    const headers = [
-      'id', '申請日', '申請者名', '先行発注済',
-      ...[...Array(10)].flatMap((_, i) => [
-        `品名${i+1}`, `数量${i+1}`, `単位${i+1}`,
-        `単価${i+1}`, `希望納期${i+1}`, `科目番号${i+1}`, `購入理由${i+1}`
-      ]),
-      '進捗', '総務承認日', '課長承認日', '副社長承認日', '社長承認日',
-    ];
-    sheet.appendRow(headers);
-    sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#dbeafe');
+    sheet.appendRow(HEADERS);
+    sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold').setBackground('#dbeafe');
     sheet.setFrozenRows(1);
   }
   sheet.appendRow(payload.row);
 
-  // 承認担当者にメール通知(省略可:メールアドレスを設定する場合)
+  // 最初の承認者(総務)へ通知
   notifyApprover('総務', payload.row);
-
   return json({ success: true, id: payload.id });
 }
 
 // ===== 承認処理 =====
-function approve(id, step, approvedBy) {
-  const stepKeyMap = { '総務': '総務承認日', '課長': '課長承認日', '副社長': '副社長承認日', '社長': '社長承認日' };
-  const steps = ['総務', '課長', '副社長', '社長'];
+function approve(id) {
+  const found = findRow(id, true);
+  if (!found) return json({ error: 'not found' });
+  const { sheet, rowIndex, headers, row } = found;
 
-  const result = findRow(id, true); // withPosition=true
-  if (!result) return json({ error: 'not found' });
-  const { sheet, rowIndex, headers, row } = result;
+  const doneCount = APPROVAL_STEPS
+    .map(s => headers.indexOf(STEP_DATE[s]))
+    .filter(col => col >= 0 && row[col]).length;
+  const step = APPROVAL_STEPS[doneCount];
+  if (!step) return json({ error: 'already completed' });
 
-  const dateCol = headers.indexOf(stepKeyMap[step]);
-  if (dateCol < 0) return json({ error: 'invalid step' });
-  sheet.getRange(rowIndex, dateCol + 1).setValue(new Date().toISOString().slice(0, 10));
+  const dateCol = headers.indexOf(STEP_DATE[step]);
+  sheet.getRange(rowIndex, dateCol + 1).setValue(today());
 
-  const stepIdx = steps.indexOf(step);
-  const nextStep = steps[stepIdx + 1];
+  const next = APPROVAL_STEPS[doneCount + 1];
   const progressCol = headers.indexOf('進捗');
-  const newProgress = nextStep ? `${nextStep}承認待ち` : '完了';
+  const newProgress = next ? `${next}承認待ち` : '完了';
   sheet.getRange(rowIndex, progressCol + 1).setValue(newProgress);
 
-  if (nextStep) notifyApprover(nextStep, row, headers);
-
+  if (next) notifyApprover(next, row, headers);
   return json({ success: true, progress: newProgress });
 }
 
-// ===== メール通知(任意設定) =====
+// ===== 差戻し処理 =====
+function reject(id, comment) {
+  const found = findRow(id, true);
+  if (!found) return json({ error: 'not found' });
+  const { sheet, rowIndex, headers } = found;
+
+  const progressCol = headers.indexOf('進捗');
+  sheet.getRange(rowIndex, progressCol + 1).setValue('差戻し');
+
+  const commentCol = headers.indexOf('差戻しコメント');
+  if (commentCol >= 0) sheet.getRange(rowIndex, commentCol + 1).setValue(comment || '');
+
+  return json({ success: true, progress: '差戻し' });
+}
+
+// ===== メール通知 =====
 function notifyApprover(step, row, headers) {
-  // 通知したい場合はここに宛先を設定してください
-  // const EMAIL_MAP = { '総務': 'somu@example.com', '課長': 'kacho@example.com', ... };
-  // const to = EMAIL_MAP[step];
-  // if (!to) return;
-  // MailApp.sendEmail(to, `【購入依頼】${step}の承認依頼が届いています`, `...`);
+  const to = EMAIL_MAP[step];
+  if (!to) return;   // 未設定なら送らない
+  headers = headers || HEADERS;
+  const applicant = row[headers.indexOf('申請者名')] || '';
+  const item = row[headers.indexOf('品名1')] || '';
+  const linkText = APP_URL ? `\n\n▼ 確認・承認はこちら\n${APP_URL}` : '';
+  const subject = `【購入依頼】${step}の承認をお願いします`;
+  const body = `${step} ご担当者さま\n\n`
+    + `新しい購入依頼が${step}の承認待ちです。\n\n`
+    + `申請者: ${applicant}\n`
+    + `品名: ${item}\n`
+    + linkText;
+  try { MailApp.sendEmail(to, subject, body); } catch (e) {}
 }
 
 // ===== 内部: 行を探す =====
@@ -128,7 +164,7 @@ function findRow(id, withPosition) {
     const idCol = headers.indexOf('id');
     if (idCol < 0) continue;
     for (let i = 1; i < data.length; i++) {
-      if (String(data[i][idCol]) === id) {
+      if (String(data[i][idCol]) === String(id)) {
         if (!withPosition) {
           const obj = {};
           headers.forEach((h, j) => { obj[h] = String(data[i][j]); });
@@ -141,7 +177,8 @@ function findRow(id, withPosition) {
   return null;
 }
 
-// ===== JSON レスポンス =====
+function today() { return new Date().toISOString().slice(0, 10); }
+
 function json(data) {
   return ContentService
     .createTextOutput(JSON.stringify(data))
