@@ -97,8 +97,11 @@ def preprocess(gray):
     bw = cv2.adaptiveThreshold(g, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                cv2.THRESH_BINARY, 31, 15)
     inv = cv2.bitwise_not(bw)
-    hor = cv2.morphologyEx(inv, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (40, 1)))
-    ver = cv2.morphologyEx(inv, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (1, 40)))
+    # 罫線とみなす線の最短長。数字の縦棒(高さ≒文字サイズ)より十分長くしないと
+    # 「1」や「4」の縦棒が罫線として消され、18,800→8,800 のような誤読になる
+    line_len = max(60, min(g.shape[0], g.shape[1]) // 25)
+    hor = cv2.morphologyEx(inv, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (line_len, 1)))
+    ver = cv2.morphologyEx(inv, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (1, line_len)))
     lines = cv2.dilate(cv2.add(hor, ver), np.ones((3, 3), np.uint8), iterations=1)
     clean = cv2.bitwise_or(bw, lines)        # 罫線を白で塗りつぶす
     clean = cv2.medianBlur(clean, 3)

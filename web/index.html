@@ -402,8 +402,11 @@ function preprocess(srcCanvas){
   cv.adaptiveThreshold(g,bw,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,31,15);
   const inv=new cv.Mat(); cv.bitwise_not(bw,inv);
   const hor=new cv.Mat(), ver=new cv.Mat();
-  const kh=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(40,1));
-  const kv=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(1,40));
+  // 罫線とみなす線の最短長。数字の縦棒(高さ≒文字サイズ)より十分長くしないと
+  // 「1」や「4」の縦棒が罫線として消され、18,800→8,800 のような誤読になる
+  const lineLen=Math.max(60,(Math.min(W,H)/25)|0);
+  const kh=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(lineLen,1));
+  const kv=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(1,lineLen));
   cv.morphologyEx(inv,hor,cv.MORPH_OPEN,kh);
   cv.morphologyEx(inv,ver,cv.MORPH_OPEN,kv);
   const lines=new cv.Mat(); cv.add(hor,ver,lines);
