@@ -675,10 +675,13 @@ async function computeRows(arts, tankaIndex, progress){
   };
 
   // ---- 品番の方式を書類全体から決める(既知形式 or 形状学習) ----
+  // joinedは行の全単語を無空白で連結したもの。品番の直後に数量などの数字が
+  // 癒着して既知形式の判定が落ちることがあるので、左半分(空白区切り)でも試す
+  const knownKey=(x)=>normalizeKey(x.joined)||normalizeKey(x.left||'');
   let knownCount=0;
   arts.forEach(a=>{
     const src=(a.kind==='text')?a.lines:a.raw;
-    (src||[]).forEach(x=>{ if(normalizeKey(x.joined)) knownCount++; });
+    (src||[]).forEach(x=>{ if(knownKey(x)) knownCount++; });
   });
   let generic=null, anchored=false;
   if(knownCount<3){
@@ -695,13 +698,13 @@ async function computeRows(arts, tankaIndex, progress){
       const m=(left||'').trim().match(DITTO_RE);
       if(m && lastFull && lastFull.includes('-')) return lastFull.slice(0,lastFull.lastIndexOf('-'))+'-'+m[1];
       // 学習した形に合わなくても、既知形式ならば拾う(検出が減る事故の保険)
-      return normalizeKey(joined);
+      return knownKey({joined,left});
     }
     if(anchored){
       const k=anchoredKey(left);
       if(k) return k;
     }
-    return normalizeKey(joined);
+    return knownKey({joined,left});
   };
   const stripParser = generic ? (t=>genericKey(t,generic.shape,generic.allowSpace)) : (anchored ? anchoredKey : null);
   if(generic){ // 品番列OCRの認識文字を学習した形に合わせる

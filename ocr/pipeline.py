@@ -621,10 +621,14 @@ def extract_file(pdf_path, tanka_col_index=None):
                          columns=columns, W=W, raw=raw_bands))
 
     # ---- 第2段: 品番の方式を決める(既知形式 or 書類全体から形を学習) ----
+    # joinedは行の全単語を無空白で連結したもの。品番の直後に数量などの数字が
+    # 癒着して既知形式の判定が落ちることがあるので、左半分(空白区切り)でも試す
+    def _known_key(left, joined):
+        return normalize_key(joined) or normalize_key(left or '')
     known_count = 0
     for a in arts:
         src = a['lines'] if a['kind'] == 'text' else a['raw']
-        known_count += sum(1 for x in src if normalize_key(x['joined']))
+        known_count += sum(1 for x in src if _known_key(x.get('left'), x['joined']))
     generic = None                              # (shape, allow_space)
     anchored = False                            # 型式アンカー方式(形がバラバラな型番向け)
     if known_count < 3:
@@ -648,12 +652,12 @@ def extract_file(pdf_path, tanka_col_index=None):
             if m and last_full[0] and '-' in last_full[0]:
                 return last_full[0].rsplit('-', 1)[0] + '-' + m.group(1)
             # 学習した形に合わなくても、既知形式ならば拾う(検出が減る事故の保険)
-            return normalize_key(joined)
+            return _known_key(left, joined)
         if anchored:
             k = _anchored_key(left)
             if k:
                 return k
-        return normalize_key(joined)
+        return _known_key(left, joined)
 
     # ---- 第3段a: 各ページの品番行と列選択を決める ----
     for a in arts:
