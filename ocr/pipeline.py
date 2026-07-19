@@ -280,12 +280,24 @@ def _row_value(strip_gac, strip_clean, y0, y1, row_text='', ban=''):
     def _minx(v):
         return min(h[2] for h in allh if h[1] == v)
 
+    def _d1(a, b):
+        # 一桁だけ違う値か(例: 18000と28000)。罫線癒着などの誤読ペアの検出用
+        s, t = str(a), str(b)
+        return len(s) == len(t) and sum(1 for x, y in zip(s, t) if x != y) == 1
+
     def _pick(cands):
         mx = max(votes[v] for v in cands)
         best = [v for v in cands if votes[v] == mx]
         if len(best) > 1:                      # 同数なら左の列(単価)を優先
             best.sort(key=_minx)
         v = best[0]
+        # 同数で一桁違いの対立(1↔2等)は、罫線除去済み画像で読めた方を採用
+        # (罫線が数字に癒着して別の数字に見える誤読は、加工なし画像で起きやすい)
+        if len(best) > 1:
+            for w in best:
+                if w != v and _d1(w, v) and w in cset and v not in cset:
+                    v = w
+                    break
         # vが「他候補の整数倍(2〜9倍)」なら、それは金額(=単価×数量)の可能性が高い。
         # 票が拮抗(差1以内)していれば左にある方(単価)へ切り替える。
         for w in cands:
@@ -295,7 +307,13 @@ def _row_value(strip_gac, strip_clean, y0, y1, row_text='', ban=''):
                 break
         n = votes[v]
         cross = v in gset and v in cset
-        return v, ('◎' if (cross or n >= 3) else ('○' if n == 2 else '△'))
+        conf = '◎' if (cross or n >= 3) else ('○' if n == 2 else '△')
+        # 一桁だけ違う対立候補が僅差(差1以内)か両画像一致で存在する時は、
+        # どちらが正しいか断定できないので要確認(△)に落とす
+        if any(w != v and _d1(w, v) and (votes[w] >= n - 1 or (w in gset and w in cset))
+               for w in cands):
+            conf = '△'
+        return v, conf
 
     tens = [v for v in votes if v % PRICE_UNIT == 0]
     if tens:

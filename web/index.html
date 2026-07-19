@@ -116,7 +116,7 @@ thead th{background:#1f3a5f!important;-webkit-print-color-adjust:exact;print-col
 <header class="topbar no-print">
   <h1>相見積もり比較アプリ <span style="font-size:13px">HTML版</span></h1>
   <span class="tag">インストール不要・ブラウザだけで動作</span>
-  <span class="tag" style="margin-left:auto">版 2026-07-18a</span>
+  <span class="tag" style="margin-left:auto">版 2026-07-19a</span>
 </header>
 
 <section class="panel no-print" id="upload-panel">
@@ -518,11 +518,21 @@ function rowValue(gacList, clnList, y0, y1, rowText, ban){
   const votes={}; allh.forEach(h=>votes[h.value]=(votes[h.value]||0)+1);
   const gset=new Set(gac.map(h=>h.value)), cset=new Set(cln.map(h=>h.value));
   const minx=v=>Math.min(...allh.filter(h=>h.value===v).map(h=>h.x));
+  // 一桁だけ違う値か(例: 18000と28000)。罫線が数字にくっつく等の誤読ペアの検出用
+  const d1=(a,b)=>{const s=String(a),t=String(b);
+    if(s.length!==t.length)return false;
+    let d=0;for(let i=0;i<s.length;i++)if(s[i]!==t[i])d++;
+    return d===1;};
   const pick=cands=>{
     let mx=0; cands.forEach(v=>{if(votes[v]>mx)mx=votes[v];});
     let best=cands.filter(v=>votes[v]===mx);
     if(best.length>1) best.sort((a,b)=>minx(a)-minx(b));   // 同数なら左(単価)優先
     let v=best[0];
+    // 同数で一桁違いの対立(1↔2等)は、罫線除去済み画像で読めた方を採用
+    // (罫線が数字に癒着して別の数字に見える誤読は、加工なし画像で起きやすい)
+    if(best.length>1){
+      for(const w of best){ if(w!==v && d1(w,v) && cset.has(w) && !cset.has(v)){ v=w; break; } }
+    }
     // vが他候補の整数倍(2〜9倍)なら金額(=単価×数量)の可能性が高い。
     // 票が拮抗(差1以内)なら左にある方(単価)へ切り替える。
     for(const w of cands){
@@ -531,7 +541,11 @@ function rowValue(gacList, clnList, y0, y1, rowText, ban){
     }
     const n=votes[v];
     const cross=gset.has(v)&&cset.has(v);
-    return {price:v, conf:(cross||n>=3)?'◎':(n===2?'○':'△')};
+    let conf=(cross||n>=3)?'◎':(n===2?'○':'△');
+    // 一桁だけ違う対立候補が僅差(差1以内)か両画像一致で存在する時は、
+    // どちらが正しいか断定できないので要確認(△)に落とす
+    if(cands.some(w=>w!==v && d1(w,v) && (votes[w]>=n-1 || (gset.has(w)&&cset.has(w))))) conf='△';
+    return {price:v, conf};
   };
   const keys=Object.keys(votes).map(Number);
   const tens=keys.filter(v=>v%UNIT_READ===0);
