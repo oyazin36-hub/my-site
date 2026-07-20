@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>選出ナビ</title>
+<meta name="theme-color" content="#0d1320">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="選出ナビ">
+</head>
+<body>
+<!--CORE-->
+<style>
+  :root{
+    --ground:#0d1320; --surface:#161f30; --raised:#1e2a40; --line:#27354e;
+    --text:#e9eef7; --muted:#8b98ad; --accent:#f0b532; --accent-dim:#f0b53226;
+    --good:#3ddc84; --warn:#f2c94c; --bad:#ff5a6e;
+    --good-bg:#3ddc8422; --warn-bg:#f2c94c20; --bad-bg:#ff5a6e22;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{background:var(--ground);}
+  body{
+    background:var(--ground);color:var(--text);
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic UI","Meiryo",sans-serif;
+    line-height:1.55;font-size:14px;
+    min-height:100vh;
+  }
+  button{font-family:inherit;color:inherit;background:none;border:none;font-size:inherit;cursor:pointer;}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .shell{max-width:520px;margin:0 auto;padding:0 14px calc(84px + env(safe-area-inset-bottom));}
+  header.top{
+    position:sticky;top:0;z-index:20;background:#0d1320ee;backdrop-filter:blur(6px);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:calc(10px + env(safe-area-inset-top)) 2px 10px;
+  }
+  .logo{font-size:18px;font-weight:800;letter-spacing:.03em;}
+  .logo span{color:var(--accent);}
+  .top-r{display:flex;gap:8px;align-items:center;}
+  .chip{
+    font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-dim);
+    border:1px solid #f0b53255;border-radius:999px;padding:2px 10px;
+  }
+  .help-btn{
+    width:28px;height:28px;border-radius:50%;background:var(--raised);color:var(--muted);
+    font-weight:800;font-size:14px;border:1px solid var(--line);
+  }
+  main{display:flex;flex-direction:column;gap:12px;padding-top:6px;}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;}
+  .card h3{
+    font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.09em;margin-bottom:10px;
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+  }
+  .card h3 .hint{font-weight:500;letter-spacing:0;color:#5d6b82;font-size:11px;text-align:right;}
+
+  .mon{
+    border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:800;color:#fff;text-shadow:0 1px 2px #0009;
+    box-shadow:inset 0 0 0 2px #ffffff2e,0 2px 6px #0006;flex-shrink:0;
+    width:46px;height:46px;font-size:13px;
+  }
+  .mon.s{width:34px;height:34px;font-size:10.5px;}
+  .team-row{display:flex;gap:6px;justify-content:space-between;}
+  .team-slot{display:flex;flex-direction:column;align-items:center;gap:4px;width:52px;min-width:0;}
+  .team-slot .name{font-size:9px;color:var(--muted);white-space:nowrap;max-width:56px;overflow:hidden;text-overflow:ellipsis;}
+  .slot-empty{
+    width:46px;height:46px;border-radius:50%;border:1.5px dashed var(--line);
+    color:#5d6b82;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;
+  }
+  .slot-empty.active{border-color:var(--accent);color:var(--accent);}
+
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 4px;}
+  .gcell{display:flex;flex-direction:column;align-items:center;gap:3px;position:relative;padding:2px 0;border-radius:10px;}
+  .gcell:active{background:var(--raised);}
+  .gcell .name{font-size:9px;color:var(--muted);white-space:nowrap;max-width:74px;overflow:hidden;text-overflow:ellipsis;}
+  .gcell .no{
+    position:absolute;top:-6px;left:50%;margin-left:-34px;font-size:9px;font-weight:800;
+    color:#05080d;background:var(--accent);border-radius:5px;padding:0 5px;z-index:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .gcell.picked .mon{opacity:.28;}
+  .search{
+    display:flex;align-items:center;gap:9px;background:var(--raised);
+    border:1px solid var(--line);border-radius:12px;padding:9px 13px;margin-bottom:12px;
+  }
+  .search input{
+    flex:1;background:none;border:none;color:var(--text);font-size:14px;outline:none;
+  }
+  .search input::placeholder{color:#5d6b82;}
+
+  .cta{
+    display:block;width:100%;text-align:center;background:var(--accent);color:#05080d;
+    font-weight:800;font-size:14px;border-radius:13px;padding:13px;letter-spacing:.05em;
+  }
+  .cta:disabled{opacity:.35;}
+  .cta.sub{background:var(--raised);color:var(--text);border:1px solid var(--line);font-weight:700;}
+  .btn-sm{
+    font-size:11px;font-weight:600;color:var(--muted);border:1px solid var(--line);
+    border-radius:8px;padding:3px 10px;background:var(--raised);
+  }
+
+  table.matrix{border-collapse:separate;border-spacing:3px;margin:0 auto;}
+  .matrix th{padding:0;}
+  .matrix td{
+    width:40px;height:40px;border-radius:9px;text-align:center;
+    font-size:15px;font-weight:800;cursor:pointer;
+  }
+  .c-good{background:var(--good-bg);color:var(--good);}
+  .c-ok{background:#3ddc8411;color:#8fd8b0;}
+  .c-warn{background:var(--warn-bg);color:var(--warn);}
+  .c-bad{background:var(--bad-bg);color:var(--bad);}
+  .legend{display:flex;gap:12px;justify-content:center;margin-top:10px;font-size:10.5px;color:var(--muted);flex-wrap:wrap;}
+  .legend b{font-weight:800;margin-right:3px;}
+  .lg{color:var(--good);} .lw{color:var(--warn);} .lb{color:var(--bad);}
+
+  .rec{display:flex;flex-direction:column;gap:9px;}
+  .rec-row{display:flex;align-items:center;gap:11px;background:var(--raised);border-radius:12px;padding:9px 12px;}
+  .rec-row .rank{font-size:13px;font-weight:800;color:var(--accent);width:18px;text-align:center;}
+  .rec-row .body{flex:1;min-width:0;}
+  .rec-row .who{font-size:13.5px;font-weight:700;}
+  .rec-row .why{font-size:11px;color:var(--muted);}
+  .rec-row.first{border:1px solid #f0b53266;background:linear-gradient(135deg,#f0b5321a,var(--raised) 55%);}
+
+  .empty{
+    text-align:center;color:var(--muted);font-size:12.5px;padding:26px 10px;line-height:1.8;
+  }
+  .empty b{color:var(--text);}
+
+  /* modal */
+  .overlay{
+    position:fixed;inset:0;background:#05080dcc;z-index:40;display:none;
+    align-items:flex-end;justify-content:center;
+  }
+  .overlay.open{display:flex;}
+  .sheet{
+    background:var(--ground);border:1px solid var(--line);border-bottom:none;
+    border-radius:22px 22px 0 0;width:100%;max-width:520px;
+    max-height:86vh;overflow-y:auto;padding:16px 16px calc(20px + env(safe-area-inset-bottom));
+  }
+  .sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .sheet-head .t{font-size:15px;font-weight:800;}
+  .close{width:30px;height:30px;border-radius:50%;background:var(--raised);color:var(--muted);font-size:14px;font-weight:700;}
+
+  /* detail */
+  .versus{display:flex;align-items:center;justify-content:center;gap:18px;padding:4px 0;}
+  .versus .side{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:90px;}
+  .versus .nm{font-size:12px;font-weight:700;}
+  .versus .tp{font-size:9.5px;color:var(--muted);}
+  .versus .vs{font-size:13px;font-weight:800;color:var(--accent);}
+  .verdict{text-align:center;font-size:12.5px;font-weight:700;border-radius:10px;padding:7px;margin-top:8px;}
+  .v-good{color:var(--good);background:var(--good-bg);}
+  .v-warn{color:var(--warn);background:var(--warn-bg);}
+  .v-bad{color:var(--bad);background:var(--bad-bg);}
+
+  .sp-row{display:flex;align-items:center;gap:9px;font-size:11.5px;margin-top:6px;}
+  .sp-row .nm{width:78px;font-weight:600;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sp-row .bar{flex:1;height:9px;border-radius:5px;background:var(--raised);overflow:hidden;}
+  .sp-row .bar i{display:block;height:100%;border-radius:5px;}
+  .sp-row .val{width:34px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;flex-shrink:0;}
+  .sp-note{font-size:10.5px;margin-top:7px;color:var(--muted);}
+
+  .moves{display:flex;flex-direction:column;gap:7px;}
+  .move{display:flex;align-items:center;gap:8px;background:var(--raised);border-radius:11px;padding:8px 11px;font-size:12px;}
+  .move .type{font-size:10px;font-weight:700;color:#fff;border-radius:6px;padding:1px 7px;flex-shrink:0;text-shadow:0 1px 1px #0007;}
+  .move .nm{font-weight:700;flex:1;min-width:0;}
+  .move .eff{font-size:11px;font-weight:800;flex-shrink:0;}
+  .e-good{color:var(--good);} .e-mid{color:var(--muted);font-weight:600;} .e-bad{color:var(--bad);}
+  .move .dmg{font-size:10.5px;color:var(--muted);flex-shrink:0;}
+  .move .dmg b{color:var(--text);}
+  .move.danger{background:#ff5a6e14;border:1px solid #ff5a6e33;}
+
+  /* diagnosis */
+  .grade-wrap{display:flex;align-items:center;gap:16px;}
+  .grade{width:74px;height:74px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .grade i{
+    width:58px;height:58px;border-radius:50%;background:var(--surface);
+    display:flex;align-items:center;justify-content:center;font-style:normal;
+    font-size:22px;font-weight:800;color:var(--accent);
+  }
+  .grade-txt .big{font-size:14px;font-weight:700;}
+  .grade-txt .sm{font-size:11px;color:var(--muted);}
+  .stats{display:flex;flex-direction:column;gap:7px;margin-top:13px;}
+  .st{display:flex;align-items:center;gap:9px;font-size:11px;}
+  .st .nm{width:58px;color:var(--muted);flex-shrink:0;}
+  .st .bar{flex:1;height:8px;border-radius:4px;background:var(--raised);overflow:hidden;}
+  .st .bar i{display:block;height:100%;border-radius:4px;background:var(--accent);}
+  .st .val{width:24px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .points{display:flex;flex-direction:column;gap:9px;}
+  .pt{display:flex;gap:9px;font-size:12.5px;align-items:flex-start;}
+  .pt .ic{
+    width:18px;height:18px;border-radius:50%;flex-shrink:0;margin-top:2px;
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;
+  }
+  .pt.good .ic{background:var(--good-bg);color:var(--good);}
+  .pt.bad .ic{background:var(--bad-bg);color:var(--bad);}
+  .pt .tx b{font-weight:700;}
+  .pt .tx .why{color:var(--muted);font-size:11px;}
+  .threats{display:flex;flex-direction:column;gap:8px;}
+  .threat{display:flex;align-items:center;gap:11px;background:var(--raised);border-radius:12px;padding:9px 11px;}
+  .threat .body{flex:1;min-width:0;}
+  .threat .who{font-size:12.5px;font-weight:700;}
+  .threat .why{font-size:10.5px;color:var(--muted);}
+  .threat .lv{font-size:10px;font-weight:800;border-radius:6px;padding:2px 7px;flex-shrink:0;}
+  .lv-hi{background:var(--bad-bg);color:var(--bad);}
+  .lv-mid{background:var(--warn-bg);color:var(--warn);}
+
+  /* scan */
+  .scan-btns{display:flex;gap:8px;}
+  .scan-btns .cta{flex:1;font-size:12.5px;padding:11px 6px;}
+  #scanWrap{margin-top:12px;display:none;}
+  #scanCanvas{width:100%;border-radius:12px;border:1px solid var(--line);display:block;touch-action:manipulation;}
+  .scan-msg{font-size:12px;color:var(--warn);margin:9px 0;text-align:center;line-height:1.7;}
+  .scan-msg.ok{color:var(--good);}
+  .conf-list{display:flex;flex-direction:column;gap:7px;margin-top:8px;}
+  .conf-row{display:flex;align-items:center;gap:10px;background:var(--raised);border-radius:11px;padding:7px 11px;}
+  .conf-row .nm{flex:1;font-size:12.5px;font-weight:700;min-width:0;}
+  .conf-row .pct{font-size:11px;color:var(--good);font-weight:700;font-variant-numeric:tabular-nums;}
+  .conf-row.unsure .pct{color:var(--warn);}
+  .conf-row .fix{font-size:10px;color:var(--warn);border:1px solid #f2c94c55;border-radius:6px;padding:1px 7px;}
+
+  /* 持ち物・メガ設定 */
+  .itag{font-size:8.5px;color:#5d6b82;border:1px solid var(--line);border-radius:5px;padding:0 4px;max-width:56px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .itag.on{color:var(--text);border-color:#3a4a66;}
+  .itag.mega{color:var(--accent);border-color:#f0b53266;background:var(--accent-dim);}
+  .opts{display:flex;flex-wrap:wrap;gap:7px;}
+  .opt{font-size:12px;border:1px solid var(--line);background:var(--raised);border-radius:999px;padding:6px 12px;}
+  .opt.sel{background:var(--accent);color:#05080d;font-weight:800;border-color:var(--accent);}
+  .opt.megaopt{border-color:#f0b53266;color:var(--accent);}
+  .opt.megaopt.sel{color:#05080d;}
+  .mflag{position:absolute;top:1px;right:3px;font-size:8px;font-weight:800;color:var(--accent);}
+  .asm{font-size:12px;line-height:2;color:var(--muted);}
+  .asm b{color:var(--text);font-weight:600;}
+
+  .hist{display:flex;flex-direction:column;gap:8px;}
+  .hist-row{display:flex;align-items:center;gap:5px;background:var(--raised);border-radius:12px;padding:8px 10px;width:100%;}
+  .hist-row .mon{width:28px;height:28px;font-size:8.5px;}
+  .hist-row .when{margin-left:auto;font-size:10px;color:#5d6b82;flex-shrink:0;}
+
+  nav.bottom{
+    position:fixed;bottom:0;left:0;right:0;z-index:30;
+    background:#0b101add;backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  }
+  .nav-in{max-width:520px;margin:0 auto;display:flex;padding:6px 8px calc(6px + env(safe-area-inset-bottom));}
+  .nav-btn{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:6px 0;color:#5d6b82;font-size:10.5px;font-weight:700;border-radius:10px;
+  }
+  .nav-btn .ic{font-size:17px;line-height:1;}
+  .nav-btn.on{color:var(--accent);}
+  .tab{display:none;}
+  .tab.on{display:flex;flex-direction:column;gap:12px;}
+  .note{font-size:11px;color:#5d6b82;line-height:1.7;}
+  .help-body{font-size:13px;line-height:1.9;color:var(--text);}
+  .help-body h4{font-size:13px;color:var(--accent);margin:14px 0 4px;}
+  .help-body ol{padding-left:20px;}
+  .help-body p{color:var(--muted);font-size:12px;}
+</style>
+
+<div class="shell">
+  <header class="top">
+    <div class="logo">選出<span>ナビ</span></div>
+    <div class="top-r">
+      <span class="chip">Pokémon Champions 用</span>
+      <button class="help-btn" id="btnHelp" aria-label="使い方">?</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- マイPT -->
+    <section class="tab" id="tab-team">
+      <div class="card">
+        <h3>マイチーム(最大6匹)<span class="hint">タップで持ち物・メガ設定</span></h3>
+        <div class="team-row" id="mySlots"></div>
+      </div>
+      <div class="card">
+        <h3>ポケモンを追加<span class="hint">タップで追加</span></h3>
+        <div class="search">🔍<input id="myq" placeholder="なまえで検索(例: がぶ)"></div>
+        <div class="grid" id="myGrid"></div>
+      </div>
+    </section>
+
+    <!-- 相手入力 -->
+    <section class="tab" id="tab-opp">
+      <div class="card">
+        <h3>相手のチーム<span class="hint">アイコンをタップで外す</span></h3>
+        <div class="team-row" id="oppSlots"></div>
+      </div>
+      <div class="card">
+        <h3>スクショ読み取り(自動入力)<span class="hint">端末内で処理・送信なし</span></h3>
+        <div class="scan-btns">
+          <button class="cta" id="btnScanFile">📷 スクショを選ぶ</button>
+          <button class="cta sub" id="btnScanReset">読み取り位置をリセット</button>
+        </div>
+        <input type="file" id="scanInput" accept="image/*" hidden>
+        <div id="scanWrap">
+          <canvas id="scanCanvas"></canvas>
+          <div class="scan-msg" id="scanMsg"></div>
+          <div class="conf-list" id="scanList"></div>
+          <div style="margin-top:10px"><button class="cta" id="btnScanApply" style="display:none">この6匹で算出する ›</button></div>
+        </div>
+        <p class="note" style="margin-top:9px">はじめて使うときだけ、画像の中の相手ポケモン6匹を順番にタップして教えてください。2回目からは同じ位置を自動で読み取り、覚えたポケモンは自動で当てます(使うほど賢くなります)。</p>
+      </div>
+      <div class="card" id="histCard" style="display:none">
+        <h3>最近の相手<span class="hint">タップで再セット</span></h3>
+        <div class="hist" id="histList"></div>
+      </div>
+      <div class="card">
+        <h3>タップで入力<span class="hint">番号=チャンピオンズ使用率TOP20</span></h3>
+        <div class="search">🔍<input id="oppq" placeholder="なまえで検索(例: ぱお)"></div>
+        <div class="grid" id="oppGrid"></div>
+      </div>
+      <button class="cta" id="btnCalc">相性を算出する ›</button>
+    </section>
+
+    <!-- 結果 -->
+    <section class="tab" id="tab-result">
+      <div id="resultBody"></div>
+    </section>
+
+    <!-- PT診断 -->
+    <section class="tab" id="tab-diag">
+      <div id="diagBody"></div>
+    </section>
+  </main>
+</div>
+
+<nav class="bottom"><div class="nav-in">
+  <button class="nav-btn" data-tab="team"><span class="ic">👥</span>マイPT</button>
+  <button class="nav-btn" data-tab="opp"><span class="ic">🎯</span>相手入力</button>
+  <button class="nav-btn" data-tab="result"><span class="ic">⚔️</span>結果</button>
+  <button class="nav-btn" data-tab="diag"><span class="ic">📋</span>PT診断</button>
+</div></nav>
+
+<!-- ピッカー -->
+<div class="overlay" id="pickOverlay"><div class="sheet">
+  <div class="sheet-head"><span class="t" id="pickTitle">ポケモンを選ぶ</span><button class="close" data-close="pickOverlay">✕</button></div>
+  <div class="search">🔍<input id="pickq" placeholder="なまえで検索"></div>
+  <div class="grid" id="pickGrid"></div>
+</div></div>
+
+<!-- 対面詳細 -->
+<div class="overlay" id="detailOverlay"><div class="sheet">
+  <div class="sheet-head"><span class="t">対面分析</span><button class="close" data-close="detailOverlay">✕</button></div>
+  <div id="detailBody"></div>
+</div></div>
+
+<!-- 持ち物・メガ設定 -->
+<div class="overlay" id="cfgOverlay"><div class="sheet">
+  <div class="sheet-head"><span class="t">ポケモンの設定</span><button class="close" data-close="cfgOverlay">✕</button></div>
+  <div id="cfgBody"></div>
+</div></div>
+
+<!-- 使い方 -->
+<div class="overlay" id="helpOverlay"><div class="sheet">
+  <div class="sheet-head"><span class="t">使い方</span><button class="close" data-close="helpOverlay">✕</button></div>
+  <div class="help-body">
+    <h4>1. 自分のチームを登録する</h4>
+    <ol><li>下の「マイPT」を押す</li><li>一覧から自分のポケモンをタップ(最大6匹)</li></ol>
+    <h4>2. 対戦がはじまったら</h4>
+    <ol><li>「相手入力」を押して相手の6匹をタップ</li><li>6匹そろうと自動で「結果」が開く</li></ol>
+    <h4>3. 結果の見かた</h4>
+    <p>表の色が答えです。<b style="color:var(--good)">緑(◎○)=有利</b> / <b style="color:var(--warn)">黄(△)=五分</b> / <b style="color:var(--bad)">赤(✕)=不利</b>。マスをタップすると「どの技が効くか」「どちらが先に動くか」が見られます。</p>
+    <h4>4. スクショ読み取り</h4>
+    <p>対戦画面のスクショを撮り、「相手入力」の「スクショを選ぶ」から読み込むと自動で入力されます。はじめの数回だけ、写っているポケモンを教えてあげてください(次からは自動)。</p>
+    <h4>5. 持ち物とメガシンカ</h4>
+    <p>「マイPT」で自分のポケモンをタップすると持ち物を設定できます。<b>メガストーン</b>を持たせるとメガシンカ後の姿で計算されます(PTに1匹だけ)。タスキ・スカーフ・ハチマキなども計算に反映されます。</p>
+    <h4>6. 相手の型はおまかせ推測</h4>
+    <p>相手のポケモンは<b>使用率の高い型(持ち物・性格・努力値・特性)を自動で推測</b>して計算します。相手がメガシンカできるポケモンの場合、マスに「M」がつき、対面詳細でメガ後の有利不利も見られます。</p>
+    <h4>7. PT診断</h4>
+    <p>「PT診断」を押すと、チームの長所・短所・苦手なポケモンが自動で表示されます。</p>
+    <p style="margin-top:14px">※ 本アプリは非公式のファンツールです。数値は代表的な型をもとにした「目安」です。</p>
+  </div>
+</div></div>
+
+<script>
+"use strict";
+/* ================= データ ================= */
+const TYPES=["ノーマル","ほのお","みず","でんき","くさ","こおり","かくとう","どく","じめん","ひこう","エスパー","むし","いわ","ゴースト","ドラゴン","あく","はがね","フェアリー"];
+const CHART={
+ "ノーマル":{"いわ":.5,"ゴースト":0,"はがね":.5},
+ "ほのお":{"ほのお":.5,"みず":.5,"くさ":2,"こおり":2,"むし":2,"いわ":.5,"ドラゴン":.5,"はがね":2},
+ "みず":{"ほのお":2,"みず":.5,"くさ":.5,"じめん":2,"いわ":2,"ドラゴン":.5},
+ "でんき":{"みず":2,"でんき":.5,"くさ":.5,"じめん":0,"ひこう":2,"ドラゴン":.5},
+ "くさ":{"ほのお":.5,"みず":2,"くさ":.5,"どく":.5,"じめん":2,"ひこう":.5,"むし":.5,"いわ":2,"ドラゴン":.5,"はがね":.5},
+ "こおり":{"ほのお":.5,"みず":.5,"くさ":2,"こおり":.5,"じめん":2,"ひこう":2,"ドラゴン":2,"はがね":.5},
+ "かくとう":{"ノーマル":2,"こおり":2,"どく":.5,"ひこう":.5,"エスパー":.5,"むし":.5,"いわ":2,"ゴースト":0,"あく":2,"はがね":2,"フェアリー":.5},
+ "どく":{"くさ":2,"どく":.5,"じめん":.5,"いわ":.5,"ゴースト":.5,"はがね":0,"フェアリー":2},
+ "じめん":{"ほのお":2,"でんき":2,"くさ":.5,"どく":2,"ひこう":0,"むし":.5,"いわ":2,"はがね":2},
+ "ひこう":{"でんき":.5,"くさ":2,"かくとう":2,"むし":2,"いわ":.5,"はがね":.5},
+ "エスパー":{"かくとう":2,"どく":2,"エスパー":.5,"あく":0,"はがね":.5},
+ "むし":{"ほのお":.5,"くさ":2,"かくとう":.5,"どく":.5,"ひこう":.5,"エスパー":2,"ゴースト":.5,"あく":2,"はがね":.5,"フェアリー":.5},
+ "いわ":{"ほのお":2,"こおり":2,"かくとう":.5,"じめん":.5,"ひこう":2,"むし":2,"はがね":.5},
+ "ゴースト":{"ノーマル":0,"エスパー":2,"ゴースト":2,"あく":.5},
+ "ドラゴン":{"ドラゴン":2,"はがね":.5,"フェアリー":0},
+ "あく":{"かくとう":.5,"エスパー":2,"ゴースト":2,"あく":.5,"フェアリー":.5},
+ "はがね":{"ほのお":.5,"みず":.5,"でんき":.5,"こおり":2,"いわ":2,"はがね":.5,"フェアリー":2},
+ "フェアリー":{"ほのお":.5,"かくとう":2,"どく":.5,"ドラゴン":2,"あく":2,"はがね":.5}
+};
+const TCOLOR={"ノーマル":"#8a8a7a","ほのお":"#f08030","みず":"#6890f0","でんき":"#e0b820","くさ":"#78c850","こおり":"#5fc0d0","かくとう":"#c03028","どく":"#a040a0","じめん":"#d8b055","ひこう":"#a890f0","エスパー":"#f85888","むし":"#a8b820","いわ":"#b8a038","ゴースト":"#705898","ドラゴン":"#7038f8","あく":"#5a4a44","はがね":"#9a9ab8","フェアリー":"#ee88a8"};
+/* [id, 名前, よみ, タイプ, 種族値(H,A,B,C,D,S), 技(名前|タイプ|物特|威力|フラグ), 略称] フラグ p=先制 fd=フリーズドライ */
+const RAW=[
+[1,"カイリュー","カイリュー","ドラゴン,ひこう","91,134,95,100,100,80","しんそく|ノーマル|P|80|p;げきりん|ドラゴン|P|120;じしん|じめん|P|100;アイススピナー|こおり|P|80"],
+[2,"ハバタクカミ","ハバタクカミ","ゴースト,フェアリー","55,55,55,135,135,135","ムーンフォース|フェアリー|S|95;シャドーボール|ゴースト|S|80;マジカルフレイム|ほのお|S|75;パワージェム|いわ|S|80","カミ"],
+[3,"パオジアン","パオジアン","あく,こおり","80,120,80,90,65,135","つららおとし|こおり|P|85;ふいうち|あく|P|70|p;せいなるつるぎ|かくとう|P|90;こおりのつぶて|こおり|P|40|p","パオ"],
+[4,"ウーラオス(れんげきのかた)","ウーラオスレンゲキノカタ","かくとう,みず","100,130,100,63,60,97","すいりゅうれんだ|みず|P|76;インファイト|かくとう|P|120;アクアジェット|みず|P|40|p;とんぼがえり|むし|P|70","ウラ"],
+[5,"ガチグマ(アカツキ)","ガチグマアカツキ","じめん,ノーマル","113,70,120,135,65,52","ブラッドムーン|ノーマル|S|140;だいちのちから|じめん|S|90;ハイパーボイス|ノーマル|S|90","グマ"],
+[6,"ランドロス(れいじゅう)","ランドロスレイジュウ","じめん,ひこう","89,145,90,105,80,91","じしん|じめん|P|100;いわなだれ|いわ|P|75;とんぼがえり|むし|P|70","ラン"],
+[7,"テツノツツミ","テツノツツミ","こおり,みず","56,80,114,124,60,136","フリーズドライ|こおり|S|70|fd;ハイドロポンプ|みず|S|110;れいとうビーム|こおり|S|90","ツツ"],
+[8,"オーガポン(かまどのめん)","オーガポンカマドノメン","くさ,ほのお","80,120,84,60,96,110","ツタこんぼう(炎)|ほのお|P|100;ウッドハンマー|くさ|P|120;じゃれつく|フェアリー|P|90;とんぼがえり|むし|P|70","カマ"],
+[9,"ドラパルト","ドラパルト","ドラゴン,ゴースト","88,120,75,100,75,142","ドラゴンアロー|ドラゴン|P|100;ゴーストダイブ|ゴースト|P|90;だいもんじ|ほのお|S|110;とんぼがえり|むし|P|70","ドラ"],
+[10,"ミミッキュ","ミミッキュ","ゴースト,フェアリー","55,90,80,50,105,96","じゃれつく|フェアリー|P|90;シャドークロー|ゴースト|P|70;かげうち|ゴースト|P|40|p;ウッドハンマー|くさ|P|120","ミミ"],
+[11,"ヒードラン","ヒードラン","ほのお,はがね","91,90,106,130,106,77","マグマストーム|ほのお|S|100;ラスターカノン|はがね|S|80;だいちのちから|じめん|S|90","ヒド"],
+[12,"イーユイ","イーユイ","あく,ほのお","55,80,80,135,120,100","かえんほうしゃ|ほのお|S|90;あくのはどう|あく|S|80;オーバーヒート|ほのお|S|130","ユイ"],
+[13,"サーフゴー","サーフゴー","はがね,ゴースト","87,60,95,133,91,84","ゴールドラッシュ|はがね|S|120;シャドーボール|ゴースト|S|80;10まんボルト|でんき|S|90","ゴー"],
+[14,"ディンルー","ディンルー","あく,じめん","155,110,125,55,80,45","じしん|じめん|P|100;いわなだれ|いわ|P|75;ヘビーボンバー|はがね|P|100","ディン"],
+[15,"ガブリアス","ガブリアス","ドラゴン,じめん","108,130,95,80,85,102","じしん|じめん|P|100;げきりん|ドラゴン|P|120;ストーンエッジ|いわ|P|100;アイアンヘッド|はがね|P|80","ガブ"],
+[16,"セグレイブ","セグレイブ","ドラゴン,こおり","115,145,92,75,86,87","きょけんとつげき|ドラゴン|P|120;つららばり|こおり|P|75;じしん|じめん|P|100;アイアンヘッド|はがね|P|80","セグ"],
+[17,"ウインディ","ウインディ","ほのお","90,110,80,100,80,95","フレアドライブ|ほのお|P|120;しんそく|ノーマル|P|80|p;インファイト|かくとう|P|120;ワイルドボルト|でんき|P|90","ウイ"],
+[18,"コノヨザル","コノヨザル","かくとう,ゴースト","110,115,80,50,90,90","ふんどのこぶし|ゴースト|P|80;インファイト|かくとう|P|120;ドレインパンチ|かくとう|P|75;がんせきふうじ|いわ|P|60","ザル"],
+[19,"テツノカイナ","テツノカイナ","かくとう,でんき","154,140,108,50,68,50","インファイト|かくとう|P|120;ワイルドボルト|でんき|P|90;ドレインパンチ|かくとう|P|75;れいとうパンチ|こおり|P|75","カイナ"],
+[20,"ドドゲザン","ドドゲザン","あく,はがね","100,135,120,60,85,50","ドゲザン|あく|P|85;アイアンヘッド|はがね|P|80;ふいうち|あく|P|70|p","ザン"],
+[21,"トドロクツキ","トドロクツキ","ドラゴン,あく","105,139,71,55,101,119","アクロバット|ひこう|P|110;かみくだく|あく|P|80;じしん|じめん|P|100;ドラゴンクロー|ドラゴン|P|80","ツキ"],
+[22,"サザンドラ","サザンドラ","あく,ドラゴン","92,105,90,125,90,98","あくのはどう|あく|S|80;りゅうせいぐん|ドラゴン|S|130;だいもんじ|ほのお|S|110;ラスターカノン|はがね|S|80","サザン"],
+[23,"キラフロル","キラフロル","いわ,どく","83,55,90,130,81,86","パワージェム|いわ|S|80;ヘドロウェーブ|どく|S|95;だいちのちから|じめん|S|90","キラ"],
+[24,"マスカーニャ","マスカーニャ","くさ,あく","76,110,70,81,60,123","トリックフラワー|くさ|P|70;はたきおとす|あく|P|65;ふいうち|あく|P|70|p","ニャ"],
+[25,"ウォッシュロトム","ウォッシュロトム","でんき,みず","50,65,107,105,107,86","ハイドロポンプ|みず|S|110;10まんボルト|でんき|S|90;ボルトチェンジ|でんき|S|70","ロト"],
+[26,"オーロンゲ","オーロンゲ","あく,フェアリー","95,120,65,95,75,60","じゃれつく|フェアリー|P|90;ソウルクラッシュ|フェアリー|P|75;ふいうち|あく|P|70|p","ロン"],
+[27,"バンギラス","バンギラス","いわ,あく","100,134,110,95,100,61","いわなだれ|いわ|P|75;かみくだく|あく|P|80;じしん|じめん|P|100","バンギ"],
+[28,"メタグロス","メタグロス","はがね,エスパー","80,135,130,95,90,70","アイアンヘッド|はがね|P|80;しねんのずつき|エスパー|P|80;バレットパンチ|はがね|P|40|p;じしん|じめん|P|100","グロス"],
+[29,"ハッサム","ハッサム","むし,はがね","70,130,100,55,80,65","バレットパンチ|はがね|P|40|p;とんぼがえり|むし|P|70;アイアンヘッド|はがね|P|80","ハサ"],
+[30,"ゲッコウガ","ゲッコウガ","みず,あく","72,95,67,103,71,122","ハイドロポンプ|みず|S|110;あくのはどう|あく|S|80;れいとうビーム|こおり|S|90;みずしゅりけん|みず|S|45|p","ゲコ"],
+[31,"リザードン","リザードン","ほのお,ひこう","78,84,78,109,85,100","かえんほうしゃ|ほのお|S|90;エアスラッシュ|ひこう|S|75;ソーラービーム|くさ|S|120","リザ"],
+[32,"ニンフィア","ニンフィア","フェアリー","95,65,65,110,130,60","ハイパーボイス|フェアリー|S|90;シャドーボール|ゴースト|S|80;マジカルフレイム|ほのお|S|75","ニン"],
+[33,"アシレーヌ","アシレーヌ","みず,フェアリー","80,74,74,126,116,60","うたかたのアリア|みず|S|90;ムーンフォース|フェアリー|S|95;れいとうビーム|こおり|S|90","アシ"],
+[34,"ウルガモス","ウルガモス","むし,ほのお","85,60,65,135,105,100","むしのさざめき|むし|S|90;だいもんじ|ほのお|S|110;ギガドレイン|くさ|S|75","ガモス"],
+[35,"アーマーガア","アーマーガア","はがね,ひこう","98,87,105,53,85,67","ブレイブバード|ひこう|P|120;アイアンヘッド|はがね|P|80;ボディプレス|かくとう|P|80","ガア"],
+[36,"カバルドン","カバルドン","じめん","108,112,118,68,72,47","じしん|じめん|P|100;いわなだれ|いわ|P|75","カバ"],
+[37,"クレセリア","クレセリア","エスパー","120,70,110,75,120,85","ムーンフォース|フェアリー|S|95;サイコキネシス|エスパー|S|90;れいとうビーム|こおり|S|90","クレセ"],
+[38,"ゲンガー","ゲンガー","ゴースト,どく","60,65,60,130,75,110","シャドーボール|ゴースト|S|80;ヘドロばくだん|どく|S|90;きあいだま|かくとう|S|120","ゲン"],
+[39,"ブリジュラス","ブリジュラス","はがね,ドラゴン","90,105,130,125,65,85","エレクトロビーム|でんき|S|130;ラスターカノン|はがね|S|80;ボディプレス|かくとう|P|80;りゅうのはどう|ドラゴン|S|85","ブリ"],
+[40,"タケルライコ","タケルライコ","でんき,ドラゴン","125,73,91,137,89,75","じんらい|でんき|S|70|p;りゅうせいぐん|ドラゴン|S|130;10まんボルト|でんき|S|90","ライコ"],
+[41,"イダイナキバ","イダイナキバ","じめん,かくとう","115,131,131,53,53,87","じしん|じめん|P|100;インファイト|かくとう|P|120;いわなだれ|いわ|P|75","キバ"],
+[42,"テツノブジン","テツノブジン","フェアリー,かくとう","74,130,90,120,60,116","インファイト|かくとう|P|120;ムーンフォース|フェアリー|S|95;サイコカッター|エスパー|P|70","ブジン"],
+[43,"テツノドクガ","テツノドクガ","ほのお,どく","80,70,60,140,110,110","ほのおのまい|ほのお|S|80;ヘドロウェーブ|どく|S|95;エナジーボール|くさ|S|90","ドクガ"],
+[44,"キノガッサ","キノガッサ","くさ,かくとう","60,130,80,60,60,70","マッハパンチ|かくとう|P|40|p;タネマシンガン|くさ|P|75","ガッサ"],
+[45,"モロバレル","モロバレル","くさ,どく","114,85,70,85,80,30","ヘドロばくだん|どく|S|90;ギガドレイン|くさ|S|75","バレル"],
+[46,"ラウドボーン","ラウドボーン","ほのお,ゴースト","104,75,100,110,75,66","フレアソング|ほのお|S|80;シャドーボール|ゴースト|S|80;だいちのちから|じめん|S|90","ラウド"],
+[47,"オーガポン(みどりのめん)","オーガポンミドリノメン","くさ","80,120,84,60,96,110","ツタこんぼう|くさ|P|100;じゃれつく|フェアリー|P|90;とんぼがえり|むし|P|70","ミド"],
+[48,"オーガポン(いどのめん)","オーガポンイドノメン","くさ,みず","80,120,84,60,96,110","ツタこんぼう(水)|みず|P|100;ウッドハンマー|くさ|P|120;じゃれつく|フェアリー|P|90","イド"],
+[49,"オーガポン(いしずえのめん)","オーガポンイシズエノメン","くさ,いわ","80,120,84,60,96,110","ツタこんぼう(岩)|いわ|P|100;ウッドハンマー|くさ|P|120;じゃれつく|フェアリー|P|90","イシ"],
+[50,"ボーマンダ","ボーマンダ","ドラゴン,ひこう","95,135,80,110,80,100","げきりん|ドラゴン|P|120;じしん|じめん|P|100;ダブルウイング|ひこう|P|80","マンダ"],
+[51,"ウェーニバル","ウェーニバル","みず,かくとう","85,120,80,85,75,85","アクアステップ|みず|P|80;インファイト|かくとう|P|120;ブレイブバード|ひこう|P|120","ニバル"],
+[52,"ギャラドス","ギャラドス","みず,ひこう","95,125,79,60,100,81","たきのぼり|みず|P|80;じしん|じめん|P|100;こおりのキバ|こおり|P|65;ストーンエッジ|いわ|P|100","ギャラ"],
+[53,"マフォクシー","マフォクシー","ほのお,エスパー","75,69,72,114,100,104","だいもんじ|ほのお|S|110;サイコキネシス|エスパー|S|90;シャドーボール|ゴースト|S|80;マジカルシャイン|フェアリー|S|80","マフォ"],
+[54,"バシャーモ","バシャーモ","ほのお,かくとう","80,120,70,110,70,80","フレアドライブ|ほのお|P|120;とびひざげり|かくとう|P|130;いわなだれ|いわ|P|75","バシャ"],
+[55,"キュウコン(アローラのすがた)","キュウコンアローラノスガタ","こおり,フェアリー","73,67,75,81,100,109","ムーンフォース|フェアリー|S|95;ふぶき|こおり|S|110;フリーズドライ|こおり|S|70|fd","キュウ"],
+[56,"イダイトウ(オス)","イダイトウオス","みず,ゴースト","120,112,65,80,75,78","ウェーブタックル|みず|P|120;アクアジェット|みず|P|40|p;シャドーボール|ゴースト|S|80","イダイ"]
+];
+/* ポケモンチャンピオンズ シングル使用率TOP20(攻略サイト・公開データより/シーズンごとに更新) */
+const ORDER=[15,10,36,28,39,24,33,52,53,54,31,22,1,35,30,55,25,38,23,56];
+const MONS=RAW.map(r=>({
+  i:r[0], n:r[1], k:r[2], t:r[3].split(","),
+  b:r[4].split(",").map(Number),
+  m:r[5].split(";").map(s=>{const a=s.split("|");return {n:a[0],t:a[1],c:a[2],p:+a[3],pr:(a[4]||"").includes("p"),fd:(a[4]||"").includes("fd")};}),
+  ab:r[6]||r[1].split("(")[0].slice(0,2)
+}));
+/* 全国図鑑データ(PokéAPI由来・自動生成)。技は「タイプ一致の代表打点(威力90)」として概算 */
+/*EXTRA_START*/
+const EXTRA=[["フシギダネ","くさ,どく","45,49,49,65,65,45"],["フシギソウ","くさ,どく","60,62,63,80,80,60"],["フシギバナ","くさ,どく","80,82,83,100,100,80"],["メガフシギバナ","くさ,どく","80,100,123,122,120,80","M"],["ヒトカゲ","ほのお","39,52,43,60,50,65"],["リザード","ほのお","58,64,58,80,65,80"],["メガリザードンＸ","ほのお,ドラゴン","78,130,111,130,85,100","M"],["メガリザードンＹ","ほのお,ひこう","78,104,78,159,115,100","M"],["ゼニガメ","みず","44,48,65,50,64,43"],["カメール","みず","59,63,80,65,80,58"],["カメックス","みず","79,83,100,85,105,78"],["メガカメックス","みず","79,103,120,135,115,78","M"],["キャタピー","むし","45,30,35,20,20,45"],["トランセル","むし","50,20,55,25,25,30"],["バタフリー","むし,ひこう","60,45,50,90,80,70"],["ビードル","むし,どく","40,35,30,20,20,50"],["コクーン","むし,どく","45,25,50,25,25,35"],["スピアー","むし,どく","65,90,40,45,80,75"],["メガスピアー","むし,どく","65,150,40,15,80,145","M"],["ポッポ","ノーマル,ひこう","40,45,40,35,35,56"],["ピジョン","ノーマル,ひこう","63,60,55,50,50,71"],["ピジョット","ノーマル,ひこう","83,80,75,70,70,101"],["メガピジョット","ノーマル,ひこう","83,80,80,135,80,121","M"],["コラッタ","ノーマル","30,56,35,25,35,72"],["コラッタ(アローラのすがた)","あく,ノーマル","30,56,35,25,35,72"],["ラッタ","ノーマル","55,81,60,50,70,97"],["ラッタ(アローラのすがた)","あく,ノーマル","75,71,70,40,80,77"],["オニスズメ","ノーマル,ひこう","40,60,30,31,31,70"],["オニドリル","ノーマル,ひこう","65,90,65,61,61,100"],["アーボ","どく","35,60,44,40,54,55"],["アーボック","どく","60,95,69,65,79,80"],["ピカチュウ","でんき","35,55,40,50,50,90"],["ライチュウ","でんき","60,90,55,90,80,110"],["ライチュウ(アローラのすがた)","でんき,エスパー","60,85,50,95,85,110"],["メガライチュウX","でんき","60,135,95,90,95,110","M"],["メガライチュウY","でんき","60,100,55,160,80,130","M"],["サンド","じめん","50,75,85,20,30,40"],["サンド(アローラのすがた)","こおり,はがね","50,75,90,10,35,40"],["ニドラン♀","どく","55,47,52,40,40,41"],["ニドリーナ","どく","70,62,67,55,55,56"],["ニドクイン","どく,じめん","90,92,87,75,85,76"],["ニドラン♂","どく","46,57,40,40,40,50"],["ニドリーノ","どく","61,72,57,55,55,65"],["ニドキング","どく,じめん","81,102,77,85,75,85"],["ピッピ","フェアリー","70,45,48,60,65,35"],["ピクシー","フェアリー","95,70,73,95,90,60"],["メガピクシー","フェアリー,ひこう","95,80,93,135,110,70","M"],["ロコン","ほのお","38,41,40,50,65,65"],["ロコン(アローラのすがた)","こおり","38,41,40,50,65,65"],["キュウコン","ほのお","73,76,75,81,100,100"],["プリン","ノーマル,フェアリー","115,45,20,45,25,20"],["プクリン","ノーマル,フェアリー","140,70,45,85,50,45"],["ズバット","どく,ひこう","40,45,35,30,40,55"],["ゴルバット","どく,ひこう","75,80,70,65,75,90"],["ナゾノクサ","くさ,どく","45,50,55,75,65,30"],["クサイハナ","くさ,どく","60,65,70,85,75,40"],["ラフレシア","くさ,どく","75,80,85,110,90,50"],["パラス","むし,くさ","35,70,55,45,55,25"],["パラセクト","むし,くさ","60,95,80,60,80,30"],["コンパン","むし,どく","60,55,50,40,55,45"],["モルフォン","むし,どく","70,65,60,90,75,90"],["ディグダ","じめん","10,55,25,35,45,95"],["ディグダ(アローラのすがた)","じめん,はがね","10,55,30,35,45,90"],["ダグトリオ","じめん","35,100,50,50,70,120"],["ダグトリオ(アローラのすがた)","じめん,はがね","35,100,60,50,70,110"],["ニャース","ノーマル","40,45,35,40,40,90"],["ニャース(アローラのすがた)","あく","40,35,35,50,40,90"],["ニャース(ガラルのすがた)","はがね","50,65,55,40,40,40"],["ペルシアン","ノーマル","65,70,60,65,65,115"],["ペルシアン(アローラのすがた)","あく","65,60,60,75,65,115"],["コダック","みず","50,52,48,65,50,55"],["ゴルダック","みず","80,82,78,95,80,85"],["マンキー","かくとう","40,80,35,35,45,70"],["オコリザル","かくとう","65,105,60,60,70,95"],["ガーディ","ほのお","55,70,45,70,50,60"],["ガーディ(ヒスイのすがた)","ほのお,いわ","60,75,45,65,50,55"],["ウインディ(ヒスイのすがた)","ほのお,いわ","95,115,80,95,80,90"],["ニョロモ","みず","40,50,40,40,40,90"],["ニョロゾ","みず","65,65,65,50,50,90"],["ニョロボン","みず,かくとう","90,95,95,70,90,70"],["ケーシィ","エスパー","25,20,15,105,55,90"],["ユンゲラー","エスパー","40,35,30,120,70,105"],["フーディン","エスパー","55,50,45,135,95,120"],["メガフーディン","エスパー","55,50,65,175,105,150","M"],["ワンリキー","かくとう","70,80,50,35,35,35"],["ゴーリキー","かくとう","80,100,70,50,60,45"],["カイリキー","かくとう","90,130,80,65,85,55"],["マダツボミ","くさ,どく","50,75,35,70,30,40"],["ウツドン","くさ,どく","65,90,50,85,45,55"],["ウツボット","くさ,どく","80,105,65,100,70,70"],["メガウツボット","くさ,どく","80,125,85,135,95,70","M"],["メノクラゲ","みず,どく","40,40,35,50,100,70"],["ドククラゲ","みず,どく","80,70,65,80,120,100"],["イシツブテ","いわ,じめん","40,80,100,30,30,20"],["イシツブテ(アローラのすがた)","いわ,でんき","40,80,100,30,30,20"],["ゴローン","いわ,じめん","55,95,115,45,45,35"],["ゴローン(アローラのすがた)","いわ,でんき","55,95,115,45,45,35"],["ゴローニャ","いわ,じめん","80,120,130,55,65,45"],["ゴローニャ(アローラのすがた)","いわ,でんき","80,120,130,55,65,45"],["ポニータ","ほのお","50,85,55,65,65,90"],["ポニータ(ガラルのすがた)","エスパー","50,85,55,65,65,90"],["ヤドン","みず,エスパー","90,65,65,40,40,15"],["ヤドン(ガラルのすがた)","エスパー","90,65,65,40,40,15"],["ヤドラン","みず,エスパー","95,75,110,100,80,30"],["メガヤドラン","みず,エスパー","95,75,180,130,80,30","M"],["ヤドラン(ガラルのすがた)","どく,エスパー","95,100,95,100,70,30"],["コイル","でんき,はがね","25,35,70,95,55,45"],["レアコイル","でんき,はがね","50,60,95,120,70,70"],["カモネギ","ノーマル,ひこう","52,90,55,58,62,60"],["カモネギ(ガラルのすがた)","かくとう","52,95,55,58,62,55"],["ドードー","ノーマル,ひこう","35,85,45,35,35,75"],["ドードリオ","ノーマル,ひこう","60,110,70,60,60,110"],["パウワウ","みず","65,45,55,45,70,45"],["ジュゴン","みず,こおり","90,70,80,70,95,70"],["ベトベター","どく","80,80,50,40,50,25"],["ベトベター(アローラのすがた)","どく,あく","80,80,50,40,50,25"],["ベトベトン","どく","105,105,75,65,100,50"],["ベトベトン(アローラのすがた)","どく,あく","105,105,75,65,100,50"],["シェルダー","みず","30,65,100,45,25,40"],["パルシェン","みず,こおり","50,95,180,85,45,70"],["ゴース","ゴースト,どく","30,35,30,100,35,80"],["ゴースト","ゴースト,どく","45,50,45,115,55,95"],["メガゲンガー","ゴースト,どく","60,65,80,170,95,130","M"],["イワーク","いわ,じめん","35,45,160,30,45,70"],["スリープ","エスパー","60,48,45,43,90,42"],["スリーパー","エスパー","85,73,70,73,115,67"],["クラブ","みず","30,105,90,25,25,50"],["キングラー","みず","55,130,115,50,50,75"],["ビリリダマ","でんき","40,30,50,55,55,100"],["ビリリダマ(ヒスイのすがた)","でんき,くさ","40,30,50,55,55,100"],["マルマイン","でんき","60,50,70,80,80,150"],["マルマイン(ヒスイのすがた)","でんき,くさ","60,50,70,80,80,150"],["タマタマ","くさ,エスパー","60,40,80,60,45,40"],["ナッシー","くさ,エスパー","95,95,85,125,75,55"],["ナッシー(アローラのすがた)","くさ,ドラゴン","95,105,85,125,75,45"],["カラカラ","じめん","50,50,95,40,50,35"],["ガラガラ","じめん","60,80,110,50,80,45"],["ガラガラ(アローラのすがた)","ほのお,ゴースト","60,80,110,50,80,45"],["サワムラー","かくとう","50,120,53,35,110,87"],["エビワラー","かくとう","50,105,79,35,110,76"],["ベロリンガ","ノーマル","90,55,75,60,75,30"],["ドガース","どく","40,65,95,60,45,35"],["マタドガス","どく","65,90,120,85,70,60"],["マタドガス(ガラルのすがた)","どく,フェアリー","65,90,120,85,70,60"],["サイホーン","じめん,いわ","80,85,95,30,30,25"],["サイドン","じめん,いわ","105,130,120,45,45,40"],["ラッキー","ノーマル","250,5,5,35,105,50"],["モンジャラ","くさ","65,55,115,100,40,60"],["ガルーラ","ノーマル","105,95,80,40,80,90"],["メガガルーラ","ノーマル","105,125,100,60,100,100","M"],["タッツー","みず","30,40,70,70,25,60"],["シードラ","みず","55,65,95,95,45,85"],["トサキント","みず","45,67,60,35,50,63"],["アズマオウ","みず","80,92,65,65,80,68"],["ヒトデマン","みず","30,45,55,70,55,85"],["スターミー","みず,エスパー","60,75,85,100,85,115"],["メガスターミー","みず,エスパー","60,100,105,130,105,120","M"],["バリヤード","エスパー,フェアリー","40,45,65,100,120,90"],["バリヤード(ガラルのすがた)","こおり,エスパー","50,65,65,90,90,100"],["ストライク","むし,ひこう","70,110,80,55,80,105"],["ルージュラ","こおり,エスパー","65,50,35,115,95,95"],["エレブー","でんき","65,83,57,95,85,105"],["ブーバー","ほのお","65,95,57,100,85,93"],["カイロス","むし","65,125,100,55,70,85"],["メガカイロス","むし,ひこう","65,155,120,65,90,105","M"],["ケンタロス","ノーマル","75,100,95,40,70,110"],["ケンタロス(パルデア・コンバット種)","かくとう","75,110,105,30,70,100"],["ケンタロス(パルデア・ブレイズ種)","かくとう,ほのお","75,110,105,30,70,100"],["ケンタロス(パルデア・ウォーター種)","かくとう,みず","75,110,105,30,70,100"],["コイキング","みず","20,10,55,15,20,80"],["メガギャラドス","みず,あく","95,155,109,70,130,81","M"],["ラプラス","みず,こおり","130,85,80,85,95,60"],["メタモン","ノーマル","48,48,48,48,48,48"],["イーブイ","ノーマル","55,55,50,45,65,55"],["シャワーズ","みず","130,65,60,110,95,65"],["サンダース","でんき","65,65,60,110,95,130"],["ブースター","ほのお","65,130,60,95,110,65"],["ポリゴン","ノーマル","65,60,70,85,75,40"],["オムナイト","いわ,みず","35,40,100,90,55,35"],["オムスター","いわ,みず","70,60,125,115,70,55"],["カブト","いわ,みず","30,80,90,55,45,55"],["カブトプス","いわ,みず","60,115,105,65,70,80"],["プテラ","いわ,ひこう","80,105,65,60,75,130"],["メガプテラ","いわ,ひこう","80,135,85,70,95,150","M"],["カビゴン","ノーマル","160,110,65,65,110,30"],["フリーザー","こおり,ひこう","90,85,100,95,125,85"],["フリーザー(ガラルのすがた)","エスパー,ひこう","90,85,85,125,100,95"],["サンダー","でんき,ひこう","90,90,85,125,90,100"],["サンダー(ガラルのすがた)","かくとう,ひこう","90,125,90,85,90,100"],["ファイヤー","ほのお,ひこう","90,100,90,125,85,90"],["ファイヤー(ガラルのすがた)","あく,ひこう","90,85,90,100,125,90"],["ミニリュウ","ドラゴン","41,64,45,50,50,50"],["ハクリュー","ドラゴン","61,84,65,70,70,70"],["メガカイリュー","ドラゴン,ひこう","91,124,115,145,125,100","M"],["ミュウツー","エスパー","106,110,90,154,90,130"],["メガミュウツーＸ","エスパー,かくとう","106,190,100,154,100,130","M"],["メガミュウツーＹ","エスパー","106,150,70,194,120,140","M"],["ミュウ","エスパー","100,100,100,100,100,100"],["チコリータ","くさ","45,49,65,49,65,45"],["ベイリーフ","くさ","60,62,80,63,80,60"],["メガニウム","くさ","80,82,100,83,100,80"],["メガメガニウム","くさ,フェアリー","80,92,115,143,115,80","M"],["ヒノアラシ","ほのお","39,52,43,60,50,65"],["マグマラシ","ほのお","58,64,58,80,65,80"],["バクフーン","ほのお","78,84,78,109,85,100"],["バクフーン(ヒスイのすがた)","ほのお,ゴースト","73,84,78,119,85,95"],["ワニノコ","みず","50,65,64,44,48,43"],["アリゲイツ","みず","65,80,80,59,63,58"],["オーダイル","みず","85,105,100,79,83,78"],["メガオーダイル","みず,ドラゴン","85,160,125,89,93,78","M"],["オタチ","ノーマル","35,46,34,35,45,20"],["オオタチ","ノーマル","85,76,64,45,55,90"],["ホーホー","ノーマル,ひこう","60,30,30,36,56,50"],["ヨルノズク","ノーマル,ひこう","100,50,50,86,96,70"],["レディバ","むし,ひこう","40,20,30,40,80,55"],["レディアン","むし,ひこう","55,35,50,55,110,85"],["イトマル","むし,どく","40,60,40,40,40,30"],["アリアドス","むし,どく","70,90,70,60,70,40"],["クロバット","どく,ひこう","85,90,80,70,80,130"],["チョンチー","みず,でんき","75,38,38,56,56,67"],["ランターン","みず,でんき","125,58,58,76,76,67"],["ピチュー","でんき","20,40,15,35,35,60"],["ピィ","フェアリー","50,25,28,45,55,15"],["ププリン","ノーマル,フェアリー","90,30,15,40,20,15"],["トゲピー","フェアリー","35,20,65,40,65,20"],["トゲチック","フェアリー,ひこう","55,40,85,80,105,40"],["ネイティ","エスパー,ひこう","40,50,45,70,45,70"],["ネイティオ","エスパー,ひこう","65,75,70,95,70,95"],["メリープ","でんき","55,40,40,65,45,35"],["モココ","でんき","70,55,55,80,60,45"],["デンリュウ","でんき","90,75,85,115,90,55"],["メガデンリュウ","でんき,ドラゴン","90,95,105,165,110,45","M"],["キレイハナ","くさ","75,80,95,90,100,50"],["マリル","みず,フェアリー","70,20,50,20,50,40"],["マリルリ","みず,フェアリー","100,50,80,60,80,50"],["ウソッキー","いわ","70,100,115,30,65,30"],["ニョロトノ","みず","90,75,75,90,100,70"],["ハネッコ","くさ,ひこう","35,35,40,35,55,50"],["ポポッコ","くさ,ひこう","55,45,50,45,65,80"],["ワタッコ","くさ,ひこう","75,55,70,55,95,110"],["エイパム","ノーマル","55,70,55,40,55,85"],["ヒマナッツ","くさ","30,30,30,30,30,30"],["キマワリ","くさ","75,75,55,105,85,30"],["ヤンヤンマ","むし,ひこう","65,65,45,75,45,95"],["ウパー","みず,じめん","55,45,45,25,25,15"],["ウパー(パルデアのすがた)","どく,じめん","55,45,45,25,25,15"],["ヌオー","みず,じめん","95,85,85,65,65,35"],["エーフィ","エスパー","65,65,60,130,95,110"],["ブラッキー","あく","95,65,110,60,130,65"],["ヤミカラス","あく,ひこう","60,85,42,85,42,91"],["ヤドキング","みず,エスパー","95,75,80,100,110,30"],["ヤドキング(ガラルのすがた)","どく,エスパー","95,65,80,110,110,30"],["ムウマ","ゴースト","60,60,60,85,85,85"],["アンノーン","エスパー","48,72,48,72,48,48"],["ソーナンス","エスパー","190,33,58,33,58,33"],["キリンリキ","ノーマル,エスパー","70,80,65,90,65,85"],["クヌギダマ","むし","50,65,90,35,35,15"],["フォレトス","むし,はがね","75,90,140,60,60,40"],["ノコッチ","ノーマル","100,70,70,65,65,45"],["グライガー","じめん,ひこう","65,75,105,35,65,85"],["ハガネール","はがね,じめん","75,85,200,55,65,30"],["メガハガネール","はがね,じめん","75,125,230,55,95,30","M"],["ブルー","フェアリー","60,80,50,40,40,30"],["グランブル","フェアリー","90,120,75,60,60,45"],["ハリーセン","みず,どく","65,95,85,55,55,85"],["ハリーセン(ヒスイのすがた)","あく,どく","65,95,85,55,55,85"],["メガハッサム","むし,はがね","70,150,140,65,100,75","M"],["ツボツボ","むし,いわ","20,10,230,10,230,5"],["ヘラクロス","むし,かくとう","80,125,75,40,95,85"],["メガヘラクロス","むし,かくとう","80,185,115,40,105,75","M"],["ニューラ","あく,こおり","55,95,55,35,75,115"],["ニューラ(ヒスイのすがた)","かくとう,どく","55,95,55,35,75,115"],["ヒメグマ","ノーマル","60,80,50,50,50,40"],["リングマ","ノーマル","90,130,75,75,75,55"],["マグマッグ","ほのお","40,40,40,70,40,20"],["マグカルゴ","ほのお,いわ","60,50,120,90,80,30"],["ウリムー","こおり,じめん","50,50,40,30,30,50"],["イノムー","こおり,じめん","100,100,80,60,60,50"],["サニーゴ","みず,いわ","65,55,95,65,95,35"],["サニーゴ(ガラルのすがた)","ゴースト","60,55,100,65,100,30"],["テッポウオ","みず","35,65,35,65,35,65"],["オクタン","みず","75,105,75,105,75,45"],["デリバード","こおり,ひこう","45,55,45,65,45,75"],["マンタイン","みず,ひこう","85,40,70,80,140,70"],["エアームド","はがね,ひこう","65,80,140,40,70,70"],["メガエアームド","はがね,ひこう","65,140,110,40,100,110","M"],["デルビル","あく,ほのお","45,60,30,80,50,65"],["ヘルガー","あく,ほのお","75,90,50,110,80,95"],["メガヘルガー","あく,ほのお","75,90,90,140,90,115","M"],["キングドラ","みず,ドラゴン","75,95,95,95,95,85"],["ゴマゾウ","じめん","90,60,60,40,40,40"],["ドンファン","じめん","90,120,120,60,60,50"],["ポリゴン２","ノーマル","85,80,90,105,95,60"],["オドシシ","ノーマル","73,95,62,85,65,85"],["ドーブル","ノーマル","55,20,35,20,45,75"],["バルキー","かくとう","35,35,35,35,35,35"],["カポエラー","かくとう","50,95,95,35,110,70"],["ムチュール","こおり,エスパー","45,30,15,85,65,65"],["エレキッド","でんき","45,63,37,65,55,95"],["ブビィ","ほのお","45,75,37,70,55,83"],["ミルタンク","ノーマル","95,80,105,40,70,100"],["ハピナス","ノーマル","255,10,10,75,135,55"],["ライコウ","でんき","90,85,75,115,100,115"],["エンテイ","ほのお","115,115,85,90,75,100"],["スイクン","みず","100,75,115,90,115,85"],["ヨーギラス","いわ,じめん","50,64,50,45,50,41"],["サナギラス","いわ,じめん","70,84,70,65,70,51"],["メガバンギラス","いわ,あく","100,164,150,95,120,71","M"],["ルギア","エスパー,ひこう","106,90,130,90,154,110"],["ホウオウ","ほのお,ひこう","106,130,90,110,154,90"],["セレビィ","エスパー,くさ","100,100,100,100,100,100"],["キモリ","くさ","40,45,35,65,55,70"],["ジュプトル","くさ","50,65,45,85,65,95"],["ジュカイン","くさ","70,85,65,105,85,120"],["メガジュカイン","くさ,ドラゴン","70,110,75,145,85,145","M"],["アチャモ","ほのお","45,60,40,70,50,45"],["ワカシャモ","ほのお,かくとう","60,85,60,85,60,55"],["メガバシャーモ","ほのお,かくとう","80,160,80,130,80,100","M"],["ミズゴロウ","みず","50,70,50,50,50,40"],["ヌマクロー","みず,じめん","70,85,70,60,70,50"],["ラグラージ","みず,じめん","100,110,90,85,90,60"],["メガラグラージ","みず,じめん","100,150,110,95,110,70","M"],["ポチエナ","あく","35,55,35,30,30,35"],["グラエナ","あく","70,90,70,60,60,70"],["ジグザグマ","ノーマル","38,30,41,30,41,60"],["ジグザグマ(ガラルのすがた)","あく,ノーマル","38,30,41,30,41,60"],["マッスグマ","ノーマル","78,70,61,50,61,100"],["マッスグマ(ガラルのすがた)","あく,ノーマル","78,70,61,50,61,100"],["ケムッソ","むし","45,45,35,20,30,20"],["カラサリス","むし","50,35,55,25,25,15"],["アゲハント","むし,ひこう","60,70,50,100,50,65"],["マユルド","むし","50,35,55,25,25,15"],["ドクケイル","むし,どく","60,50,70,50,90,65"],["ハスボー","みず,くさ","40,30,30,40,50,30"],["ハスブレロ","みず,くさ","60,50,50,60,70,50"],["ルンパッパ","みず,くさ","80,70,70,90,100,70"],["タネボー","くさ","40,40,50,30,30,30"],["コノハナ","くさ,あく","70,70,40,60,40,60"],["ダーテング","くさ,あく","90,100,60,90,60,80"],["スバメ","ノーマル,ひこう","40,55,30,30,30,85"],["オオスバメ","ノーマル,ひこう","60,85,60,75,50,125"],["キャモメ","みず,ひこう","40,30,30,55,30,85"],["ペリッパー","みず,ひこう","60,50,100,95,70,65"],["ラルトス","エスパー,フェアリー","28,25,25,45,35,40"],["キルリア","エスパー,フェアリー","38,35,35,65,55,50"],["サーナイト","エスパー,フェアリー","68,65,65,125,115,80"],["メガサーナイト","エスパー,フェアリー","68,85,65,165,135,100","M"],["アメタマ","むし,みず","40,30,32,50,52,65"],["アメモース","むし,ひこう","70,60,62,100,82,80"],["キノココ","くさ","60,40,60,40,60,35"],["ナマケロ","ノーマル","60,60,60,35,35,30"],["ヤルキモノ","ノーマル","80,80,80,55,55,90"],["ケッキング","ノーマル","150,160,100,95,65,100"],["ツチニン","むし,じめん","31,45,90,30,30,40"],["テッカニン","むし,ひこう","61,90,45,50,50,160"],["ヌケニン","むし,ゴースト","1,90,45,30,30,40"],["ゴニョニョ","ノーマル","64,51,23,51,23,28"],["ドゴーム","ノーマル","84,71,43,71,43,48"],["バクオング","ノーマル","104,91,63,91,73,68"],["マクノシタ","かくとう","72,60,30,20,30,25"],["ハリテヤマ","かくとう","144,120,60,40,60,50"],["ルリリ","ノーマル,フェアリー","50,20,40,20,40,20"],["ノズパス","いわ","30,45,135,45,90,30"],["エネコ","ノーマル","50,45,45,35,35,50"],["エネコロロ","ノーマル","70,65,65,55,55,90"],["ヤミラミ","あく,ゴースト","50,75,75,65,65,50"],["メガヤミラミ","あく,ゴースト","50,85,125,85,115,20","M"],["クチート","はがね,フェアリー","50,85,85,55,55,50"],["メガクチート","はがね,フェアリー","50,105,125,55,95,50","M"],["ココドラ","はがね,いわ","50,70,100,40,40,30"],["コドラ","はがね,いわ","60,90,140,50,50,40"],["ボスゴドラ","はがね,いわ","70,110,180,60,60,50"],["メガボスゴドラ","はがね","70,140,230,60,80,50","M"],["アサナン","かくとう,エスパー","30,40,55,40,55,60"],["チャーレム","かくとう,エスパー","60,60,75,60,75,80"],["メガチャーレム","かくとう,エスパー","60,100,85,80,85,100","M"],["ラクライ","でんき","40,45,40,65,40,65"],["ライボルト","でんき","70,75,60,105,60,105"],["メガライボルト","でんき","70,75,80,135,80,135","M"],["プラスル","でんき","60,50,40,85,75,95"],["マイナン","でんき","60,40,50,75,85,95"],["バルビート","むし","65,73,75,47,85,85"],["イルミーゼ","むし","65,47,75,73,85,85"],["ロゼリア","くさ,どく","50,60,45,100,80,65"],["ゴクリン","どく","70,43,53,43,53,40"],["マルノーム","どく","100,73,83,73,83,55"],["キバニア","みず,あく","45,90,20,65,20,65"],["サメハダー","みず,あく","70,120,40,95,40,95"],["メガサメハダー","みず,あく","70,140,70,110,65,105","M"],["ホエルコ","みず","130,70,35,70,35,60"],["ホエルオー","みず","170,90,45,90,45,60"],["ドンメル","ほのお,じめん","60,60,40,65,45,35"],["バクーダ","ほのお,じめん","70,100,70,105,75,40"],["メガバクーダ","ほのお,じめん","70,120,100,145,105,20","M"],["コータス","ほのお","70,85,140,85,70,20"],["バネブー","エスパー","60,25,35,70,80,60"],["ブーピッグ","エスパー","80,45,65,90,110,80"],["パッチール","ノーマル","60,60,60,60,60,60"],["ナックラー","じめん","45,100,45,45,45,10"],["ビブラーバ","じめん,ドラゴン","50,70,50,50,50,70"],["フライゴン","じめん,ドラゴン","80,100,80,80,80,100"],["サボネア","くさ","50,85,40,85,40,35"],["ノクタス","くさ,あく","70,115,60,115,60,55"],["チルット","ノーマル,ひこう","45,40,60,40,75,50"],["チルタリス","ドラゴン,ひこう","75,70,90,70,105,80"],["メガチルタリス","ドラゴン,フェアリー","75,110,110,110,105,80","M"],["ザングース","ノーマル","73,115,60,60,60,90"],["ハブネーク","どく","73,100,60,100,60,65"],["ルナトーン","いわ,エスパー","90,55,65,95,85,70"],["ソルロック","いわ,エスパー","90,95,85,55,65,70"],["ドジョッチ","みず,じめん","50,48,43,46,41,60"],["ヘイガニ","みず","43,80,65,50,35,35"],["シザリガー","みず,あく","63,120,85,90,55,55"],["ヤジロン","じめん,エスパー","40,40,55,40,70,55"],["ネンドール","じめん,エスパー","60,70,105,70,120,75"],["リリーラ","いわ,くさ","66,41,77,61,87,23"],["ユレイドル","いわ,くさ","86,81,97,81,107,43"],["アノプス","いわ,むし","45,95,50,40,50,75"],["アーマルド","いわ,むし","75,125,100,70,80,45"],["ヒンバス","みず","20,15,20,10,55,80"],["ミロカロス","みず","95,60,79,100,125,81"],["ポワルン","ノーマル","70,70,70,70,70,70"],["カクレオン","ノーマル","60,90,70,60,120,40"],["カゲボウズ","ゴースト","44,75,35,63,33,45"],["ジュペッタ","ゴースト","64,115,65,83,63,65"],["メガジュペッタ","ゴースト","64,165,75,93,83,75","M"],["ヨマワル","ゴースト","20,40,90,30,90,25"],["サマヨール","ゴースト","40,70,130,60,130,25"],["トロピウス","くさ,ひこう","99,68,83,72,87,51"],["チリーン","エスパー","75,50,80,95,90,65"],["メガチリーン","エスパー,はがね","75,50,110,135,120,65","M"],["アブソル","あく","65,130,60,75,60,75"],["メガアブソル","あく","65,150,60,115,60,115","M"],["メガアブソルZ","あく,ゴースト","65,154,60,75,60,151","M"],["ソーナノ","エスパー","95,23,48,23,48,23"],["ユキワラシ","こおり","50,50,50,50,50,50"],["オニゴーリ","こおり","80,80,80,80,80,80"],["メガオニゴーリ","こおり","80,120,80,120,80,100","M"],["タマザラシ","こおり,みず","70,40,50,55,50,25"],["トドグラー","こおり,みず","90,60,70,75,70,45"],["トドゼルガ","こおり,みず","110,80,90,95,90,65"],["パールル","みず","35,64,85,74,55,32"],["ハンテール","みず","55,104,105,94,75,52"],["サクラビス","みず","55,84,105,114,75,52"],["ジーランス","みず,いわ","100,90,130,45,65,55"],["ラブカス","みず","43,30,55,40,65,97"],["タツベイ","ドラゴン","45,75,60,40,30,50"],["コモルー","ドラゴン","65,95,100,60,50,50"],["メガボーマンダ","ドラゴン,ひこう","95,145,130,120,90,120","M"],["ダンバル","はがね,エスパー","40,55,80,35,60,30"],["メタング","はがね,エスパー","60,75,100,55,80,50"],["メガメタグロス","はがね,エスパー","80,145,150,105,110,110","M"],["レジロック","いわ","80,100,200,50,100,50"],["レジアイス","こおり","80,50,100,100,200,50"],["レジスチル","はがね","80,75,150,75,150,50"],["ラティアス","ドラゴン,エスパー","80,80,90,110,130,110"],["メガラティアス","ドラゴン,エスパー","80,100,120,140,150,110","M"],["ラティオス","ドラゴン,エスパー","80,90,80,130,110,110"],["メガラティオス","ドラゴン,エスパー","80,130,100,160,120,110","M"],["カイオーガ","みず","100,100,90,150,140,90"],["グラードン","じめん","100,150,140,100,90,90"],["レックウザ","ドラゴン,ひこう","105,150,90,150,90,95"],["メガレックウザ","ドラゴン,ひこう","105,180,100,180,100,115","M"],["ジラーチ","はがね,エスパー","100,100,100,100,100,100"],["デオキシス","エスパー","50,150,50,150,50,150"],["デオキシス(アタックフォルム)","エスパー","50,180,20,180,20,150"],["デオキシス(ディフェンスフォルム)","エスパー","50,70,160,70,160,90"],["デオキシス(スピードフォルム)","エスパー","50,95,90,95,90,180"],["ナエトル","くさ","55,68,64,45,55,31"],["ハヤシガメ","くさ","75,89,85,55,65,36"],["ドダイトス","くさ,じめん","95,109,105,75,85,56"],["ヒコザル","ほのお","44,58,44,58,44,61"],["モウカザル","ほのお,かくとう","64,78,52,78,52,81"],["ゴウカザル","ほのお,かくとう","76,104,71,104,71,108"],["ポッチャマ","みず","53,51,53,61,56,40"],["ポッタイシ","みず","64,66,68,81,76,50"],["エンペルト","みず,はがね","84,86,88,111,101,60"],["ムックル","ノーマル,ひこう","40,55,30,30,30,60"],["ムクバード","ノーマル,ひこう","55,75,50,40,40,80"],["ムクホーク","ノーマル,ひこう","85,120,70,50,60,100"],["メガムクホーク","かくとう,ひこう","85,140,100,60,90,110","M"],["ビッパ","ノーマル","59,45,40,35,40,31"],["ビーダル","ノーマル,みず","79,85,60,55,60,71"],["コロボーシ","むし","37,25,41,25,41,25"],["コロトック","むし","77,85,51,55,51,65"],["コリンク","でんき","45,65,34,40,34,45"],["ルクシオ","でんき","60,85,49,60,49,60"],["レントラー","でんき","80,120,79,95,79,70"],["スボミー","くさ,どく","40,30,35,50,70,55"],["ロズレイド","くさ,どく","60,70,65,125,105,90"],["ズガイドス","いわ","67,125,40,30,30,58"],["ラムパルド","いわ","97,165,60,65,50,58"],["タテトプス","いわ,はがね","30,42,118,42,88,30"],["トリデプス","いわ,はがね","60,52,168,47,138,30"],["ミノムッチ","むし","40,29,45,29,45,36"],["ミノマダム","むし,くさ","60,59,85,79,105,36"],["ミノマダム(すなちのミノ)","むし,じめん","60,79,105,59,85,36"],["ガーメイル","むし,ひこう","70,94,50,94,50,66"],["ミツハニー","むし,ひこう","30,30,42,30,42,70"],["ビークイン","むし,ひこう","70,80,102,80,102,40"],["パチリス","でんき","60,45,70,45,90,95"],["ブイゼル","みず","55,65,35,60,30,85"],["フローゼル","みず","85,105,55,85,50,115"],["チェリンボ","くさ","45,35,45,62,53,35"],["チェリム","くさ","70,60,70,87,78,85"],["カラナクシ","みず","76,48,48,57,62,34"],["トリトドン","みず,じめん","111,83,68,92,82,39"],["エテボース","ノーマル","75,100,66,60,66,115"],["フワンテ","ゴースト,ひこう","90,50,34,60,44,70"],["フワライド","ゴースト,ひこう","150,80,44,90,54,80"],["ミミロル","ノーマル","55,66,44,44,56,85"],["ミミロップ","ノーマル","65,76,84,54,96,105"],["メガミミロップ","ノーマル,かくとう","65,136,94,54,96,135","M"],["ムウマージ","ゴースト","60,60,60,105,105,105"],["ドンカラス","あく,ひこう","100,125,52,105,52,71"],["ニャルマー","ノーマル","49,55,42,42,37,85"],["ブニャット","ノーマル","71,82,64,64,59,112"],["リーシャン","エスパー","45,30,50,65,50,45"],["スカンプー","どく,あく","63,63,47,41,41,74"],["スカタンク","どく,あく","103,93,67,71,61,84"],["ドーミラー","はがね,エスパー","57,24,86,24,86,23"],["ドータクン","はがね,エスパー","67,89,116,79,116,33"],["ウソハチ","いわ","50,80,95,10,45,10"],["マネネ","エスパー,フェアリー","20,25,45,70,90,60"],["ピンプク","ノーマル","100,5,5,15,65,30"],["ペラップ","ノーマル,ひこう","76,65,45,92,42,91"],["ミカルゲ","ゴースト,あく","50,92,108,92,108,35"],["フカマル","ドラゴン,じめん","58,70,45,40,45,42"],["ガバイト","ドラゴン,じめん","68,90,65,50,55,82"],["メガガブリアス","ドラゴン,じめん","108,170,115,120,95,92","M"],["メガガブリアスZ","ドラゴン","108,130,85,141,85,151","M"],["ゴンベ","ノーマル","135,85,40,40,85,5"],["リオル","かくとう","40,70,40,35,40,60"],["ルカリオ","かくとう,はがね","70,110,70,115,70,90"],["メガルカリオ","かくとう,はがね","70,145,88,140,70,112","M"],["メガルカリオZ","かくとう,はがね","70,100,70,164,70,151","M"],["ヒポポタス","じめん","68,72,78,38,42,32"],["スコルピ","どく,むし","40,50,90,30,55,65"],["ドラピオン","どく,あく","70,90,110,60,75,95"],["グレッグル","どく,かくとう","48,61,40,61,40,50"],["ドクロッグ","どく,かくとう","83,106,65,86,65,85"],["マスキッパ","くさ","74,100,72,90,72,46"],["ケイコウオ","みず","49,49,56,49,61,66"],["ネオラント","みず","69,69,76,69,86,91"],["タマンタ","みず,ひこう","45,20,50,60,120,50"],["ユキカブリ","くさ,こおり","60,62,50,62,60,40"],["ユキノオー","くさ,こおり","90,92,75,92,85,60"],["メガユキノオー","くさ,こおり","90,132,105,132,105,30","M"],["マニューラ","あく,こおり","70,120,65,45,85,125"],["ジバコイル","でんき,はがね","70,70,115,130,90,60"],["ベロベルト","ノーマル","110,85,95,80,95,50"],["ドサイドン","じめん,いわ","115,140,130,55,55,40"],["モジャンボ","くさ","100,100,125,110,50,50"],["エレキブル","でんき","75,123,67,95,85,95"],["ブーバーン","ほのお","75,95,67,125,95,83"],["トゲキッス","フェアリー,ひこう","85,50,95,120,115,80"],["メガヤンマ","むし,ひこう","86,76,86,116,56,95"],["リーフィア","くさ","65,110,130,60,65,95"],["グレイシア","こおり","65,60,110,130,95,65"],["グライオン","じめん,ひこう","75,95,125,45,75,95"],["マンムー","こおり,じめん","110,130,80,70,60,80"],["ポリゴンＺ","ノーマル","85,80,70,135,75,90"],["エルレイド","エスパー,かくとう","68,125,65,65,115,80"],["メガエルレイド","エスパー,かくとう","68,165,95,65,115,110","M"],["ダイノーズ","いわ,はがね","60,55,145,75,150,40"],["ヨノワール","ゴースト","45,100,135,65,135,45"],["ユキメノコ","こおり,ゴースト","70,80,70,80,70,110"],["メガユキメノコ","こおり,ゴースト","70,80,70,140,100,120","M"],["ロトム","でんき,ゴースト","50,50,77,95,77,91"],["ヒートロトム","でんき,ほのお","50,65,107,105,107,86"],["フロストロトム","でんき,こおり","50,65,107,105,107,86"],["スピンロトム","でんき,ひこう","50,65,107,105,107,86"],["カットロトム","でんき,くさ","50,65,107,105,107,86"],["ユクシー","エスパー","75,75,130,75,130,95"],["エムリット","エスパー","80,105,105,105,105,80"],["アグノム","エスパー","75,125,70,125,70,115"],["ディアルガ","はがね,ドラゴン","100,120,120,150,100,90"],["ディアルガ(オリジンフォルム)","はがね,ドラゴン","100,100,120,150,120,90"],["パルキア","みず,ドラゴン","90,120,100,150,120,100"],["パルキア(オリジンフォルム)","みず,ドラゴン","90,100,100,150,120,120"],["メガヒードラン","ほのお,はがね","91,120,106,175,141,67","M"],["レジギガス","ノーマル","110,160,110,80,110,100"],["ギラティナ","ゴースト,ドラゴン","150,100,120,100,120,90"],["ギラティナ(オリジンフォルム)","ゴースト,ドラゴン","150,120,100,120,100,90"],["フィオネ","みず","80,80,80,80,80,80"],["マナフィ","みず","100,100,100,100,100,100"],["ダークライ","あく","70,90,90,135,90,125"],["メガダークライ","あく","70,120,130,165,130,85","M"],["シェイミ","くさ","100,100,100,100,100,100"],["シェイミ(スカイフォルム)","くさ,ひこう","100,103,75,120,75,127"],["アルセウス","ノーマル","120,120,120,120,120,120"],["ビクティニ","エスパー,ほのお","100,100,100,100,100,100"],["ツタージャ","くさ","45,45,55,45,55,63"],["ジャノビー","くさ","60,60,75,60,75,83"],["ジャローダ","くさ","75,75,95,75,95,113"],["ポカブ","ほのお","65,63,45,45,45,45"],["チャオブー","ほのお,かくとう","90,93,55,70,55,55"],["エンブオー","ほのお,かくとう","110,123,65,100,65,65"],["メガエンブオー","ほのお,かくとう","110,148,75,110,110,75","M"],["ミジュマル","みず","55,55,45,63,45,45"],["フタチマル","みず","75,75,60,83,60,60"],["ダイケンキ","みず","95,100,85,108,70,70"],["ダイケンキ(ヒスイのすがた)","みず,あく","90,108,80,100,65,85"],["ミネズミ","ノーマル","45,55,39,35,39,42"],["ミルホッグ","ノーマル","60,85,69,60,69,77"],["ヨーテリー","ノーマル","45,60,45,25,45,55"],["ハーデリア","ノーマル","65,80,65,35,65,60"],["ムーランド","ノーマル","85,110,90,45,90,80"],["チョロネコ","あく","41,50,37,50,37,66"],["レパルダス","あく","64,88,50,88,50,106"],["ヤナップ","くさ","50,53,48,53,48,64"],["ヤナッキー","くさ","75,98,63,98,63,101"],["バオップ","ほのお","50,53,48,53,48,64"],["バオッキー","ほのお","75,98,63,98,63,101"],["ヒヤップ","みず","50,53,48,53,48,64"],["ヒヤッキー","みず","75,98,63,98,63,101"],["ムンナ","エスパー","76,25,45,67,55,24"],["ムシャーナ","エスパー","116,55,85,107,95,29"],["マメパト","ノーマル,ひこう","50,55,50,36,30,43"],["ハトーボー","ノーマル,ひこう","62,77,62,50,42,65"],["ケンホロウ","ノーマル,ひこう","80,115,80,65,55,93"],["シママ","でんき","45,60,32,50,32,76"],["ゼブライカ","でんき","75,100,63,80,63,116"],["ダンゴロ","いわ","55,75,85,25,25,15"],["ガントル","いわ","70,105,105,50,40,20"],["ギガイアス","いわ","85,135,130,60,80,25"],["コロモリ","エスパー,ひこう","65,45,43,55,43,72"],["ココロモリ","エスパー,ひこう","67,57,55,77,55,114"],["モグリュー","じめん","60,85,40,30,45,68"],["ドリュウズ","じめん,はがね","110,135,60,50,65,88"],["メガドリュウズ","じめん,はがね","110,165,100,65,65,103","M"],["タブンネ","ノーマル","103,60,86,60,86,50"],["メガタブンネ","ノーマル,フェアリー","103,60,126,80,126,50","M"],["ドッコラー","かくとう","75,80,55,25,35,35"],["ドテッコツ","かくとう","85,105,85,40,50,40"],["ローブシン","かくとう","105,140,95,55,65,45"],["オタマロ","みず","50,50,40,50,40,64"],["ガマガル","みず,じめん","75,65,55,65,55,69"],["ガマゲロゲ","みず,じめん","105,95,75,85,75,74"],["ナゲキ","かくとう","120,100,85,30,85,45"],["ダゲキ","かくとう","75,125,75,30,75,85"],["クルミル","むし,くさ","45,53,70,40,60,42"],["クルマユ","むし,くさ","55,63,90,50,80,42"],["ハハコモリ","むし,くさ","75,103,80,70,80,92"],["フシデ","むし,どく","30,45,59,30,39,57"],["ホイーガ","むし,どく","40,55,99,40,79,47"],["ペンドラー","むし,どく","60,100,89,55,69,112"],["メガペンドラー","むし,どく","60,140,149,75,99,62","M"],["モンメン","くさ,フェアリー","40,27,60,37,50,66"],["エルフーン","くさ,フェアリー","60,67,85,77,75,116"],["チュリネ","くさ","45,35,50,70,50,30"],["ドレディア","くさ","70,60,75,110,75,90"],["ドレディア(ヒスイのすがた)","くさ,かくとう","70,105,75,50,75,105"],["バスラオ","みず","70,92,65,80,55,98"],["バスラオ(しろすじのすがた)","みず","70,92,65,80,55,98"],["メグロコ","じめん,あく","50,72,35,35,35,65"],["ワルビル","じめん,あく","60,82,45,45,45,74"],["ワルビアル","じめん,あく","95,117,80,65,70,92"],["ダルマッカ","ほのお","70,90,45,15,45,50"],["ダルマッカ(ガラルのすがた)","こおり","70,90,45,15,45,50"],["ヒヒダルマ","ほのお","105,140,55,30,55,95"],["ヒヒダルマ(ガラルのすがた)","こおり","105,140,55,30,55,95"],["マラカッチ","くさ","75,86,67,106,67,60"],["イシズマイ","むし,いわ","50,65,85,35,35,55"],["イワパレス","むし,いわ","70,105,125,65,75,45"],["ズルッグ","あく,かくとう","50,75,70,35,70,48"],["ズルズキン","あく,かくとう","65,90,115,45,115,58"],["メガズルズキン","あく,かくとう","65,130,135,55,135,68","M"],["シンボラー","エスパー,ひこう","72,58,80,103,80,97"],["デスマス","ゴースト","38,30,85,55,65,30"],["デスマス(ガラルのすがた)","じめん,ゴースト","38,55,85,30,65,30"],["デスカーン","ゴースト","58,50,145,95,105,30"],["プロトーガ","みず,いわ","54,78,103,53,45,22"],["アバゴーラ","みず,いわ","74,108,133,83,65,32"],["アーケン","いわ,ひこう","55,112,45,74,45,70"],["アーケオス","いわ,ひこう","75,140,65,112,65,110"],["ヤブクロン","どく","50,50,62,40,62,65"],["ダストダス","どく","80,95,82,60,82,75"],["ゾロア","あく","40,65,40,80,40,65"],["ゾロア(ヒスイのすがた)","ノーマル,ゴースト","35,60,40,85,40,70"],["ゾロアーク","あく","60,105,60,120,60,105"],["ゾロアーク(ヒスイのすがた)","ノーマル,ゴースト","55,100,60,125,60,110"],["チラーミィ","ノーマル","55,50,40,40,40,75"],["チラチーノ","ノーマル","75,95,60,65,60,115"],["ゴチム","エスパー","45,30,50,55,65,45"],["ゴチミル","エスパー","60,45,70,75,85,55"],["ゴチルゼル","エスパー","70,55,95,95,110,65"],["ユニラン","エスパー","45,30,40,105,50,20"],["ダブラン","エスパー","65,40,50,125,60,30"],["ランクルス","エスパー","110,65,75,125,85,30"],["コアルヒー","みず,ひこう","62,44,50,44,50,55"],["スワンナ","みず,ひこう","75,87,63,87,63,98"],["バニプッチ","こおり","36,50,50,65,60,44"],["バニリッチ","こおり","51,65,65,80,75,59"],["バイバニラ","こおり","71,95,85,110,95,79"],["シキジカ","ノーマル,くさ","60,60,50,40,50,75"],["メブキジカ","ノーマル,くさ","80,100,70,60,70,95"],["エモンガ","でんき,ひこう","55,75,60,75,60,103"],["カブルモ","むし","50,75,45,40,45,60"],["シュバルゴ","むし,はがね","70,135,105,60,105,20"],["タマゲタケ","くさ,どく","69,55,45,55,55,15"],["プルリル","みず,ゴースト","55,40,50,65,85,40"],["ブルンゲル","みず,ゴースト","100,60,70,85,105,60"],["ママンボウ","みず","165,75,80,40,45,65"],["バチュル","むし,でんき","50,47,50,57,50,65"],["デンチュラ","むし,でんき","70,77,60,97,60,108"],["テッシード","くさ,はがね","44,50,91,24,86,10"],["ナットレイ","くさ,はがね","74,94,131,54,116,20"],["ギアル","はがね","40,55,70,45,60,30"],["ギギアル","はがね","60,80,95,70,85,50"],["ギギギアル","はがね","60,100,115,70,85,90"],["シビシラス","でんき","35,55,40,45,40,60"],["シビビール","でんき","65,85,70,75,70,40"],["シビルドン","でんき","85,115,80,105,80,50"],["メガシビルドン","でんき","85,145,80,135,90,80","M"],["リグレー","エスパー","55,55,55,85,55,30"],["オーベム","エスパー","75,75,75,125,95,40"],["ヒトモシ","ゴースト,ほのお","50,30,55,65,55,20"],["ランプラー","ゴースト,ほのお","60,40,60,95,60,55"],["シャンデラ","ゴースト,ほのお","60,55,90,145,90,80"],["メガシャンデラ","ゴースト,ほのお","60,75,110,175,110,90","M"],["キバゴ","ドラゴン","46,87,60,30,40,57"],["オノンド","ドラゴン","66,117,70,40,50,67"],["オノノクス","ドラゴン","76,147,90,60,70,97"],["クマシュン","こおり","55,70,40,60,40,40"],["ツンベアー","こおり","95,130,80,70,80,50"],["フリージオ","こおり","80,50,50,95,135,105"],["チョボマキ","むし","50,40,85,40,65,25"],["アギルダー","むし","80,70,40,100,60,145"],["マッギョ","じめん,でんき","109,66,84,81,99,32"],["マッギョ(ガラルのすがた)","じめん,はがね","109,81,99,66,84,32"],["コジョフー","かくとう","45,85,50,55,50,65"],["コジョンド","かくとう","65,125,60,95,60,105"],["クリムガン","ドラゴン","77,120,90,60,90,48"],["ゴビット","じめん,ゴースト","59,74,50,35,50,35"],["ゴルーグ","じめん,ゴースト","89,124,80,55,80,55"],["メガゴルーグ","じめん,ゴースト","89,159,105,70,105,55","M"],["コマタナ","あく,はがね","45,85,70,40,40,60"],["キリキザン","あく,はがね","65,125,100,60,70,70"],["バッフロン","ノーマル","95,110,95,40,95,55"],["ワシボン","ノーマル,ひこう","70,83,50,37,50,60"],["ウォーグル","ノーマル,ひこう","100,123,75,57,75,80"],["ウォーグル(ヒスイのすがた)","エスパー,ひこう","110,83,70,112,70,65"],["バルチャイ","あく,ひこう","70,55,75,45,65,60"],["バルジーナ","あく,ひこう","110,65,105,55,95,80"],["クイタラン","ほのお","85,97,66,105,66,65"],["アイアント","むし,はがね","58,109,112,48,48,109"],["モノズ","あく,ドラゴン","52,65,50,45,50,38"],["ジヘッド","あく,ドラゴン","72,85,70,65,70,58"],["メラルバ","むし,ほのお","55,85,55,50,55,60"],["コバルオン","はがね,かくとう","91,90,129,90,72,108"],["テラキオン","いわ,かくとう","91,129,90,72,90,108"],["ビリジオン","くさ,かくとう","91,90,72,90,129,108"],["トルネロス","ひこう","79,115,70,125,80,111"],["トルネロス(れいじゅうフォルム)","ひこう","79,100,80,110,90,121"],["ボルトロス","でんき,ひこう","79,115,70,125,80,111"],["ボルトロス(れいじゅうフォルム)","でんき,ひこう","79,105,70,145,80,101"],["レシラム","ドラゴン,ほのお","100,120,100,150,120,90"],["ゼクロム","ドラゴン,でんき","100,150,120,120,100,90"],["ランドロス","じめん,ひこう","89,125,90,115,80,101"],["キュレム","ドラゴン,こおり","125,130,90,130,90,95"],["ブラックキュレム","ドラゴン,こおり","125,170,100,120,90,95"],["ホワイトキュレム","ドラゴン,こおり","125,120,90,170,100,95"],["ケルディオ","みず,かくとう","91,72,90,129,90,108"],["ケルディオ(かくごのすがた)","みず,かくとう","91,72,90,129,90,108"],["メロエッタ","ノーマル,エスパー","100,77,77,128,128,90"],["ゲノセクト","むし,はがね","71,120,95,120,95,99"],["ハリマロン","くさ","56,61,65,48,45,38"],["ハリボーグ","くさ","61,78,95,56,58,57"],["ブリガロン","くさ,かくとう","88,107,122,74,75,64"],["メガブリガロン","くさ,かくとう","88,137,172,74,115,44","M"],["フォッコ","ほのお","40,45,40,62,60,60"],["テールナー","ほのお","59,59,58,90,70,73"],["メガマフォクシー","ほのお,エスパー","75,69,72,159,125,134","M"],["ケロマツ","みず","41,56,40,62,44,71"],["ゲコガシラ","みず","54,63,52,83,56,97"],["メガゲッコウガ","みず,あく","72,125,77,133,81,142","M"],["ホルビー","ノーマル","38,36,38,32,36,57"],["ホルード","ノーマル,じめん","85,56,77,50,77,78"],["ヤヤコマ","ノーマル,ひこう","45,50,43,40,38,62"],["ヒノヤコマ","ほのお,ひこう","62,73,55,56,52,84"],["ファイアロー","ほのお,ひこう","78,81,71,74,69,126"],["コフキムシ","むし","38,35,40,27,25,35"],["コフーライ","むし","45,22,60,27,30,29"],["ビビヨン","むし,ひこう","80,52,50,90,50,89"],["シシコ","ほのお,ノーマル","62,50,58,73,54,72"],["カエンジシ","ほのお,ノーマル","86,68,72,109,66,106"],["メガカエンジシ","ほのお,ノーマル","86,88,92,129,86,126","M"],["フラベベ","フェアリー","44,38,39,61,79,42"],["フラエッテ","フェアリー","54,45,47,75,98,52"],["フラエッテ(えいえんのはな)","フェアリー","74,65,67,125,128,92"],["メガフラエッテ","フェアリー","74,85,87,155,148,102","M"],["フラージェス","フェアリー","78,65,68,112,154,75"],["メェークル","くさ","66,65,48,62,57,52"],["ゴーゴート","くさ","123,100,62,97,81,68"],["ヤンチャム","かくとう","67,82,62,46,48,43"],["ゴロンダ","かくとう,あく","95,124,78,69,71,58"],["トリミアン","ノーマル","75,80,60,65,90,102"],["ニャスパー","エスパー","62,48,54,63,60,68"],["ニャオニクス(オス)","エスパー","74,48,76,83,81,104"],["ニャオニクス(メス)","エスパー","74,48,76,83,81,104"],["メガニャオニクス(オス)","エスパー","74,48,76,143,101,124","M"],["メガニャオニクス(メス)","エスパー","74,48,76,143,101,124","M"],["ヒトツキ","はがね,ゴースト","45,80,100,35,37,28"],["ニダンギル","はがね,ゴースト","59,110,150,45,49,35"],["シュシュプ","フェアリー","78,52,60,63,65,23"],["フレフワン","フェアリー","101,72,72,99,89,29"],["ペロッパフ","フェアリー","62,48,66,59,57,49"],["ペロリーム","フェアリー","82,80,86,85,75,72"],["マーイーカ","あく,エスパー","53,54,53,37,46,45"],["カラマネロ","あく,エスパー","86,92,88,68,75,73"],["メガカラマネロ","あく,エスパー","86,102,88,98,120,88","M"],["カメテテ","いわ,みず","42,52,67,39,56,50"],["ガメノデス","いわ,みず","72,105,115,54,86,68"],["メガガメノデス","いわ,かくとう","72,140,130,64,106,88","M"],["クズモー","どく,みず","50,60,60,60,60,30"],["ドラミドロ","どく,ドラゴン","65,75,90,97,123,44"],["メガドラミドロ","どく,ドラゴン","65,85,105,132,163,44","M"],["ウデッポウ","みず","50,53,62,58,63,44"],["ブロスター","みず","71,73,88,120,89,59"],["エリキテル","でんき,ノーマル","44,38,33,61,43,70"],["エレザード","でんき,ノーマル","62,55,52,109,94,109"],["チゴラス","いわ,ドラゴン","58,89,77,45,45,48"],["ガチゴラス","いわ,ドラゴン","82,121,119,69,59,71"],["アマルス","いわ,こおり","77,59,50,67,63,46"],["アマルルガ","いわ,こおり","123,77,72,99,92,58"],["ルチャブル","かくとう,ひこう","78,92,75,74,63,118"],["メガルチャブル","かくとう,ひこう","78,137,100,74,93,118","M"],["デデンネ","でんき,フェアリー","67,58,57,81,67,101"],["メレシー","いわ,フェアリー","50,50,150,50,150,50"],["ヌメラ","ドラゴン","45,50,35,55,75,40"],["ヌメイル","ドラゴン","68,75,53,83,113,60"],["ヌメイル(ヒスイのすがた)","はがね,ドラゴン","58,75,83,83,113,40"],["ヌメルゴン","ドラゴン","90,100,70,110,150,80"],["ヌメルゴン(ヒスイのすがた)","はがね,ドラゴン","80,100,100,110,150,60"],["クレッフィ","はがね,フェアリー","57,80,91,80,87,75"],["ボクレー","ゴースト,くさ","43,70,48,50,60,38"],["オーロット","ゴースト,くさ","85,110,76,65,82,56"],["バケッチャ","ゴースト,くさ","49,66,70,44,55,51"],["バケッチャ(ちいさいサイズ)","ゴースト,くさ","44,66,70,44,55,56"],["バケッチャ(おおきいサイズ)","ゴースト,くさ","54,66,70,44,55,46"],["バケッチャ(とくだいサイズ)","ゴースト,くさ","59,66,70,44,55,41"],["パンプジン","ゴースト,くさ","65,90,122,58,75,84"],["パンプジン(ちいさいサイズ)","ゴースト,くさ","55,85,122,58,75,99"],["パンプジン(おおきいサイズ)","ゴースト,くさ","75,95,122,58,75,69"],["パンプジン(とくだいサイズ)","ゴースト,くさ","85,100,122,58,75,54"],["カチコール","こおり","55,69,85,32,35,28"],["クレベース","こおり","95,117,184,44,46,28"],["クレベース(ヒスイのすがた)","こおり,いわ","95,127,184,34,36,38"],["オンバット","ひこう,ドラゴン","40,30,35,45,40,55"],["オンバーン","ひこう,ドラゴン","85,70,80,97,80,123"],["ゼルネアス","フェアリー","126,131,95,131,98,99"],["イベルタル","あく,ひこう","126,131,95,131,98,99"],["ジガルデ","ドラゴン,じめん","108,100,121,81,95,95"],["ジガルデ(１０％フォルム)","ドラゴン,じめん","54,100,71,61,85,115"],["ジガルデ(５０％フォルム)","ドラゴン,じめん","108,100,121,81,95,95"],["ジガルデ(１０％フォルム)#10181","ドラゴン,じめん","54,100,71,61,85,115"],["メガジガルデ","ドラゴン,じめん","216,70,91,216,85,100","M"],["ディアンシー","いわ,フェアリー","50,100,150,100,150,50"],["メガディアンシー","いわ,フェアリー","50,160,110,160,110,110","M"],["フーパ","エスパー,ゴースト","80,110,60,150,130,70"],["ときはなたれしフーパ","エスパー,あく","80,160,60,170,130,80"],["ボルケニオン","ほのお,みず","80,110,120,130,90,70"],["モクロー","くさ,ひこう","68,55,55,50,50,42"],["フクスロー","くさ,ひこう","78,75,75,70,70,52"],["ジュナイパー","くさ,ゴースト","78,107,75,100,100,70"],["ジュナイパー(ヒスイのすがた)","くさ,かくとう","88,112,80,95,95,60"],["ニャビー","ほのお","45,65,40,60,40,70"],["ニャヒート","ほのお","65,85,50,80,50,90"],["ガオガエン","ほのお,あく","95,115,90,80,90,60"],["アシマリ","みず","50,54,54,66,56,40"],["オシャマリ","みず","60,69,69,91,81,50"],["ツツケラ","ノーマル,ひこう","35,75,30,30,30,65"],["ケララッパ","ノーマル,ひこう","55,85,50,40,50,75"],["ドデカバシ","ノーマル,ひこう","80,120,75,75,75,60"],["ヤングース","ノーマル","48,70,30,30,30,45"],["デカグース","ノーマル","88,110,60,55,60,45"],["アゴジムシ","むし","47,62,45,55,45,46"],["デンヂムシ","むし,でんき","57,82,95,55,75,36"],["クワガノン","むし,でんき","77,70,90,145,75,43"],["マケンカニ","かくとう","47,82,57,42,47,63"],["ケケンカニ","かくとう,こおり","97,132,77,62,67,43"],["メガケケンカニ","かくとう,こおり","97,157,122,62,107,33","M"],["オドリドリ","ほのお,ひこう","75,70,70,98,70,93"],["オドリドリ(ぱちぱちスタイル)","でんき,ひこう","75,70,70,98,70,93"],["オドリドリ(ふらふらスタイル)","エスパー,ひこう","75,70,70,98,70,93"],["オドリドリ(まいまいスタイル)","ゴースト,ひこう","75,70,70,98,70,93"],["アブリー","むし,フェアリー","40,45,40,55,40,84"],["アブリボン","むし,フェアリー","60,55,60,95,70,124"],["イワンコ","いわ","45,65,40,30,40,60"],["イワンコ（マイペース）","いわ","45,65,40,30,40,60"],["ルガルガン","いわ","75,115,65,55,65,112"],["ルガルガン(まよなかのすがた)","いわ","85,115,75,55,75,82"],["ルガルガン(たそがれのすがた)","いわ","75,117,65,55,65,110"],["ヒドイデ","どく,みず","50,53,62,43,52,45"],["ドヒドイデ","どく,みず","50,63,152,53,142,35"],["ドロバンコ","じめん","70,100,70,45,55,45"],["バンバドロ","じめん","100,125,100,55,85,35"],["シズクモ","みず,むし","38,40,52,40,72,27"],["オニシズクモ","みず,むし","68,70,92,50,132,42"],["カリキリ","くさ","40,55,35,50,35,35"],["ラランテス","くさ","70,105,90,80,90,45"],["ネマシュ","くさ,フェアリー","40,35,55,65,75,15"],["マシェード","くさ,フェアリー","60,45,80,90,100,30"],["ヤトウモリ","どく,ほのお","48,44,40,71,40,77"],["エンニュート","どく,ほのお","68,64,60,111,60,117"],["ヌイコグマ","ノーマル,かくとう","70,75,50,45,50,50"],["キテルグマ","ノーマル,かくとう","120,125,80,55,60,60"],["アマカジ","くさ","42,30,38,30,38,32"],["アママイコ","くさ","52,40,48,40,48,62"],["アマージョ","くさ","72,120,98,50,98,72"],["キュワワー","フェアリー","51,52,90,82,110,100"],["ヤレユータン","ノーマル,エスパー","90,60,80,90,110,60"],["ナゲツケサル","かくとう","100,120,90,40,60,80"],["コソクムシ","むし,みず","25,35,40,20,30,80"],["グソクムシャ","むし,みず","75,125,140,60,90,40"],["メガグソクムシャ","むし,はがね","75,150,175,70,120,40","M"],["スナバァ","ゴースト,じめん","55,55,80,70,45,15"],["シロデスナ","ゴースト,じめん","85,75,110,100,75,35"],["ナマコブシ","みず","55,60,130,30,130,5"],["タイプ：ヌル","ノーマル","95,95,95,95,95,59"],["シルヴァディ","ノーマル","95,95,95,95,95,95"],["メテノ","いわ,ひこう","60,60,100,60,100,60"],["メテノ(あかいろのコア)","いわ,ひこう","60,100,60,100,60,120"],["メテノ(きいろのコア)","いわ,ひこう","60,100,60,100,60,120"],["メテノ(みどりいろのコア)","いわ,ひこう","60,100,60,100,60,120"],["メテノ(みずいろのコア)","いわ,ひこう","60,100,60,100,60,120"],["メテノ(あおいろのコア)","いわ,ひこう","60,100,60,100,60,120"],["メテノ(むらさきいろのコア)","いわ,ひこう","60,100,60,100,60,120"],["ネッコアラ","ノーマル","65,115,65,75,95,65"],["バクガメス","ほのお,ドラゴン","60,78,135,91,85,36"],["トゲデマル","でんき,はがね","65,98,63,40,73,96"],["ハギギシリ","みず,エスパー","68,105,70,70,70,92"],["ジジーロン","ノーマル,ドラゴン","78,60,85,135,91,36"],["メガジジーロン","ノーマル,ドラゴン","78,85,110,160,116,36","M"],["ダダリン","ゴースト,くさ","70,131,100,86,90,40"],["ジャラコ","ドラゴン","45,55,65,45,45,45"],["ジャランゴ","ドラゴン,かくとう","55,75,90,65,70,65"],["ジャラランガ","ドラゴン,かくとう","75,110,125,100,105,85"],["カプ・コケコ","でんき,フェアリー","70,115,85,95,75,130"],["カプ・テテフ","エスパー,フェアリー","70,85,75,130,115,95"],["カプ・ブルル","くさ,フェアリー","70,130,115,85,95,75"],["カプ・レヒレ","みず,フェアリー","70,75,115,95,130,85"],["コスモッグ","エスパー","43,29,31,29,31,37"],["コスモウム","エスパー","43,29,131,29,131,37"],["ソルガレオ","エスパー,はがね","137,137,107,113,89,97"],["ルナアーラ","エスパー,ゴースト","137,113,89,137,107,97"],["ウツロイド","いわ,どく","109,53,47,127,131,103"],["マッシブーン","むし,かくとう","107,139,139,53,53,79"],["フェローチェ","むし,かくとう","71,137,37,137,37,151"],["デンジュモク","でんき","83,89,71,173,71,83"],["テッカグヤ","はがね,ひこう","97,101,103,107,101,61"],["カミツルギ","くさ,はがね","59,181,131,59,31,109"],["アクジキング","あく,ドラゴン","223,101,53,97,53,43"],["ネクロズマ","エスパー","97,107,101,127,89,79"],["ネクロズマ(たそがれのたてがみ)","エスパー,はがね","97,157,127,113,109,77"],["ネクロズマ(あかつきのつばさ)","エスパー,ゴースト","97,113,109,157,127,77"],["ウルトラネクロズマ","エスパー,ドラゴン","97,167,97,167,97,129"],["マギアナ","はがね,フェアリー","80,95,115,130,115,65"],["マギアナ(オリジナルカラー)","はがね,フェアリー","80,95,115,130,115,65"],["メガマギアナ","はがね,フェアリー","80,125,115,170,115,95","M"],["メガマギアナ(オリジナルカラー)","はがね,フェアリー","80,125,115,170,115,95","M"],["マーシャドー","かくとう,ゴースト","90,125,80,90,90,125"],["ベベノム","どく","67,73,67,73,67,73"],["アーゴヨン","どく,ドラゴン","73,73,73,127,73,121"],["ツンデツンデ","いわ,はがね","61,131,211,53,101,13"],["ズガドーン","ほのお,ゴースト","53,127,53,151,79,107"],["ゼラオラ","でんき","88,112,75,102,80,143"],["メガゼラオラ","でんき","88,157,75,147,80,153","M"],["メルタン","はがね","46,65,65,55,35,34"],["メルメタル","はがね","135,143,143,80,65,34"],["サルノリ","くさ","50,65,50,40,40,65"],["バチンキー","くさ","70,85,70,55,60,80"],["ゴリランダー","くさ","100,125,90,60,70,85"],["ヒバニー","ほのお","50,71,40,40,40,69"],["ラビフット","ほのお","65,86,60,55,60,94"],["エースバーン","ほのお","80,116,75,65,75,119"],["メッソン","みず","50,40,40,70,40,70"],["ジメレオン","みず","65,60,55,95,55,90"],["インテレオン","みず","70,85,65,125,65,120"],["ホシガリス","ノーマル","70,55,55,35,35,25"],["ヨクバリス","ノーマル","120,95,95,55,75,20"],["ココガラ","ひこう","38,47,35,33,35,57"],["アオガラス","ひこう","68,67,55,43,55,77"],["サッチムシ","むし","25,20,20,25,45,45"],["レドームシ","むし,エスパー","50,35,80,50,90,30"],["イオルブ","むし,エスパー","60,45,110,80,120,90"],["クスネ","あく","40,28,28,47,52,50"],["フォクスライ","あく","70,58,58,87,92,90"],["ヒメンカ","くさ","40,40,60,40,60,10"],["ワタシラガ","くさ","60,50,90,80,120,60"],["ウールー","ノーマル","42,40,55,40,45,48"],["バイウールー","ノーマル","72,80,100,60,90,88"],["カムカメ","みず","50,64,50,38,38,44"],["カジリガメ","みず,いわ","90,115,90,48,68,74"],["ワンパチ","でんき","59,45,50,40,50,26"],["パルスワン","でんき","69,90,60,90,60,121"],["タンドン","いわ","30,40,50,40,50,30"],["トロッゴン","いわ,ほのお","80,60,90,60,70,50"],["セキタンザン","いわ,ほのお","110,80,120,80,90,30"],["カジッチュ","くさ,ドラゴン","40,40,80,40,40,20"],["アップリュー","くさ,ドラゴン","70,110,80,95,60,70"],["タルップル","くさ,ドラゴン","110,85,80,100,80,30"],["スナヘビ","じめん","52,57,75,35,50,46"],["サダイジャ","じめん","72,107,125,65,70,71"],["ウッウ","ひこう,みず","70,85,55,85,95,85"],["サシカマス","みず","41,63,40,40,30,66"],["カマスジョー","みず","61,123,60,60,50,136"],["エレズン","でんき,どく","40,38,35,54,35,40"],["ストリンダー","でんき,どく","75,98,70,114,70,75"],["ストリンダー(ローなすがた)","でんき,どく","75,98,70,114,70,75"],["ヤクデ","ほのお,むし","50,65,45,50,50,45"],["マルヤクデ","ほのお,むし","100,115,65,90,90,65"],["タタッコ","かくとう","50,68,60,50,50,32"],["オトスパス","かくとう","80,118,90,70,80,42"],["ヤバチャ","ゴースト","40,45,45,74,54,50"],["ポットデス","ゴースト","60,65,65,134,114,70"],["ミブリム","エスパー","42,30,45,56,53,39"],["テブリム","エスパー","57,40,65,86,73,49"],["ブリムオン","エスパー,フェアリー","57,90,95,136,103,29"],["ベロバー","あく,フェアリー","45,45,30,55,40,50"],["ギモー","あく,フェアリー","65,60,45,75,55,70"],["タチフサグマ","あく,ノーマル","93,90,101,60,81,95"],["ニャイキング","はがね","70,110,100,50,60,50"],["サニゴーン","ゴースト","60,95,50,145,130,30"],["ネギガナイト","かくとう","62,135,95,68,82,65"],["バリコオル","こおり,エスパー","80,85,75,110,100,70"],["デスバーン","じめん,ゴースト","58,95,145,50,105,30"],["マホミル","フェアリー","45,40,40,50,61,34"],["マホイップ","フェアリー","65,60,75,110,121,64"],["タイレーツ","かくとう","65,100,100,70,60,75"],["メガタイレーツ","かくとう","65,135,135,70,65,100","M"],["バチンウニ","でんき","48,101,95,91,85,15"],["ユキハミ","こおり,むし","30,25,35,45,30,20"],["モスノウ","こおり,むし","70,65,60,125,90,65"],["イシヘンジン","いわ","100,125,135,20,20,70"],["コオリッポ","こおり","75,80,110,65,90,50"],["イエッサン","エスパー,ノーマル","60,65,55,105,95,95"],["イエッサン(メスのすがた)","エスパー,ノーマル","70,55,65,95,105,85"],["モルペコ","でんき,あく","58,95,58,70,58,97"],["ゾウドウ","はがね","72,80,49,40,49,40"],["ダイオウドウ","はがね","122,130,69,80,69,30"],["パッチラゴン","でんき,ドラゴン","90,100,90,80,70,75"],["パッチルドン","でんき,こおり","90,100,90,90,80,55"],["ウオノラゴン","みず,ドラゴン","90,90,100,70,80,75"],["ウオチルドン","みず,こおり","90,90,100,80,90,55"],["ジュラルドン","はがね,ドラゴン","70,95,115,120,50,85"],["ドラメシヤ","ドラゴン,ゴースト","28,60,30,40,30,82"],["ドロンチ","ドラゴン,ゴースト","68,80,50,60,50,102"],["ザシアン","フェアリー","92,120,115,80,115,138"],["ザマゼンタ","かくとう","92,120,115,80,115,138"],["ムゲンダイナ","どく,ドラゴン","140,85,95,145,95,130"],["ダクマ","かくとう","60,90,60,53,50,72"],["ウーラオス","かくとう,あく","100,130,100,63,60,97"],["ザルード","あく,くさ","105,120,105,70,95,105"],["ザルード(とうちゃん)","あく,くさ","105,120,105,70,95,105"],["レジエレキ","でんき","80,100,50,100,50,200"],["レジドラゴ","ドラゴン","200,100,50,100,50,80"],["ブリザポス","こおり","100,145,130,65,110,30"],["レイスポス","ゴースト","100,65,60,145,80,130"],["バドレックス","エスパー,くさ","100,80,80,80,80,80"],["バドレックス(はくばじょうのすがた)","エスパー,こおり","100,165,150,85,130,50"],["バドレックス(こくばじょうのすがた)","エスパー,ゴースト","100,85,80,165,100,150"],["アヤシシ","ノーマル,エスパー","103,105,72,105,75,65"],["バサギリ","むし,いわ","70,135,95,45,70,85"],["ガチグマ","じめん,ノーマル","130,140,105,45,80,50"],["イダイトウ(メスのすがた)","みず,ゴースト","120,92,65,100,75,78"],["オオニューラ","かくとう,どく","80,130,60,40,80,120"],["ハリーマン","あく,どく","85,115,95,65,65,85"],["ラブトロス","フェアリー,ひこう","74,115,70,135,80,106"],["ラブトロス(れいじゅうフォルム)","フェアリー,ひこう","74,115,110,135,100,46"],["ニャオハ","くさ","40,61,54,45,45,65"],["ニャローテ","くさ","61,80,63,60,63,83"],["マスカーニャ","くさ,あく","76,110,70,81,70,123"],["ホゲータ","ほのお","67,45,59,63,40,36"],["アチゲータ","ほのお","81,55,78,90,58,49"],["クワッス","みず","55,65,45,50,45,50"],["ウェルカモ","みず","70,85,65,65,60,65"],["グルトン","ノーマル","54,45,40,35,45,35"],["パフュートン","ノーマル","110,100,75,59,80,65"],["パフュートン(メスのすがた)","ノーマル","115,90,70,59,90,65"],["タマンチュラ","むし","35,41,45,29,40,20"],["ワナイダー","むし","60,79,92,52,86,35"],["マメバッタ","むし","33,46,40,21,25,45"],["エクスレッグ","むし,あく","71,102,78,52,55,92"],["パモ","でんき","45,50,20,40,25,60"],["パモット","でんき,かくとう","60,75,40,50,40,85"],["パーモット","でんき,かくとう","70,115,70,70,60,105"],["ワッカネズミ","ノーマル","50,50,45,40,45,75"],["イッカネズミ","ノーマル","74,75,70,65,75,111"],["イッカネズミ(３びきかぞく)","ノーマル","74,75,70,65,75,111"],["パピモッチ","フェアリー","37,55,70,30,55,65"],["バウッツェル","フェアリー","57,80,115,50,80,95"],["ミニーブ","くさ,ノーマル","41,35,45,58,51,30"],["オリーニョ","くさ,ノーマル","52,53,60,78,78,33"],["オリーヴァ","くさ,ノーマル","78,69,90,125,109,39"],["イキリンコ(ホワイトフェザー)","ノーマル,ひこう","82,96,51,45,51,92"],["コジオ","いわ","55,55,75,35,35,25"],["ジオヅム","いわ","60,60,100,35,65,35"],["キョジオーン","いわ","100,100,130,45,90,35"],["カルボウ","ほのお","40,50,40,50,40,35"],["グレンアルマ","ほのお,エスパー","85,60,100,125,80,75"],["ソウブレイズ","ほのお,ゴースト","75,125,80,60,100,85"],["ズピカ","でんき","61,31,41,59,35,45"],["ハラバリー","でんき","109,64,91,103,83,45"],["カイデン","でんき,ひこう","40,40,35,55,40,70"],["タイカイデン","でんき,ひこう","70,70,60,105,60,125"],["オラチフ","あく","60,78,60,40,51,51"],["マフィティフ","あく","80,120,90,60,70,85"],["シルシュルー","どく,ノーマル","40,65,35,40,35,75"],["タギングル","どく,ノーマル","63,95,65,80,72,110"],["アノクサ","くさ,ゴースト","40,65,30,45,35,60"],["アノホラグサ","くさ,ゴースト","55,115,70,80,70,90"],["ノノクラゲ","じめん,くさ","40,40,35,50,100,70"],["リククラゲ","じめん,くさ","80,70,65,80,120,100"],["ガケガニ","いわ","70,100,115,35,55,75"],["カプサイジ","くさ","50,62,40,62,40,50"],["スコヴィラン","くさ,ほのお","65,108,65,108,65,75"],["メガスコヴィラン","くさ,ほのお","65,138,85,138,85,75","M"],["シガロコ","むし","41,50,60,31,58,30"],["ベラカス","むし,エスパー","75,50,85,115,100,45"],["ヒラヒナ","エスパー","30,35,30,55,30,75"],["クエスパトラ","エスパー","95,60,60,101,60,105"],["カヌチャン","フェアリー,はがね","50,45,45,35,64,58"],["ナカヌチャン","フェアリー,はがね","65,55,55,45,82,78"],["デカヌチャン","フェアリー,はがね","85,75,77,70,105,94"],["ウミディグダ","みず","10,55,25,35,25,95"],["ウミトリオ","みず","35,100,50,50,70,120"],["オトシドリ","ひこう,あく","70,103,85,60,85,82"],["ナミイルカ","みず","70,45,40,45,40,75"],["イルカマン","みず","100,70,72,53,62,100"],["ブロロン","はがね,どく","45,70,63,30,45,47"],["ブロロローム","はがね,どく","80,119,90,54,67,90"],["モトトカゲ","ドラゴン,ノーマル","70,95,65,85,65,121"],["ミミズズ","はがね","70,85,145,60,55,65"],["キラーメ","いわ,どく","48,35,42,105,60,60"],["メガキラフロル","いわ,どく","83,90,105,150,96,101","M"],["ボチ","ゴースト","50,61,60,30,55,34"],["ハカドッグ","ゴースト","72,101,100,50,97,68"],["カラミンゴ","ひこう,かくとう","82,115,74,75,64,90"],["アルクジラ","こおり","108,68,45,30,40,43"],["ハルクジラ","こおり","170,113,65,45,55,73"],["ミガルーサ","みず,エスパー","90,102,73,78,65,70"],["ヘイラッシャ","みず","150,100,115,65,65,35"],["シャリタツ(そったすがた)","ドラゴン,みず","68,50,60,120,95,82"],["シャリタツ(たれたすがた)","ドラゴン,みず","68,50,60,120,95,82"],["シャリタツ(のびたすがた)","ドラゴン,みず","68,50,60,120,95,82"],["メガシャリタツ(そったすがた)","ドラゴン,みず","68,65,90,135,125,92","M"],["メガシャリタツ(たれたすがた)","ドラゴン,みず","68,65,90,135,125,92","M"],["メガシャリタツ(のびたすがた)","ドラゴン,みず","68,65,90,135,125,92","M"],["ドオー","どく,じめん","130,75,60,45,100,20"],["リキキリン","ノーマル,エスパー","120,90,70,110,70,60"],["ノココッチ","ノーマル","125,100,80,85,75,55"],["ノココッチ(みつふしフォルム)","ノーマル","125,100,80,85,75,55"],["サケブシッポ","フェアリー,エスパー","115,65,99,65,115,111"],["アラブルタケ","くさ,あく","111,127,99,79,99,55"],["チヲハウハネ","むし,かくとう","85,135,79,85,105,81"],["スナノケガワ","でんき,じめん","85,81,97,121,85,101"],["テツノワダチ","じめん,はがね","90,112,120,72,70,106"],["テツノコウベ","あく,ひこう","94,80,86,122,80,108"],["テツノイバラ","いわ,でんき","100,134,110,70,84,72"],["セビエ","ドラゴン,こおり","65,75,45,35,45,55"],["セゴール","ドラゴン,こおり","90,95,66,45,65,62"],["メガセグレイブ","ドラゴン,こおり","115,175,117,105,101,87","M"],["コレクレー","ゴースト","45,30,70,75,70,10"],["コレクレー(とほフォルム)","ゴースト","45,30,25,75,45,80"],["チオンジェン","あく,くさ","85,85,100,95,135,70"],["コライドン","かくとう,ドラゴン","100,135,115,85,100,135"],["ミライドン","でんき,ドラゴン","100,85,100,135,115,135"],["ウネルミナモ","みず,ドラゴン","99,83,91,125,83,109"],["テツノイサハ","くさ,エスパー","90,130,88,70,108,104"],["カミッチュ","くさ,ドラゴン","80,80,110,95,80,40"],["チャデス","くさ,ゴースト","40,45,45,74,54,50"],["ヤバソチャ","くさ,ゴースト","71,60,106,121,80,70"],["イイネイヌ","どく,かくとう","88,128,115,58,86,80"],["マシマシラ","どく,エスパー","88,75,66,130,90,106"],["キチキギス","どく,フェアリー","88,91,82,70,125,99"],["カミツオロチ","くさ,ドラゴン","106,80,110,120,80,44"],["ウガツホムラ","ほのお,ドラゴン","105,115,121,65,93,91"],["テツノイワオ","いわ,エスパー","90,120,80,68,108,124"],["テツノカシラ","はがね,エスパー","90,72,100,122,108,98"],["テラパゴス","ノーマル","90,65,85,65,85,60"],["モモワロウ","どく,ゴースト","88,88,160,88,88,88"]];
+/*EXTRA_END*/
+const kana=s=>s.replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
+EXTRA.forEach((e,ix)=>{
+  const t=e[1].split(","),b=e[2].split(",").map(Number);
+  MONS.push({
+    i:1001+ix,n:e[0],k:kana(e[0]),t,b,
+    m:t.map(tt=>({n:tt+"打点(目安)",t:tt,c:b[1]>=b[3]?"P":"S",p:90,pr:false,fd:false})),
+    ab:e[0].replace(/^メガ/,"").split("(")[0].slice(0,2),
+    mg:e[3]==="M"
+  });
+});
+/* 使用率順に並べ替え(TOP20 → その他人気 → 図鑑順) */
+const RANK={};ORDER.forEach((id,ix)=>RANK[id]=ix+1);
+MONS.sort((a,b)=>{
+  const ra=RANK[a.i]||(a.i<=1000?100+a.i:100000+a.i);
+  const rb=RANK[b.i]||(b.i<=1000?100+b.i:100000+b.i);
+  return ra-rb;
+});
+const byId=id=>MONS.find(m=>m.i===id);
+
+/* ================= 持ち物・メガシンカ ================= */
+const ITEMS=[
+  {id:"sash",n:"きあいのタスキ"},
+  {id:"scarf",n:"こだわりスカーフ"},
+  {id:"band",n:"こだわりハチマキ"},
+  {id:"specs",n:"こだわりメガネ"},
+  {id:"orb",n:"いのちのたま"},
+  {id:"vest",n:"とつげきチョッキ"},
+  {id:"lefto",n:"たべのこし"},
+  {id:"helmet",n:"ゴツゴツメット"}
+];
+const itemName=it=>{
+  if(!it)return "なし";
+  if(it.startsWith("mega:")){const m=byId(+it.slice(5));return m?`メガストーン(→${m.n})`:"メガストーン";}
+  const x=ITEMS.find(i=>i.id===it);return x?x.n:it;
+};
+function megasOf(mon){
+  if(mon.mg)return []; // すでにメガシンカ
+  const base=mon.n.split("(")[0];
+  const suf=(mon.n.match(/\((.+)\)/)||[])[1];
+  return MONS.filter(x=>{
+    if(!x.mg||!x.n.startsWith("メガ"+base))return false;
+    const xs=(x.n.match(/\((.+)\)/)||[])[1];
+    return suf?(!xs||xs===suf):true; // フォルム違い(オス/メス等)は同じフォルムのメガだけ
+  });
+}
+/* 相手の型推測: 使用率の高い定番セット(持ち物/性格/特性)を想定する */
+const ASSUME={
+  15:{it:"sash",ab:"さめはだ"},10:{it:"orb",ab:"ばけのかわ"},36:{it:"lefto",ab:"すなおこし"},
+  28:{it:"band",ab:"クリアボディ"},39:{it:"lefto",ab:"がんじょう"},24:{it:"sash",ab:"へんげんじざい"},
+  33:{it:"specs",ab:"うるおいボイス"},52:{it:"lefto",ab:"いかく"},53:{it:"specs",ab:"マジシャン"},
+  54:{it:"orb",ab:"かそく"},31:{it:"orb",ab:"もうか"},22:{it:"specs",ab:"ふゆう"},
+  1:{it:"orb",ab:"マルチスケイル"},35:{it:"lefto",ab:"ミラーアーマー"},30:{it:"sash",ab:"へんげんじざい"},
+  55:{it:"sash",ab:"ゆきふらし"},25:{it:"lefto",ab:"ふゆう"},38:{it:"sash",ab:"のろわれボディ"},
+  23:{it:"sash",ab:"どくげしょう"},56:{it:"orb",ab:"てきおうりょく"}
+};
+function oppEff(id){
+  const m=byId(id);const a=ASSUME[id]||{};
+  const off=Math.max(m.b[1],m.b[3]),spe=m.b[5];
+  let it=a.it;
+  if(!it){ // 種族値から定番の持ち物を推測
+    if(spe>=100&&(m.b[2]+m.b[4])<=150)it="sash";
+    else if(spe>=90&&off>=110)it="scarf";
+    else if(off>=115)it=(m.b[1]>=m.b[3]?"band":"specs");
+    else it="lefto";
+  }
+  const defensive=off<105&&spe<75;
+  const na=a.na||(m.b[1]>=m.b[3]?(spe>=90?"ようき":"いじっぱり"):(spe>=90?"おくびょう":"ひかえめ"));
+  return {...m,_it:it,_hpInv:defensive,_asm:true,_na:na,_ab:a.ab||"(代表的な特性)"};
+}
+/* こちらのポケモン: 設定した持ち物を反映。メガストーンならメガ後の能力・タイプで計算 */
+function myEff(e){
+  const base=byId(e.id);
+  if(e.item&&e.item.startsWith("mega:")){
+    const mg=byId(+e.item.slice(5));
+    if(mg)return {...mg,m:base.m,_it:null,_bid:base.i,_mega:true};
+  }
+  return {...base,_it:e.item||null,_bid:base.i};
+}
+
+/* ================= 計算 ================= */
+const mst=b=>Math.floor((2*b+94)*50/100)+5;          // 攻撃実数値(努力値252)
+const mdef=b=>Math.floor((2*b+31)*50/100)+5;         // 防御実数値(無振り)
+const mhp=b=>Math.floor((2*b+31)*50/100)+60;         // HP実数値(無振り)
+const mhpInv=b=>Math.floor((2*b+94)*50/100)+60;      // HP実数値(252振り)
+const mspe=b=>Math.floor((Math.floor((2*b+94)*50/100)+5)*1.1); // 最速実数値
+const speedOf=m=>Math.floor(mspe(m.b[5])*(m._it==="scarf"?1.5:1));
+function eff(mv,def){return def.t.reduce((a,t)=>a*((mv.fd&&t==="みず")?2:((CHART[mv.t]||{})[t]!==undefined?CHART[mv.t][t]:1)),1);}
+function dmg(att,mv,def){
+  const A=mst(mv.c==="P"?att.b[1]:att.b[3]);
+  const D=mdef(mv.c==="P"?def.b[2]:def.b[4]);
+  const base=Math.floor(Math.floor(22*mv.p*A/D)/50)+2;
+  const stab=att.t.includes(mv.t)?1.5:1;
+  const e=eff(mv,def);
+  let ir=1; // 攻め側の持ち物補正
+  if(att._it==="band"&&mv.c==="P")ir=1.5;
+  else if(att._it==="specs"&&mv.c==="S")ir=1.5;
+  else if(att._it==="orb")ir=1.3;
+  let dr=1; // 受け側の持ち物補正
+  if(def._it==="vest"&&mv.c==="S")dr=1.5;
+  const max=Math.floor(base*stab*e*ir/dr), min=Math.floor(base*stab*e*0.85*ir/dr);
+  const hp=def._hpInv?mhpInv(def.b[0]):mhp(def.b[0]);
+  let label;
+  if(e===0)label="無効";
+  else if(min>=hp)label="確1";
+  else if(max>=hp)label="乱数1";
+  else if(min*2>=hp)label="確2";
+  else if(max*2>=hp)label="乱数2";
+  else if(min*3>=hp)label="確3";
+  else label="低め";
+  return {mv,e,min,max,hp,label,pct:Math.min(150,Math.round(max/hp*100))};
+}
+function bestAtk(att,def){
+  const list=att.m.map(mv=>dmg(att,mv,def)).sort((a,b)=>b.min-a.min);
+  return {best:list[0],list};
+}
+function cell(att,def){
+  const mine=bestAtk(att,def).best, theirs=bestAtk(def,att).best;
+  let op=Math.min(1.2,mine?mine.min/mine.hp:0);
+  let dp=Math.min(1.2,theirs?theirs.min/theirs.hp:0);
+  if(def._it==="sash")op=Math.min(op,0.95); // タスキは確1を耐える想定
+  if(att._it==="sash")dp=Math.min(dp,0.95);
+  const faster=speedOf(att)>speedOf(def);
+  let s=(op-dp)*1.6+(faster?0.35:-0.35);
+  const prio=att.m.some(mv=>{if(!mv.pr)return false;const d=dmg(att,mv,def);return d.e>=1&&d.min/d.hp>=0.2;});
+  if(prio)s+=0.15;
+  if(s>=0.55)return{sym:"◎",cls:"c-good",v:3,s};
+  if(s>=0.1)return{sym:"○",cls:"c-ok",v:2,s};
+  if(s>=-0.5)return{sym:"△",cls:"c-warn",v:1,s};
+  return{sym:"✕",cls:"c-bad",v:0,s};
+}
+function recommend(my,opp){
+  const val=my.map(a=>opp.map(d=>cell(a,d).v));
+  const covered=opp.map(()=>0);
+  const picks=[];
+  const used=new Set();
+  for(let k=0;k<Math.min(3,my.length);k++){
+    let bi=-1,bs=-1;
+    my.forEach((a,i)=>{
+      if(used.has(i))return;
+      const s=opp.reduce((acc,_,j)=>acc+Math.max(0,val[i][j]-covered[j]),0)+opp.reduce((acc,_,j)=>acc+val[i][j],0)*0.01;
+      if(s>bs){bs=s;bi=i;}
+    });
+    if(bi<0)break;
+    used.add(bi);
+    opp.forEach((_,j)=>{covered[j]=Math.max(covered[j],val[bi][j]);});
+    const strong=opp.filter((_,j)=>val[bi][j]===3).map(d=>d.n.split("(")[0]);
+    picks.push({mon:my[bi],why:strong.length?strong.slice(0,3).join("・")+"に有利":"広く戦える安定枠"});
+  }
+  return picks;
+}
+function defEffType(atkType,mon){return mon.t.reduce((a,t)=>a*((CHART[atkType]||{})[t]!==undefined?CHART[atkType][t]:1),1);}
+
+/* ================= 状態 ================= */
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+let myTeam=LS.get("navi_my",[]).map(e=>typeof e==="number"?{id:e,item:null}:e);
+let oppTeam=LS.get("navi_opp",[]);
+let hist=LS.get("navi_hist",[]);
+let scanData=LS.get("navi_scan",{pos:null,hashes:[]});
+const $=id=>document.getElementById(id);
+
+/* ================= 共通UI ================= */
+function badge(m,small){
+  const c1=TCOLOR[m.t[0]],c2=TCOLOR[m.t[1]||m.t[0]];
+  return `<div class="mon${small?" s":""}" style="background:linear-gradient(135deg,${c1},${c2})">${m.ab}</div>`;
+}
+const kat=kana;
+function grid(el,q,onPick,pickedIds){
+  const query=kat((q||"").trim());
+  const hits=MONS.filter(m=>!query||m.k.includes(query)||m.n.includes(query));
+  const shown=hits.slice(0,72);
+  el.innerHTML=shown.map(m=>`<button class="gcell${pickedIds.includes(m.i)?" picked":""}" data-id="${m.i}">
+      ${RANK[m.i]?`<span class="no">${RANK[m.i]}</span>`:""}${badge(m)}<span class="name">${m.n}</span></button>`).join("")
+    +(hits.length>shown.length?`<div class="empty" style="grid-column:1/-1;padding:10px">ほか ${hits.length-shown.length}匹 — 検索で絞り込めます</div>`:"")
+    +(hits.length===0?`<div class="empty" style="grid-column:1/-1">見つかりませんでした</div>`:"");
+  el.querySelectorAll(".gcell").forEach(b=>b.addEventListener("click",()=>onPick(+b.dataset.id)));
+}
+function slots(el,team,onRemove){
+  let html="";
+  for(let i=0;i<6;i++){
+    if(team[i]!==undefined){
+      const m=byId(team[i]);
+      html+=`<button class="team-slot" data-idx="${i}">${badge(m)}<span class="name">${m.n.split("(")[0]}</span></button>`;
+    }else{
+      html+=`<div class="team-slot"><div class="slot-empty">＋</div><span class="name">&nbsp;</span></div>`;
+    }
+  }
+  el.innerHTML=html;
+  el.querySelectorAll("button.team-slot").forEach(b=>b.addEventListener("click",()=>onRemove(+b.dataset.idx)));
+}
+
+/* ================= タブ ================= */
+function show(tab){
+  document.querySelectorAll(".tab").forEach(s=>s.classList.toggle("on",s.id==="tab-"+tab));
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
+  if(tab==="opp")renderOpp();
+  if(tab==="result")renderResult();
+  if(tab==="diag")renderDiag();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll(".nav-btn").forEach(b=>b.addEventListener("click",()=>show(b.dataset.tab)));
+document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>$(b.dataset.close).classList.remove("open")));
+$("btnHelp").addEventListener("click",()=>$("helpOverlay").classList.add("open"));
+
+/* ================= マイPT ================= */
+function renderMySlots(){
+  const el=$("mySlots");let html="";
+  for(let i=0;i<6;i++){
+    const e=myTeam[i];
+    if(e){
+      const m=myEff(e);
+      const lbl=e.item?(e.item.startsWith("mega:")?"メガ":itemName(e.item).slice(0,5)):"設定";
+      html+=`<button class="team-slot" data-idx="${i}">${badge(m)}<span class="name">${m.n.split("(")[0]}</span><span class="itag${e.item?" on":""}${e.item&&e.item.startsWith("mega:")?" mega":""}">${lbl}</span></button>`;
+    }else{
+      html+=`<div class="team-slot"><div class="slot-empty">＋</div><span class="name">&nbsp;</span></div>`;
+    }
+  }
+  el.innerHTML=html;
+  el.querySelectorAll("button.team-slot").forEach(b=>b.addEventListener("click",()=>openCfg(+b.dataset.idx)));
+}
+function renderTeam(){
+  renderMySlots();
+  grid($("myGrid"),$("myq").value,id=>{
+    const ix=myTeam.findIndex(e=>e.id===id);
+    if(ix>=0)myTeam.splice(ix,1);
+    else if(myTeam.length<6)myTeam.push({id,item:null});
+    LS.set("navi_my",myTeam);renderTeam();
+  },myTeam.map(e=>e.id));
+}
+$("myq").addEventListener("input",renderTeam);
+
+/* ---- 持ち物・メガ設定シート ---- */
+let cfgIdx=-1;
+function openCfg(i){cfgIdx=i;renderCfg();$("cfgOverlay").classList.add("open");}
+function renderCfg(){
+  const e=myTeam[cfgIdx];if(!e)return;
+  const base=byId(e.id);
+  const megas=megasOf(base);
+  const cur=e.item||"";
+  const opts=[{id:"",n:"なし"},...megas.map(m=>({id:"mega:"+m.i,n:`メガストーン → ${m.n}`,mega:true})),...ITEMS.map(x=>({id:x.id,n:x.n}))];
+  const effm=myEff(e);
+  $("cfgBody").innerHTML=`
+    <div class="versus" style="margin-bottom:10px">
+      <div class="side">${badge(effm)}<span class="nm">${effm.n}</span><span class="tp">${effm.t.join("・")}</span></div>
+    </div>
+    ${effm._mega?`<p class="note" style="text-align:center;margin-bottom:10px">⚡ メガシンカ後の能力・タイプで計算します</p>`:""}
+    <div class="card" style="margin-bottom:12px">
+      <h3>持ち物を選ぶ</h3>
+      <div class="opts">${opts.map(o=>`<button class="opt${cur===o.id?" sel":""}${o.mega?" megaopt":""}" data-it="${o.id}">${o.n}</button>`).join("")}</div>
+      <p class="note" style="margin-top:9px">タスキ・スカーフ・ハチマキ・メガネ・いのちのたま・チョッキ・メガストーンは相性計算に反映されます。<b style="color:var(--accent)">メガストーンはPTに1匹まで</b>(他の子に持たせると自動で付け替え)。</p>
+    </div>
+    <button class="cta sub" id="cfgRemove">このポケモンをPTから外す</button>`;
+  $("cfgBody").querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>{
+    const it=b.dataset.it||null;
+    if(it&&it.startsWith("mega:")){
+      myTeam.forEach((x,j)=>{if(j!==cfgIdx&&x.item&&x.item.startsWith("mega:"))x.item=null;});
+    }
+    myTeam[cfgIdx].item=(myTeam[cfgIdx].item===it)?null:it;
+    LS.set("navi_my",myTeam);renderCfg();renderMySlots();
+  }));
+  $("cfgRemove").addEventListener("click",()=>{
+    myTeam.splice(cfgIdx,1);LS.set("navi_my",myTeam);
+    $("cfgOverlay").classList.remove("open");renderTeam();
+  });
+}
+
+/* ================= 相手入力 ================= */
+function pushHist(){
+  if(oppTeam.length<6)return;
+  const key=oppTeam.slice().sort().join(",");
+  hist=hist.filter(h=>h.ids.slice().sort().join(",")!==key);
+  hist.unshift({ids:oppTeam.slice(),at:Date.now()});
+  hist=hist.slice(0,5);
+  LS.set("navi_hist",hist);
+}
+function renderOpp(){
+  slots($("oppSlots"),oppTeam,i=>{oppTeam.splice(i,1);LS.set("navi_opp",oppTeam);renderOpp();});
+  grid($("oppGrid"),$("oppq").value,id=>{
+    if(oppTeam.includes(id)){oppTeam=oppTeam.filter(x=>x!==id);}
+    else if(oppTeam.length<6){oppTeam.push(id);}
+    LS.set("navi_opp",oppTeam);renderOpp();
+    if(oppTeam.length===6){pushHist();show("result");}
+  },oppTeam);
+  $("histCard").style.display=hist.length?"":"none";
+  $("histList").innerHTML=hist.map((h,i)=>`<button class="hist-row" data-i="${i}">
+    ${h.ids.map(id=>badge(byId(id),true)).join("")}
+    <span class="when">${new Date(h.at).toLocaleDateString("ja-JP",{month:"numeric",day:"numeric"})}</span></button>`).join("");
+  $("histList").querySelectorAll(".hist-row").forEach(b=>b.addEventListener("click",()=>{
+    oppTeam=hist[+b.dataset.i].ids.slice();LS.set("navi_opp",oppTeam);renderOpp();show("result");
+  }));
+}
+$("oppq").addEventListener("input",renderOpp);
+$("btnCalc").addEventListener("click",()=>{if(oppTeam.length){pushHist();show("result");}});
+
+/* ================= ピッカー(共用) ================= */
+let pickCb=null;
+function openPicker(title,cb){
+  pickCb=cb;$("pickTitle").textContent=title;$("pickq").value="";
+  renderPickGrid();$("pickOverlay").classList.add("open");
+}
+function renderPickGrid(){
+  grid($("pickGrid"),$("pickq").value,id=>{
+    $("pickOverlay").classList.remove("open");
+    if(pickCb)pickCb(id);
+  },[]);
+}
+$("pickq").addEventListener("input",renderPickGrid);
+
+/* ================= 結果 ================= */
+let curMy=[],curOpp=[];
+function oppMegaCell(a,d){
+  // 相手がメガシンカした場合の判定(未知なので併記用)
+  const mgs=megasOf(byId(d.i));
+  if(!mgs.length)return null;
+  return mgs.slice(0,2).map(mg=>({mg,c:cell(a,{...mg,m:d.m,_it:null,_hpInv:false})}));
+}
+function renderResult(){
+  curMy=myTeam.map(myEff);curOpp=oppTeam.map(oppEff);
+  const my=curMy,opp=curOpp;
+  const el=$("resultBody");
+  if(!my.length||!opp.length){
+    el.innerHTML=`<div class="card"><div class="empty">まず <b>マイPT</b> で自分のチームを、<br><b>相手入力</b> で相手のチームを選んでください。</div></div>`;
+    return;
+  }
+  let rows=my.map((a,i)=>`<tr><th>${badge(a,true)}</th>${opp.map((d,j)=>{
+    const c=cell(a,d);
+    const mg=oppMegaCell(a,d);
+    const changed=mg&&mg.some(x=>x.c.v!==c.v);
+    return `<td class="${c.cls}" data-i="${i}" data-j="${j}" style="position:relative">${c.sym}${changed?'<span class="mflag">M</span>':""}</td>`;
+  }).join("")}</tr>`).join("");
+  const recs=recommend(my,opp);
+  const megaMine=my.find(a=>a._mega);
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:12px">
+      <h3>相性マトリクス<span class="hint">マスをタップで対面詳細</span></h3>
+      <div style="overflow-x:auto"><table class="matrix">
+        <tr><th></th>${opp.map(d=>`<th>${badge(d,true)}</th>`).join("")}</tr>${rows}
+      </table></div>
+      <div class="legend"><span><b class="lg">◎</b>有利</span><span><b class="lg">○</b>やや有利</span><span><b class="lw">△</b>五分</span><span><b class="lb">✕</b>不利</span><span><b style="color:var(--accent)">M</b>=相手メガで変動</span></div>
+      ${megaMine?`<p class="note" style="margin-top:8px;text-align:center">⚡ ${byId(megaMine._bid).n} は ${megaMine.n} として計算中</p>`:""}
+    </div>
+    <div class="card">
+      <h3>おすすめ選出</h3>
+      <div class="rec">${recs.map((r,i)=>`
+        <div class="rec-row${i===0?" first":""}"><span class="rank">${i+1}</span>${badge(r.mon,true)}
+        <div class="body"><div class="who">${r.mon.n}</div><div class="why">${r.why}</div></div></div>`).join("")}
+      </div>
+      <p class="note" style="margin-top:10px">※ 相手は使用率の高い型(持ち物・性格・努力値・特性)を推測して計算しています。「M」つきのマスは相手のメガシンカで評価が変わるので対面詳細を確認してください。</p>
+    </div>`;
+  el.querySelectorAll("td[data-i]").forEach(td=>td.addEventListener("click",()=>openDetail(+td.dataset.i,+td.dataset.j)));
+}
+function moveRow(d,danger){
+  const cls=d.e>=2?"e-good":(d.e===0||d.e<1)?(danger?"e-mid":"e-bad"):"e-mid";
+  const effTxt=d.e===0?"無効":d.e>=4?"抜群 ×4":d.e>=2?"抜群 ×2":d.e===1?"等倍":"いまひとつ";
+  return `<div class="move${danger&&(d.mv.pr||d.label==="確1"||d.label==="乱数1")?" danger":""}">
+    <span class="type" style="background:${TCOLOR[d.mv.t]}">${d.mv.t}</span>
+    <span class="nm">${d.mv.n}</span>
+    <span class="eff ${danger?(d.e>=2||d.mv.pr?"e-bad":"e-mid"):cls}">${d.mv.pr?effTxt+"・先制":effTxt}</span>
+    <span class="dmg">${d.e===0?"":`<b>${d.label}</b>`}</span></div>`;
+}
+function openDetail(i,j){
+  const a=curMy[i]||myEff(myTeam[i]);
+  const d=curOpp[j]||oppEff(oppTeam[j]);
+  const c=cell(a,d);
+  const sa=speedOf(a),sd=speedOf(d);
+  const mx=Math.max(sa,sd);
+  const myMoves=bestAtk(a,d).list.map(x=>{
+    if(d._it==="sash"&&(x.label==="確1"||x.label==="乱数1"))return {...x,label:x.label+"(タスキ注意)"};
+    return x;
+  });
+  const thMoves=bestAtk(d,a).list;
+  const vCls=c.v>=2?"v-good":c.v===1?"v-warn":"v-bad";
+  const vTxt=c.v===3?"◎ 有利対面 — 攻めて OK":c.v===2?"○ やや有利 — 基本は攻められる":c.v===1?"△ 五分 — 相手の技に注意":"✕ 不利対面 — 交代も検討";
+  const megaCases=oppMegaCell(a,d)||[];
+  $("detailBody").innerHTML=`
+    <div class="card" style="margin-bottom:12px">
+      <div class="versus">
+        <div class="side">${badge(a)}<span class="nm">${a.n}</span><span class="tp">${a.t.join("・")}</span></div>
+        <span class="vs">VS</span>
+        <div class="side">${badge(d)}<span class="nm">${d.n}</span><span class="tp">${d.t.join("・")}</span></div>
+      </div>
+      <div class="verdict ${vCls}">${vTxt}</div>
+      ${megaCases.map(x=>`<div class="verdict ${x.c.v>=2?"v-good":x.c.v===1?"v-warn":"v-bad"}" style="margin-top:6px">相手が${x.mg.n}にメガシンカした場合: ${x.c.sym} ${x.c.v===3?"有利":x.c.v===2?"やや有利":x.c.v===1?"五分":"不利"}</div>`).join("")}
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <h3>相手の想定セット(使用率からの推測)</h3>
+      <div class="asm">
+        持ち物: <b>${itemName(d._it)}</b> / 性格: <b>${d._na||"—"}</b> / 特性: <b>${d._ab||"—"}</b><br>
+        努力値: <b>${d._hpInv?"HP・耐久振り想定":"火力+素早さ全振り想定"}</b>
+        ${d._it==="sash"?'<br><span style="color:var(--warn)">▲ タスキ想定: 一撃圏内でも1発は耐えられる前提で立ち回る</span>':""}
+        ${d._it==="scarf"?'<br><span style="color:var(--warn)">▲ スカーフ想定: 見た目より速い前提で計算しています</span>':""}
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <h3>素早さ比較(最速実数値${d._it==="scarf"?"・相手スカーフ込み":""})</h3>
+      <div class="sp-row"><span class="nm">${a.n.split("(")[0]}</span><div class="bar"><i style="width:${Math.round(sa/mx*100)}%;background:var(--accent)"></i></div><span class="val">${sa}</span></div>
+      <div class="sp-row"><span class="nm">${d.n.split("(")[0]}</span><div class="bar"><i style="width:${Math.round(sd/mx*100)}%;background:${sd>sa?"var(--bad)":"var(--muted)"}"></i></div><span class="val">${sd}</span></div>
+      <p class="sp-note">${sa>sd?"✅ こちらが先に動ける(同条件の場合)":sa<sd?"▲ 相手が先に動く(同条件の場合)":"同速(50%で先制)"}</p>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <h3>こちらの有効な技${a._mega?"(メガ後の能力)":""}</h3>
+      <div class="moves">${myMoves.map(m=>moveRow(m,false)).join("")}</div>
+    </div>
+    <div class="card">
+      <h3>注意すべき相手の技</h3>
+      <div class="moves">${thMoves.slice(0,3).map(m=>moveRow(m,true)).join("")}</div>
+    </div>`;
+  $("detailOverlay").classList.add("open");
+}
+
+/* ================= PT診断 ================= */
+function renderDiag(){
+  const my=myTeam.map(myEff);
+  const el=$("diagBody");
+  if(my.length<2){
+    el.innerHTML=`<div class="card"><div class="empty"><b>マイPT</b> に2匹以上登録すると、<br>チームの診断が表示されます。</div></div>`;
+    return;
+  }
+  // 攻撃範囲
+  const covered=TYPES.filter(T=>my.some(m=>m.m.some(mv=>{
+    const e=(mv.fd&&T==="みず")?2:((CHART[mv.t]||{})[T]!==undefined?CHART[mv.t][T]:1);
+    return e>=2;
+  })));
+  const holes=TYPES.filter(T=>!covered.includes(T));
+  // 弱点重複
+  const weak=TYPES.map(T=>{
+    const ms=my.filter(m=>defEffType(T,m)>=2);
+    const x4=my.filter(m=>defEffType(T,m)>=4);
+    return {T,n:ms.length,x4:x4.length,names:ms.map(m=>m.n.split("(")[0])};
+  }).filter(w=>w.n>=2).sort((a,b)=>(b.n+b.x4)-(a.n+a.x4));
+  // 無効
+  const imm=TYPES.map(T=>({T,ms:my.filter(m=>defEffType(T,m)===0)})).filter(x=>x.ms.length);
+  const prios=my.filter(m=>m.m.some(mv=>mv.pr));
+  const fast=my.filter(m=>mspe(m.b[5])>=190);
+  // バー
+  const range=Math.round(covered.length/18*100);
+  const spd=Math.min(100,Math.round(my.reduce((a,m)=>a+mspe(m.b[5]),0)/my.length/2.1));
+  const bulk=Math.min(100,Math.round(my.reduce((a,m)=>a+mhp(m.b[0])*(mdef(m.b[2])+mdef(m.b[4]))/2,0)/my.length/300));
+  const prioBar=Math.min(100,prios.length*40);
+  const power=Math.min(100,Math.round(my.reduce((a,m)=>{
+    const t=MONS.filter(x=>x.i!==m.i);
+    const avg=t.reduce((s,d)=>s+Math.min(1.3,bestAtk(m,d).best.min/bestAtk(m,d).best.hp),0)/t.length;
+    return a+avg*100;
+  },0)/my.length*1.35));
+  const total=range*0.3+spd*0.2+bulk*0.15+prioBar*0.1+power*0.25;
+  const grade=total>=80?"S":total>=72?"A":total>=64?"B+":total>=55?"B":total>=45?"C+":"C";
+  const gradeDeg=Math.round(Math.min(100,total));
+  // 長所
+  const goods=[];
+  if(covered.length>=13)goods.push({b:`攻撃範囲が広い(${covered.length}/18タイプに抜群)`,w:"ほとんどの相手に抜群を取れる"});
+  if(prios.length>=2)goods.push({b:`先制技持ちが${prios.length}匹`,w:"終盤の詰め・削り合いに強い"});
+  imm.slice(0,2).forEach(x=>goods.push({b:`${x.T}技を無効にできる`,w:`${x.ms.map(m=>m.n.split("(")[0]).join("・")}で安全に受けられる`}));
+  if(fast.length>=2)goods.push({b:`最速級のアタッカーが${fast.length}匹`,w:"上から動いて主導権を取りやすい"});
+  if(bulk>=70)goods.push({b:"耐久力のある並び",w:"サイクル戦・持久戦に強い"});
+  if(!goods.length)goods.push({b:"バランス型の構成",w:"大きな偏りはありません"});
+  // 短所
+  const bads=[];
+  weak.filter(w=>w.n>=3||(w.n>=2&&w.x4>=1)).slice(0,3).forEach(w=>{
+    bads.push({b:`${w.T}弱点が${w.n}匹${w.x4?`(×4が${w.x4}匹)`:""}`,w:w.names.join("・")});
+  });
+  if(holes.length)bads.push({b:`${holes.slice(0,3).join("・")}タイプに抜群を取れない`,w:"受け出しされると突破に時間がかかる"});
+  if(spd<45)bads.push({b:"全体的に素早さが低め",w:"上から殴られる展開になりやすい"});
+  if(!prios.length)bads.push({b:"先制技がない",w:"削られた終盤に巻き返しづらい"});
+  if(!bads.length)bads.push({b:"大きな穴は見つかりませんでした",w:"よい構成です"});
+  // 脅威
+  // 脅威スキャン: 手入力の人気ポケモンは常に対象。図鑑データ側は現実的な強さの範囲(合計500〜620)に絞る
+  const threats=MONS.filter(R=>{
+    if(myTeam.some(e=>e.id===R.i))return false;
+    if(R.i<=1000)return true;
+    const bst=R.b.reduce((a,v)=>a+v,0);
+    return bst>=500&&bst<=620;
+  }).map(R=>{
+    const beats=my.filter(m=>cell(R,m).v===3);
+    const ans=my.filter(m=>cell(m,R).v===3);
+    return {R,beats,ans,score:beats.length*2-ans.length};
+  }).filter(t=>t.beats.length>=2).sort((a,b)=>b.score-a.score)
+    .filter((t,i,arr)=>arr.findIndex(x=>x.R.n.split("(")[0]===t.R.n.split("(")[0])===i)
+    .slice(0,4);
+  // おすすめ補強ポケモン: 弱点タイプに強く、苦手な相手に有利を取れる候補を探す
+  const weakTypes=weak.filter(w=>w.n>=2).map(w=>w.T);
+  const candPool=MONS.filter(C=>{
+    if(myTeam.some(e=>e.id===C.i))return false;
+    if(my.some(m=>m.n.split("(")[0].replace(/^メガ/,"")===C.n.split("(")[0]))return false;
+    if(C.mg)return false; // メガシンカはストーン前提なので提案からは除外
+    const bst=C.b.reduce((a,v)=>a+v,0);
+    return C.i<=1000||(bst>=500&&bst<=620);
+  });
+  const suggest=candPool.map(C=>{
+    let sc=0;const why=[];
+    const resist=weakTypes.filter(T=>defEffType(T,C)<1);
+    if(resist.length){sc+=resist.length*2;why.push(`${resist.slice(0,2).join("・")}技に強い`);}
+    const beatT=threats.filter(t=>cell(C,t.R).v===3);
+    if(beatT.length){sc+=beatT.length*3;why.push(`苦手な${beatT.slice(0,2).map(t=>t.R.n.split("(")[0]).join("・")}に有利`);}
+    const holeCover=holes.filter(T=>C.m.some(mv=>{
+      const e=(mv.fd&&T==="みず")?2:((CHART[mv.t]||{})[T]!==undefined?CHART[mv.t][T]:1);
+      return e>=2;
+    }));
+    if(holeCover.length)sc+=holeCover.length;
+    if(RANK[C.i])sc+=1.5-RANK[C.i]*0.05; // 使用率が高いほど少し優先
+    return {C,sc,why};
+  }).filter(r=>r.sc>=4&&r.why.length).sort((a,b)=>b.sc-a.sc)
+    .filter((r,i,arr)=>arr.findIndex(x=>x.C.n.split("(")[0]===r.C.n.split("(")[0])===i)
+    .slice(0,3);
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:12px">
+      <div class="grade-wrap">
+        <div class="grade" style="background:conic-gradient(var(--accent) 0 ${gradeDeg}%, var(--raised) ${gradeDeg}% 100%)"><i>${grade}</i></div>
+        <div class="grade-txt">
+          <div class="big">${range>=70?"攻め寄りの":bulk>=70?"受け寄りの":"バランス型の"}構成</div>
+          <div class="sm">${bads[0]?bads[0].b:""}${bads[0]&&bads[0].b.includes("穴")?"":"が課題"}</div>
+        </div>
+      </div>
+      <div class="stats">
+        ${[["攻撃範囲",range],["素早さ",spd],["耐久",bulk],["先制技",prioBar],["崩し性能",power]].map(([n,v])=>`
+        <div class="st"><span class="nm">${n}</span><div class="bar"><i style="width:${v}%"></i></div><span class="val">${v}</span></div>`).join("")}
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <h3>優れている点</h3>
+      <div class="points">${goods.slice(0,4).map(g=>`<div class="pt good"><span class="ic">✓</span><div class="tx"><b>${g.b}</b><div class="why">${g.w}</div></div></div>`).join("")}</div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <h3>劣っている点</h3>
+      <div class="points">${bads.slice(0,4).map(g=>`<div class="pt bad"><span class="ic">!</span><div class="tx"><b>${g.b}</b><div class="why">${g.w}</div></div></div>`).join("")}</div>
+    </div>
+    <div class="card">
+      <h3>出てきたら不利なポケモン</h3>
+      <div class="threats">${threats.length?threats.map(t=>`
+        <div class="threat">${badge(t.R,true)}
+          <div class="body"><div class="who">${t.R.n}</div>
+          <div class="why">${t.beats.length}匹に有利を取られる${t.ans.length?` → ${t.ans[0].n.split("(")[0]}で対応`:"。安定した対抗がいない"}</div></div>
+          <span class="lv ${t.beats.length>=3&&t.ans.length<=1?"lv-hi":"lv-mid"}">${t.beats.length>=3&&t.ans.length<=1?"危険":"注意"}</span>
+        </div>`).join(""):`<div class="empty">大きく不利を取られる相手は見つかりませんでした。</div>`}
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3>おすすめの補強ポケモン<span class="hint">${myTeam.length>=6?"入れ替え候補":"追加におすすめ"}</span></h3>
+      <div class="rec">${suggest.length?suggest.map((r,i)=>`
+        <div class="rec-row${i===0?" first":""}"><span class="rank">${i+1}</span>${badge(r.C,true)}
+        <div class="body"><div class="who">${r.C.n}</div><div class="why">${r.why.join("。")}</div></div></div>`).join(""):`<div class="empty">今の並びで大きな穴はありません。補強候補は見つかりませんでした。</div>`}
+      </div>
+      <p class="note" style="margin-top:10px">※ 弱点タイプへの耐性・苦手な相手への強さ・使用率から自動で選んでいます。タイプ相性・種族値・代表的な技をもとにした目安です。</p>
+    </div>`;
+}
+
+/* ================= スクショ読み取り ================= */
+const scanState={img:null,taps:[],slots:null};
+$("btnScanFile").addEventListener("click",()=>$("scanInput").click());
+$("btnScanReset").addEventListener("click",()=>{
+  scanData.pos=null;LS.set("navi_scan",scanData);
+  $("scanMsg").textContent="読み取り位置をリセットしました。次のスクショで6匹をタップして教えてください。";
+  $("scanMsg").className="scan-msg";
+});
+$("scanInput").addEventListener("change",e=>{
+  const f=e.target.files[0];if(!f)return;
+  const img=new Image();
+  img.onload=()=>{startScan(img);};
+  img.src=URL.createObjectURL(f);
+  e.target.value="";
+});
+function startScan(img){
+  scanState.img=img;scanState.taps=[];scanState.slots=null;
+  $("scanWrap").style.display="block";
+  $("btnScanApply").style.display="none";
+  $("scanList").innerHTML="";
+  drawScan();
+  if(scanData.pos&&scanData.pos.length===6){
+    autoDetect();
+  }else{
+    $("scanMsg").textContent="画像の中の相手ポケモン 6匹のアイコンを、左から順番にタップしてください(0/6)";
+    $("scanMsg").className="scan-msg";
+  }
+}
+function drawScan(){
+  const cv=$("scanCanvas"),img=scanState.img;
+  const w=Math.min(1000,img.width);
+  const scale=w/img.width;
+  cv.width=w;cv.height=Math.round(img.height*scale);
+  const ctx=cv.getContext("2d");
+  ctx.drawImage(img,0,0,cv.width,cv.height);
+  ctx.lineWidth=3;
+  const pts=scanState.slots?scanState.slots.map(s=>({x:s.x,y:s.y,ok:s.id!==null&&s.conf>=70})):scanState.taps.map(t=>({x:t.x,y:t.y,ok:true}));
+  pts.forEach((p,i)=>{
+    ctx.strokeStyle=p.ok?"#3ddc84":"#f2c94c";
+    const r=Math.round(cv.width*0.055);
+    ctx.strokeRect(p.x*cv.width-r,p.y*cv.height-r,r*2,r*2);
+    ctx.fillStyle="#05080d";ctx.fillRect(p.x*cv.width-r,p.y*cv.height-r-16,18,15);
+    ctx.fillStyle="#fff";ctx.font="bold 12px sans-serif";
+    ctx.fillText(String(i+1),p.x*cv.width-r+5,p.y*cv.height-r-4);
+  });
+}
+$("scanCanvas").addEventListener("click",e=>{
+  if(scanData.pos&&scanData.pos.length===6)return;
+  if(scanState.taps.length>=6)return;
+  const cv=$("scanCanvas"),rect=cv.getBoundingClientRect();
+  const x=(e.clientX-rect.left)/rect.width, y=(e.clientY-rect.top)/rect.height;
+  scanState.taps.push({x,y});
+  drawScan();
+  if(scanState.taps.length<6){
+    $("scanMsg").textContent=`画像の中の相手ポケモン 6匹のアイコンを、左から順番にタップしてください(${scanState.taps.length}/6)`;
+  }else{
+    scanData.pos=scanState.taps.slice();
+    LS.set("navi_scan",scanData);
+    autoDetect();
+  }
+});
+function cropFeat(img,rx,ry){
+  // 形(明暗の勾配 dHash 64bit)+ 色(4x4 の平均色)の2つで照合する
+  const r=Math.max(8,Math.round(img.width*0.055));
+  const cv=document.createElement("canvas");cv.width=9;cv.height=8;
+  const ctx=cv.getContext("2d",{willReadFrequently:true});
+  ctx.drawImage(img,rx*img.width-r,ry*img.height-r,r*2,r*2,0,0,9,8);
+  const d=ctx.getImageData(0,0,9,8).data;
+  let bits="";
+  for(let y=0;y<8;y++)for(let x=0;x<8;x++){
+    const i1=(y*9+x)*4,i2=(y*9+x+1)*4;
+    const g1=d[i1]*0.3+d[i1+1]*0.59+d[i1+2]*0.11;
+    const g2=d[i2]*0.3+d[i2+1]*0.59+d[i2+2]*0.11;
+    bits+=g1>g2?"1":"0";
+  }
+  const cv2=document.createElement("canvas");cv2.width=4;cv2.height=4;
+  const cx2=cv2.getContext("2d",{willReadFrequently:true});
+  cx2.drawImage(img,rx*img.width-r,ry*img.height-r,r*2,r*2,0,0,4,4);
+  const d2=cx2.getImageData(0,0,4,4).data;
+  const col=[];
+  for(let i=0;i<16;i++)col.push(d2[i*4],d2[i*4+1],d2[i*4+2]);
+  return {h:bits,c:col};
+}
+function hamming(a,b){let n=0;for(let i=0;i<64;i++)if(a[i]!==b[i])n++;return n;}
+function featDist(f,h,c){
+  const cd=c?c.reduce((a,v,i)=>a+Math.abs(v-f.c[i]),0)/16/765:0.5; // 0..1
+  return hamming(f.h,h)+cd*45;
+}
+function autoDetect(){
+  const img=scanState.img;
+  scanState.slots=scanData.pos.map(p=>{
+    const f=cropFeat(img,p.x,p.y);
+    let best=null,bd=999;
+    scanData.hashes.forEach(([id,hh,cc])=>{const d=featDist(f,hh,cc);if(d<bd){bd=d;best=id;}});
+    const conf=best!==null&&bd<=20?Math.max(55,Math.round(100-bd*2.5)):0;
+    return {x:p.x,y:p.y,hash:f.h,color:f.c,id:conf?best:null,conf};
+  });
+  drawScan();renderScanList();
+}
+function renderScanList(){
+  const sl=scanState.slots;
+  const done=sl.every(s=>s.id!==null);
+  $("scanMsg").textContent=done?"読み取りが完了しました。間違いがないか確認してください。":"「?」の行をタップして、写っているポケモンを教えてください(次から自動で認識します)";
+  $("scanMsg").className="scan-msg"+(done?" ok":"");
+  $("scanList").innerHTML=sl.map((s,i)=>{
+    const m=s.id!==null?byId(s.id):null;
+    return `<button class="conf-row${!m||s.conf<80?" unsure":""}" data-i="${i}">
+      ${m?badge(m,true):'<div class="slot-empty" style="width:34px;height:34px;font-size:13px">?</div>'}
+      <span class="nm">${m?m.n:"タップして選択"}</span>
+      ${m?`<span class="pct">${s.conf?s.conf+"%":"手動"}</span>`:'<span class="fix">選ぶ</span>'}
+    </button>`;
+  }).join("");
+  $("scanList").querySelectorAll(".conf-row").forEach(b=>b.addEventListener("click",()=>{
+    const i=+b.dataset.i;
+    openPicker(`${i+1}匹目のポケモンを選ぶ`,id=>{
+      scanState.slots[i].id=id;scanState.slots[i].conf=0;
+      drawScan();renderScanList();
+    });
+  }));
+  $("btnScanApply").style.display=done?"block":"none";
+}
+$("btnScanApply").addEventListener("click",()=>{
+  const sl=scanState.slots;
+  if(!sl||sl.some(s=>s.id===null))return;
+  // 学習: 確定したアイコンの特徴を保存(ほぼ同一のものは除外・最大400件)
+  sl.forEach(s=>{
+    if(!scanData.hashes.some(([id,h,c])=>id===s.id&&featDist({h:s.hash,c:s.color},h,c)<=4)){
+      scanData.hashes.push([s.id,s.hash,s.color]);
+    }
+  });
+  scanData.hashes=scanData.hashes.slice(-400);
+  LS.set("navi_scan",scanData);
+  oppTeam=sl.map(s=>s.id);
+  LS.set("navi_opp",oppTeam);
+  pushHist();renderOpp();show("result");
+});
+
+/* ================= 起動 ================= */
+renderTeam();renderOpp();
+show(myTeam.length?"opp":"team");
+if("serviceWorker" in navigator&&location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("./sw.js").catch(()=>{});
+}
+</script>
+<!--/CORE-->
+</body>
+</html>
