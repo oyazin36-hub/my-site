@@ -948,6 +948,31 @@ function renderDiag(){
   }).filter(t=>t.beats.length>=2).sort((a,b)=>b.score-a.score)
     .filter((t,i,arr)=>arr.findIndex(x=>x.R.n.split("(")[0]===t.R.n.split("(")[0])===i)
     .slice(0,4);
+  // おすすめ補強ポケモン: 弱点タイプに強く、苦手な相手に有利を取れる候補を探す
+  const weakTypes=weak.filter(w=>w.n>=2).map(w=>w.T);
+  const candPool=MONS.filter(C=>{
+    if(myTeam.some(e=>e.id===C.i))return false;
+    if(my.some(m=>m.n.split("(")[0].replace(/^メガ/,"")===C.n.split("(")[0]))return false;
+    if(C.mg)return false; // メガシンカはストーン前提なので提案からは除外
+    const bst=C.b.reduce((a,v)=>a+v,0);
+    return C.i<=1000||(bst>=500&&bst<=620);
+  });
+  const suggest=candPool.map(C=>{
+    let sc=0;const why=[];
+    const resist=weakTypes.filter(T=>defEffType(T,C)<1);
+    if(resist.length){sc+=resist.length*2;why.push(`${resist.slice(0,2).join("・")}技に強い`);}
+    const beatT=threats.filter(t=>cell(C,t.R).v===3);
+    if(beatT.length){sc+=beatT.length*3;why.push(`苦手な${beatT.slice(0,2).map(t=>t.R.n.split("(")[0]).join("・")}に有利`);}
+    const holeCover=holes.filter(T=>C.m.some(mv=>{
+      const e=(mv.fd&&T==="みず")?2:((CHART[mv.t]||{})[T]!==undefined?CHART[mv.t][T]:1);
+      return e>=2;
+    }));
+    if(holeCover.length)sc+=holeCover.length;
+    if(RANK[C.i])sc+=1.5-RANK[C.i]*0.05; // 使用率が高いほど少し優先
+    return {C,sc,why};
+  }).filter(r=>r.sc>=4&&r.why.length).sort((a,b)=>b.sc-a.sc)
+    .filter((r,i,arr)=>arr.findIndex(x=>x.C.n.split("(")[0]===r.C.n.split("(")[0])===i)
+    .slice(0,3);
   el.innerHTML=`
     <div class="card" style="margin-bottom:12px">
       <div class="grade-wrap">
@@ -979,7 +1004,14 @@ function renderDiag(){
           <span class="lv ${t.beats.length>=3&&t.ans.length<=1?"lv-hi":"lv-mid"}">${t.beats.length>=3&&t.ans.length<=1?"危険":"注意"}</span>
         </div>`).join(""):`<div class="empty">大きく不利を取られる相手は見つかりませんでした。</div>`}
       </div>
-      <p class="note" style="margin-top:10px">※ タイプ相性・種族値・代表的な技をもとに自動計算した目安です。</p>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3>おすすめの補強ポケモン<span class="hint">${myTeam.length>=6?"入れ替え候補":"追加におすすめ"}</span></h3>
+      <div class="rec">${suggest.length?suggest.map((r,i)=>`
+        <div class="rec-row${i===0?" first":""}"><span class="rank">${i+1}</span>${badge(r.C,true)}
+        <div class="body"><div class="who">${r.C.n}</div><div class="why">${r.why.join("。")}</div></div></div>`).join(""):`<div class="empty">今の並びで大きな穴はありません。補強候補は見つかりませんでした。</div>`}
+      </div>
+      <p class="note" style="margin-top:10px">※ 弱点タイプへの耐性・苦手な相手への強さ・使用率から自動で選んでいます。タイプ相性・種族値・代表的な技をもとにした目安です。</p>
     </div>`;
 }
 
