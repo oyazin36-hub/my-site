@@ -1,0 +1,1937 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="株式会社原マシナリー 会社紹介動画（48秒）— 大きな機械に、確かな技術を。">
+<!-- ARTIFACT:BEGIN -->
+<title>原マシナリー 会社紹介動画</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07090c; --panel:#0e1216; --line:#1e252c; --line2:#2b343d;
+    --fg:#e8eef4; --dim:#9aa6b2; --dim2:#67717c;
+    --accent:#e2a33c; --steel:#7fb0c8;
+    --font:"Noto Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:var(--font); font-weight:400;
+    -webkit-font-smoothing:antialiased; line-height:1.7;
+  }
+  .wrap{max-width:1120px; margin:0 auto; padding:32px 20px 96px}
+
+  /* ---------- header ---------- */
+  .masthead{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:22px}
+  .masthead h1{font-size:19px; font-weight:900; letter-spacing:.14em; margin:0}
+  .masthead .en{font-size:11px; letter-spacing:.3em; color:var(--dim2); font-weight:500}
+  .masthead .tag{margin-left:auto; font-size:11px; letter-spacing:.14em; color:var(--dim2);
+    border:1px solid var(--line); border-radius:999px; padding:4px 12px}
+
+  /* ---------- player ---------- */
+  .stage{position:relative; width:100%; aspect-ratio:16/9; background:#000;
+    border:1px solid var(--line); border-radius:4px; overflow:hidden;
+    box-shadow:0 24px 60px -30px #000, 0 0 0 1px #000 inset}
+  .stage canvas{display:block; width:100%; height:100%}
+
+  /* subtitles */
+  #subs{position:absolute; left:0; right:0; bottom:5.2%; text-align:center;
+    pointer-events:none; padding:0 8%; transition:opacity .18s}
+  #subs span{display:inline-block; background:rgba(3,5,8,.62); backdrop-filter:blur(3px);
+    border-left:2px solid var(--accent);
+    padding:.4em .9em; font-size:clamp(11px,1.55vw,19px); font-weight:500;
+    letter-spacing:.06em; line-height:1.55; color:#f2f6fa;
+    text-shadow:0 1px 3px rgba(0,0,0,.9)}
+  #subs.off{display:none}
+
+  /* big play overlay */
+  #cover{position:absolute; inset:0; display:grid; place-items:center; cursor:pointer;
+    background:linear-gradient(180deg,rgba(4,6,9,.32),rgba(4,6,9,.72)); transition:opacity .4s}
+  #cover.hide{opacity:0; pointer-events:none}
+  #cover .btn{width:clamp(56px,7vw,92px); aspect-ratio:1; border-radius:50%;
+    border:1px solid rgba(226,163,60,.55); background:rgba(8,11,14,.55);
+    display:grid; place-items:center; transition:transform .25s, background .25s, border-color .25s}
+  #cover:hover .btn{transform:scale(1.07); background:rgba(226,163,60,.14); border-color:var(--accent)}
+  #cover .btn svg{width:34%; margin-left:12%; fill:#f0f4f8}
+  #cover .cap{position:absolute; bottom:7%; left:0; right:0; text-align:center;
+    font-size:clamp(9px,1.05vw,12px); letter-spacing:.34em; color:#c9d3dc; font-weight:500}
+  .imgnote{position:absolute; right:1.4%; top:2.6%; font-size:clamp(8px,.85vw,10px);
+    letter-spacing:.16em; color:rgba(203,214,224,.5); pointer-events:none}
+
+  /* controls */
+  .ctrls{display:flex; align-items:center; gap:14px; margin-top:12px;
+    border:1px solid var(--line); border-radius:4px; background:var(--panel); padding:10px 14px}
+  .ico{width:34px; height:34px; flex:none; border-radius:3px; border:1px solid var(--line2);
+    background:#141a20; color:var(--fg); cursor:pointer; display:grid; place-items:center; padding:0;
+    transition:background .18s, border-color .18s}
+  .ico:hover{background:#1c242c; border-color:#3d4954}
+  .ico svg{width:14px; fill:currentColor}
+  .time{font-size:11px; letter-spacing:.1em; color:var(--dim); font-variant-numeric:tabular-nums;
+    white-space:nowrap; font-weight:500}
+  .scrub{flex:1; position:relative; height:34px; display:flex; align-items:center; cursor:pointer}
+  .scrub .track{position:absolute; left:0; right:0; height:3px; background:#222a32; border-radius:2px}
+  .scrub .fill{position:absolute; left:0; height:3px; background:var(--accent); border-radius:2px; width:0}
+  .scrub .mark{position:absolute; width:1px; height:9px; background:#3f4a55; top:50%; transform:translateY(-50%)}
+  .scrub input{position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; margin:0}
+  .tog{font-size:10px; letter-spacing:.14em; color:var(--dim); border:1px solid var(--line2);
+    background:#141a20; border-radius:3px; padding:7px 10px; cursor:pointer; font-family:var(--font);
+    font-weight:500; white-space:nowrap; transition:.18s}
+  .tog[aria-pressed="true"]{color:#0a0d10; background:var(--accent); border-color:var(--accent)}
+  .tog:hover{border-color:#3d4954}
+
+  /* chapters */
+  .chaps{display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin-top:8px}
+  .chap{text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:3px;
+    padding:9px 10px; cursor:pointer; font-family:var(--font); color:var(--dim);
+    transition:.18s; overflow:hidden}
+  .chap:hover{border-color:#3d4954; color:var(--fg)}
+  .chap.on{border-color:var(--accent); background:#15181a; color:var(--fg)}
+  .chap b{display:block; font-size:11px; font-weight:700; letter-spacing:.06em; white-space:nowrap}
+  .chap i{display:block; font-style:normal; font-size:9px; letter-spacing:.1em; color:var(--dim2); margin-top:2px;
+    font-variant-numeric:tabular-nums}
+  @media(max-width:720px){ .chaps{grid-template-columns:repeat(3,1fr)} .ctrls{flex-wrap:wrap} .scrub{order:9; flex-basis:100%} }
+
+  /* ---------- content ---------- */
+  h2{font-size:12px; font-weight:700; letter-spacing:.26em; color:var(--dim);
+    margin:56px 0 18px; padding-bottom:10px; border-bottom:1px solid var(--line)}
+  .cut{display:grid; grid-template-columns:88px 1fr; gap:0 20px; padding:16px 0;
+    border-bottom:1px solid #131920}
+  .cut:last-child{border-bottom:0}
+  .cut .tc{font-size:11px; font-variant-numeric:tabular-nums; letter-spacing:.06em;
+    color:var(--accent); font-weight:700; padding-top:2px}
+  .cut .tc small{display:block; color:var(--dim2); font-weight:400; letter-spacing:.1em; margin-top:3px; font-size:10px}
+  .cut h3{margin:0 0 6px; font-size:14px; font-weight:700; letter-spacing:.08em}
+  .cut p{margin:0; font-size:13px; color:var(--dim); line-height:1.85}
+  .cut .telop{display:inline-block; margin:8px 8px 0 0; font-size:11px; font-weight:700;
+    letter-spacing:.12em; color:#dfe6ed; background:#151b21; border:1px solid var(--line2);
+    border-radius:2px; padding:4px 9px}
+  .cut .nar{margin-top:9px; font-size:12px; color:#b9c4ce; border-left:2px solid var(--line2);
+    padding-left:11px; line-height:1.8}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1px;
+    background:var(--line); border:1px solid var(--line)}
+  .grid div{background:var(--panel); padding:16px 18px}
+  .grid dt{font-size:10px; letter-spacing:.2em; color:var(--dim2); margin-bottom:6px}
+  .grid dd{margin:0; font-size:14px; font-weight:500; letter-spacing:.04em}
+  .keys{display:flex; flex-wrap:wrap; gap:7px}
+  .keys span{font-size:11px; letter-spacing:.1em; color:var(--dim); border:1px solid var(--line2);
+    border-radius:999px; padding:5px 12px}
+  .note{font-size:12px; color:var(--dim2); line-height:1.9; border:1px solid var(--line);
+    border-left:2px solid var(--steel); background:#0b0f13; padding:14px 18px; border-radius:2px}
+  .note b{color:var(--dim); font-weight:700}
+  footer{margin-top:64px; padding-top:22px; border-top:1px solid var(--line);
+    font-size:10px; letter-spacing:.18em; color:var(--dim2); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <h1>株式会社 原マシナリー</h1>
+    <span class="en">HARA MACHINERY INC. &nbsp;/&nbsp; 1948 -</span>
+    <span class="tag">会社紹介動画 &nbsp;48秒</span>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="imgnote">映像はすべてCGによるイメージです</div>
+    <div id="subs"><span id="subtext"></span></div>
+    <div id="cover">
+      <div class="btn"><svg viewBox="0 0 24 24"><path d="M7 4l14 8-14 8z"/></svg></div>
+      <div class="cap">大きな機械に、確かな技術を。</div>
+    </div>
+  </div>
+
+  <div class="ctrls">
+    <button class="ico" id="play" aria-label="再生"><svg id="playicon" viewBox="0 0 24 24"><path d="M7 4l14 8-14 8z"/></svg></button>
+    <button class="ico" id="restart" aria-label="最初から"><svg viewBox="0 0 24 24"><path d="M12 4V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-9z"/></svg></button>
+    <span class="time" id="time">00:00 / 00:48</span>
+    <div class="scrub" id="scrub">
+      <div class="track"></div><div class="fill" id="fill"></div>
+      <input type="range" id="range" min="0" max="48" step="0.02" value="0" aria-label="シーク">
+    </div>
+    <button class="tog" id="sound" aria-pressed="true">音声 ON</button>
+    <button class="tog" id="cc" aria-pressed="true">字幕 ON</button>
+  </div>
+
+  <div class="chaps" id="chaps"></div>
+
+  <h2>構成 / カット表</h2>
+  <div id="cuts"></div>
+
+  <h2>ナレーション全文</h2>
+  <div class="note" style="border-left-color:var(--accent)">
+    1948年の創業以来、ものづくりの現場を支えてきた、原マシナリー。<br>
+    お客様ごとに異なる課題に応える、専用機の設計・製作。<br>
+    そして、原マシナリーの大きな強みが、大物精密機械加工。<br>
+    大型の部品から、多品種・少量の加工まで、確かな技術で応えます。<br>
+    自動車、航空宇宙、工作機械、そして先端素材まで。<br>
+    幅広い産業のものづくりを支えています。<br>
+    受け継いできた技術を、未来へ。<br>
+    原マシナリーは、技術革新で選ばれ続ける100年企業を目指します。
+  </div>
+
+  <h2>会社概要</h2>
+  <dl class="grid">
+    <div><dt>会社名</dt><dd>株式会社 原マシナリー</dd></div>
+    <div><dt>英語表記</dt><dd>Hara Machinery Inc.</dd></div>
+    <div><dt>創業</dt><dd>1948年3月</dd></div>
+    <div><dt>所在地</dt><dd>愛知県岡崎市滝町字追ノ狭間6-3</dd></div>
+    <div><dt>代表取締役</dt><dd>原 大輔</dd></div>
+    <div><dt>資本金</dt><dd>1,000万円</dd></div>
+    <div><dt>事業内容</dt><dd>専用機設計・製作 ／ 大物精密機械加工 ／ 環境関連事業</dd></div>
+  </dl>
+
+  <h2>キーワード</h2>
+  <div class="keys">
+    <span>1948年創業</span><span>専用機</span><span>大物精密機械加工</span><span>技術力</span>
+    <span>設計力</span><span>設備力</span><span>人間力</span><span>ものづくり</span><span>100年企業</span>
+  </div>
+
+  <h2>制作上の扱い</h2>
+  <p class="note">
+    <b>この映像は全編CGによるイメージ映像です。</b>
+    実在しない製品・設備・社員を「原マシナリーの実写」として提示しないという方針に基づき、
+    機械・加工シーンはすべて抽象化した形状で描画し、人物は個人を特定しないシルエットとしています。
+    表示している数値・産業分野は事業内容の範囲を出ないものに限定しています。<br><br>
+    <b>実写素材が提供された場合は、そちらを優先して差し替えてください。</b>
+    本ページは尺・カット割り・テロップ・ナレーションのタイミングを確定させるための
+    プリビズ（動く絵コンテ）として使用でき、そのまま実写・実素材版の編集台本になります。
+    正式なロゴデータが提供され次第、ラストカットのロゴタイプを差し替えます。
+  </p>
+
+  <footer>
+    <span>HARA MACHINERY INC.</span>
+    <span>技術で、未来のものづくりを支える。</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   タイムライン定義
+   ============================================================ */
+const DUR = 48;
+const SC = {
+  op:     [0,  5 ],   // オープニング
+  spec:   [5,  15],   // 専用機 設計・製作
+  big:    [15, 28],   // 大物精密機械加工（見せ場）
+  fields: [28, 38],   // 幅広い技術
+  people: [38, 44],   // 人・技術・未来
+  end:    [44, 48]    // エンドカード
+};
+
+const CHAPTERS = [
+  {t:0,  n:"オープニング",   r:"00:00 - 00:05"},
+  {t:5,  n:"専用機",         r:"00:05 - 00:15"},
+  {t:15, n:"大物精密加工",   r:"00:15 - 00:28"},
+  {t:28, n:"幅広い技術",     r:"00:28 - 00:38"},
+  {t:38, n:"人・技術・未来", r:"00:38 - 00:44"},
+  {t:44, n:"エンドカード",   r:"00:44 - 00:48"}
+];
+
+const NARR = [
+  [0.8,  5.0,  "1948年の創業以来、ものづくりの現場を支えてきた、原マシナリー。"],
+  [6.2,  11.4, "お客様ごとに異なる課題に応える、専用機の設計・製作。"],
+  [16.0, 21.2, "そして、原マシナリーの大きな強みが、大物精密機械加工。"],
+  [21.6, 27.6, "大型の部品から、多品種・少量の加工まで、確かな技術で応えます。"],
+  [29.0, 33.6, "自動車、航空宇宙、工作機械、そして先端素材まで。"],
+  [34.0, 37.6, "幅広い産業のものづくりを支えています。"],
+  [38.4, 41.0, "受け継いできた技術を、未来へ。"],
+  [41.4, 45.6, "原マシナリーは、技術革新で選ばれ続ける100年企業を目指します。"]
+];
+
+const CUTS = [
+  {tc:"00:00", d:"5秒", h:"オープニング — 1948年から",
+   p:"暗い工場内。大型工作機械の刃先をクローズアップから起こす。ゆっくりとしたプッシュイン、金属表面を走る一条のハイライト。奥に門型機のシルエットが浮かび上がり、規模感を提示する。",
+   tel:["1948年創業。","ものづくりを支える、技術力。"],
+   n:"1948年の創業以来、ものづくりの現場を支えてきた、原マシナリー。"},
+  {tc:"00:05", d:"10秒", h:"専用機 設計・製作",
+   p:"CAD画面のグリッド上に機械が線で描き起こされ、寸法線が入る。ワイヤーフレームが実体へと変わり、そのまま軸が動きだす。設計から製作までを一貫して行うことを、1カットの変化で見せる。",
+   tel:["専用機 設計・製作","世界にひとつの機械を、カタチにする。"],
+   n:"お客様ごとに異なる課題に応える、専用機の設計・製作。"},
+  {tc:"00:15", d:"13秒", h:"大物精密機械加工 — 最大の見せ場",
+   p:"クレーンが巨大ワークを吊り下ろし、門型機のテーブルに着座。傍らに人物シルエットを置いて大きさを対比させる。主軸が送られ、切削開始。火花と切粉。続いて刃先の超接写へ寄り、最後は加工を終えた大型部品と測定値を提示する。",
+   tel:["大物精密機械加工","大型ワーク × 高精度加工","±0.01mm"],
+   n:"そして、原マシナリーの大きな強みが、大物精密機械加工。／ 大型の部品から、多品種・少量の加工まで、確かな技術で応えます。"},
+  {tc:"00:28", d:"10秒", h:"幅広い技術",
+   p:"2秒ずつ、5つの領域をテンポよく切り替える。自動車／航空宇宙／半導体関連／工作機械／先端素材。金属だけでなく、シリコン・石英・セラミック・サファイアといった難削材まで扱うことを示す。",
+   tel:["自動車","航空宇宙","半導体関連","工作機械","先端素材"],
+   n:"自動車、航空宇宙、工作機械、そして先端素材まで。／ 幅広い産業のものづくりを支えています。"},
+  {tc:"00:38", d:"6秒", h:"人・技術・未来",
+   p:"操作盤に向かう技術者、図面とマイクロメータ、打ち合わせ。すべてシルエットで抽象化。最後に工場外観へ引き、灯りの点いた窓を残して夜明けの空へ抜ける。",
+   tel:["技術力 × 設計力 × 設備力 × 人間力","技術革新で選ばれ続ける、100年企業へ。"],
+   n:"受け継いできた技術を、未来へ。／ 原マシナリーは、技術革新で選ばれ続ける100年企業を目指します。"},
+  {tc:"00:44", d:"4秒", h:"エンドカード",
+   p:"黒地。社名、英字表記、1948 - 、罫線が引かれ、コピーが出る。BGMは余韻を残して減衰。正式ロゴデータ提供時はここに差し替える。",
+   tel:["株式会社 原マシナリー","HARA MACHINERY","1948 -","技術で、未来のものづくりを支える。"],
+   n:"（ナレーションなし・音楽のみ）"}
+];
+
+/* ============================================================
+   ユーティリティ
+   ============================================================ */
+const W = 1920, H = 1080;
+const clamp = (v,a,b)=> v<(a===undefined?0:a) ? (a===undefined?0:a) : v>(b===undefined?1:b) ? (b===undefined?1:b) : v;
+const lerp  = (a,b,t)=> a+(b-a)*t;
+const inv   = (t,a,b)=> clamp((t-a)/(b-a),0,1);
+const eo    = t=> 1-Math.pow(1-t,3);
+const ei    = t=> t*t*t;
+const eio   = t=> t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+function fade(t,a,b,fi,fo){
+  fi = fi===undefined?.4:fi; fo = fo===undefined?.4:fo;
+  if(t<a||t>b) return 0;
+  return Math.min(fi>0?inv(t,a,a+fi):1, fo>0?1-inv(t,b-fo,b):1);
+}
+function rng(seed){
+  let a = seed>>>0;
+  return function(){
+    a = (a+0x6D2B79F5)>>>0;
+    let t = Math.imul(a^(a>>>15), 1|a);
+    t = (t + Math.imul(t^(t>>>7), 61|t))^t;
+    return ((t^(t>>>14))>>>0)/4294967296;
+  };
+}
+
+const C = {
+  bg0:"#04060a", bg1:"#0a0f14",
+  dark:"#0d1217", metalD:"#222a31", metal:"#5d6873", metalL:"#a9b4bf", metalX:"#dbe3ea",
+  hi:"#eef3f8", cad:"#5fc8de", spark:"#ffab4d", hot:"#fff3d6", accent:"#e2a33c", steel:"#7fb0c8"
+};
+
+const cv  = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+let DPR = 1;
+
+function resize(){
+  const r = cv.getBoundingClientRect();
+  DPR = Math.min(window.devicePixelRatio||1, 2);
+  cv.width  = Math.max(320, Math.round(r.width*DPR));
+  cv.height = Math.round(cv.width*H/W);
+  render(pos);
+}
+window.addEventListener("resize", resize);
+
+function base(){
+  const s = cv.width/W;
+  ctx.setTransform(s,0,0,s,0,0);
+}
+
+/* ---- 文字（字間つき） ---- */
+const FONT = '"Noto Sans JP","Hiragino Sans","Yu Gothic",Meiryo,sans-serif';
+function setFont(size, weight){ ctx.font = (weight||700)+" "+size+"px "+FONT; ctx.textAlign="left"; ctx.textBaseline="alphabetic"; }
+function twidth(text, ls){
+  const a = Array.from(text); let w = 0;
+  for(let i=0;i<a.length;i++) w += ctx.measureText(a[i]).width;
+  return w + ls*Math.max(0,a.length-1);
+}
+function tracked(text, x, y, ls, align){
+  const a = Array.from(text);
+  const w = twidth(text, ls);
+  let cx = align==="center" ? x-w/2 : align==="right" ? x-w : x;
+  for(let i=0;i<a.length;i++){ ctx.fillText(a[i], cx, y); cx += ctx.measureText(a[i]).width + ls; }
+  return w;
+}
+
+/* ---- テロップ ---- */
+function telop(t, o){
+  const f = fade(t, o.a, o.b, o.fi===undefined?.45:o.fi, o.fo===undefined?.45:o.fo);
+  if(f<=0) return;
+  const app = inv(t, o.a, o.a+(o.fi===undefined?.45:o.fi));
+  const size = o.size||60, ls = o.ls===undefined?8:o.ls, align = o.align||"left";
+  setFont(size, o.weight||900);
+  const w = twidth(o.text, ls);
+  const x = o.x, y = o.y;
+  const x0 = align==="center" ? x-w/2 : align==="right" ? x-w : x;
+
+  ctx.save();
+  ctx.globalAlpha = f;
+  ctx.translate(0, lerp(16,0,eo(app)));
+  // ワイプ状に出す
+  ctx.beginPath();
+  ctx.rect(x0-8, y-size*1.25, lerp(0,w+18,eo(clamp(app*1.25,0,1))), size*1.75);
+  ctx.clip();
+  ctx.shadowColor = "rgba(0,0,0,.75)"; ctx.shadowBlur = 18; ctx.shadowOffsetY = 3;
+  ctx.fillStyle = o.color||C.hi;
+  tracked(o.text, x, y, ls, align);
+  ctx.restore();
+
+  if(o.rule){
+    ctx.save(); ctx.globalAlpha = f*.9;
+    ctx.fillStyle = o.ruleColor||C.accent;
+    ctx.fillRect(x0, y+size*0.42, lerp(0,w,eo(clamp((app-.15)*1.5,0,1))), 2);
+    ctx.restore();
+  }
+  if(o.sub){
+    const sf = fade(t, o.a+(o.subDelay===undefined?.55:o.subDelay), o.b, .4, .35);
+    if(sf>0){
+      ctx.save(); ctx.globalAlpha = sf;
+      const ss = o.subSize||24;
+      setFont(ss, 500);
+      ctx.fillStyle = o.subColor||"#b6c2ce";
+      ctx.shadowColor="rgba(0,0,0,.8)"; ctx.shadowBlur=12;
+      tracked(o.sub, x, y+size*0.42+(o.rule?30:22)+ss, o.subLs===undefined?5:o.subLs, align);
+      ctx.restore();
+    }
+  }
+}
+
+/* ---- 背景・質感 ---- */
+function bg(tint){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, tint||C.bg1); g.addColorStop(.55, C.bg0); g.addColorStop(1,"#020406");
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+}
+function vignette(strength){
+  const s = strength===undefined?.9:strength;
+  const g = ctx.createRadialGradient(W/2,H*.48,H*.22, W/2,H*.5,H*1.02);
+  g.addColorStop(0,"rgba(0,0,0,0)"); g.addColorStop(.62,"rgba(0,0,0,"+(0.34*s)+")"); g.addColorStop(1,"rgba(0,0,0,"+(0.9*s)+")");
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+}
+let grainTiles = null;
+function makeGrain(){
+  grainTiles = [];
+  for(let k=0;k<3;k++){
+    const c = document.createElement("canvas"); c.width=c.height=160;
+    const g = c.getContext("2d"); const d = g.createImageData(160,160);
+    const r = rng(1234+k*77);
+    for(let i=0;i<d.data.length;i+=4){
+      const v = 128 + (r()-0.5)*150;
+      d.data[i]=d.data[i+1]=d.data[i+2]=v; d.data[i+3]=255;
+    }
+    g.putImageData(d,0,0); grainTiles.push(c);
+  }
+}
+function grain(t, amt){
+  if(!grainTiles) makeGrain();
+  const tile = grainTiles[Math.floor(t*18)%3];
+  ctx.save();
+  ctx.globalAlpha = amt===undefined?.05:amt;
+  ctx.globalCompositeOperation = "overlay";
+  const p = ctx.createPattern(tile,"repeat");
+  ctx.fillStyle = p; ctx.fillRect(0,0,W,H);
+  ctx.restore();
+}
+function flare(x,y,r,a,col){
+  if(a<=0) return;
+  const g = ctx.createRadialGradient(x,y,0,x,y,r);
+  g.addColorStop(0,(col||"rgba(255,190,120,")+a+")");
+  g.addColorStop(.4,(col||"rgba(255,170,90,")+(a*.28)+")");
+  g.addColorStop(1,"rgba(255,150,60,0)");
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill();
+}
+function fadeToBlack(t,a,b){
+  const f = inv(t,a,b); if(f<=0) return;
+  ctx.fillStyle="rgba(0,0,0,"+f+")"; ctx.fillRect(0,0,W,H);
+}
+function fadeFromBlack(t,a,b){
+  const f = 1-inv(t,a,b); if(f<=0) return;
+  ctx.fillStyle="rgba(0,0,0,"+f+")"; ctx.fillRect(0,0,W,H);
+}
+
+/* ---- 金属パーツ ---- */
+function metalRect(x,y,w,h,shade){
+  const s = shade===undefined?0:shade;
+  const g = ctx.createLinearGradient(x,0,x+w,0);
+  g.addColorStop(0,   "#141b21");
+  g.addColorStop(.16, "#44505b");
+  g.addColorStop(.40, "#9fadb9");
+  g.addColorStop(.52, "#7c8792");
+  g.addColorStop(.78, "#333d46");
+  g.addColorStop(1,   "#10161b");
+  ctx.fillStyle = g; ctx.fillRect(x,y,w,h);
+  if(s){ ctx.fillStyle="rgba(0,0,0,"+s+")"; ctx.fillRect(x,y,w,h); }
+  ctx.fillStyle="rgba(255,255,255,.16)"; ctx.fillRect(x,y,w,1.5);
+  ctx.fillStyle="rgba(0,0,0,.55)"; ctx.fillRect(x,y+h-1.5,w,1.5);
+}
+
+/* 工場空間の奥行き（背景） */
+function factoryBack(t, a){
+  if(a<=0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  // 奥の壁
+  const wg = ctx.createLinearGradient(0,120,0,900);
+  wg.addColorStop(0,"#10171e"); wg.addColorStop(.6,"#0b1116"); wg.addColorStop(1,"#05080b");
+  ctx.fillStyle=wg; ctx.fillRect(0,90,W,830);
+  // 天井トラス
+  ctx.strokeStyle="rgba(150,175,200,.10)"; ctx.lineWidth=4;
+  ctx.beginPath();
+  for(let i=0;i<7;i++){ const x=-60+i*310; ctx.moveTo(x,0); ctx.lineTo(x+90,150); ctx.lineTo(x,300); }
+  ctx.moveTo(0,120); ctx.lineTo(W,150); ctx.moveTo(0,272); ctx.lineTo(W,300);
+  ctx.stroke();
+  // 吊り下げ照明
+  for(let i=0;i<4;i++){
+    const x = 260+i*470, y = 175;
+    ctx.strokeStyle="rgba(120,140,160,.16)"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x,60); ctx.lineTo(x,y); ctx.stroke();
+    ctx.fillStyle="rgba(190,215,240,.30)"; ctx.fillRect(x-46,y,92,13);
+    ctx.save(); ctx.globalCompositeOperation="lighter";
+    flare(x,y+16,230,.15,"rgba(170,205,240,"); ctx.restore();
+  }
+  // 奥の設備シルエット
+  ctx.fillStyle="rgba(6,10,14,.85)";
+  ctx.fillRect(60,540,300,380); ctx.fillRect(1580,470,280,450);
+  ctx.fillStyle="rgba(150,180,210,.07)";
+  ctx.fillRect(60,540,300,3); ctx.fillRect(1580,470,280,3);
+  // 床
+  const fg = ctx.createLinearGradient(0,880,0,H);
+  fg.addColorStop(0,"#0c1218"); fg.addColorStop(1,"#04070a");
+  ctx.fillStyle=fg; ctx.fillRect(0,880,W,H-880);
+  ctx.fillStyle="rgba(150,180,210,.09)"; ctx.fillRect(0,880,W,2);
+  ctx.restore();
+}
+/* テロップ帯を沈める */
+function floorFade(from){
+  const y = from===undefined?740:from;
+  const g = ctx.createLinearGradient(0,y,0,H);
+  g.addColorStop(0,"rgba(2,4,6,0)"); g.addColorStop(.45,"rgba(2,4,6,.72)"); g.addColorStop(1,"rgba(2,4,6,.94)");
+  ctx.fillStyle=g; ctx.fillRect(0,y,W,H-y);
+}
+/* 機械コンポジションの共通配置 */
+function stageX(scale, dy){
+  ctx.translate(W/2, H/2); ctx.scale(scale, scale); ctx.translate(-W/2, -H/2 + dy/scale);
+}
+function plate(x,y,w,h,c1,c2){
+  const g = ctx.createLinearGradient(0,y,0,y+h);
+  g.addColorStop(0,c1||"#242c33"); g.addColorStop(1,c2||"#0b0f13");
+  ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+  ctx.fillStyle="rgba(255,255,255,.08)"; ctx.fillRect(x,y,w,1.2);
+}
+/* 主軸／ツールホルダ */
+function toolHolder(cx, top, bot, hw, rot){
+  const g = ctx.createLinearGradient(cx-hw,0,cx+hw,0);
+  g.addColorStop(0,"#05080b"); g.addColorStop(.14,"#2a333b"); g.addColorStop(.34,"#8b97a2");
+  g.addColorStop(.46,"#b9c4ce"); g.addColorStop(.60,"#68727c"); g.addColorStop(.84,"#1b2127"); g.addColorStop(1,"#04070a");
+  ctx.fillStyle=g; ctx.fillRect(cx-hw, top, hw*2, bot-top);
+  // 機械加工のリング目
+  ctx.save(); ctx.beginPath(); ctx.rect(cx-hw,top,hw*2,bot-top); ctx.clip();
+  for(let y=top; y<bot; y+=13){
+    ctx.fillStyle="rgba(0,0,0,.22)"; ctx.fillRect(cx-hw,y,hw*2,1.4);
+    ctx.fillStyle="rgba(255,255,255,.05)"; ctx.fillRect(cx-hw,y+1.4,hw*2,1);
+  }
+  // 回転を示すハイライト帯
+  for(let i=0;i<3;i++){
+    const ph = ((rot + i/3)%1+1)%1;
+    const bx = cx-hw + ph*hw*2;
+    const bg2 = ctx.createLinearGradient(bx-26,0,bx+26,0);
+    bg2.addColorStop(0,"rgba(255,255,255,0)");
+    bg2.addColorStop(.5,"rgba(255,255,255,.16)");
+    bg2.addColorStop(1,"rgba(255,255,255,0)");
+    ctx.fillStyle=bg2; ctx.fillRect(bx-26,top,52,bot-top);
+  }
+  ctx.restore();
+  // 右側リムライト
+  ctx.fillStyle="rgba(190,215,240,.30)"; ctx.fillRect(cx+hw-3, top, 3, bot-top);
+}
+
+/* ---- 火花（決定論的：シーク対応） ---- */
+function sparks(t, o){
+  // o: {x,y,t0,t1,n,spread,speed,size,life,g}
+  if(t < o.t0 || t > o.t1 + (o.life||.55)) return;
+  const n = o.n||70, life = o.life||.55, gv = o.g===undefined?900:o.g;
+  const r = rng(o.seed||99);
+  ctx.save();
+  ctx.globalCompositeOperation="lighter";
+  for(let i=0;i<n;i++){
+    const born = o.t0 + r()*(o.t1-o.t0);
+    const ang  = (o.dir===undefined?-Math.PI/2:o.dir) + (r()-0.5)*(o.spread||2.4);
+    const spd  = (o.speed||520)*(0.35+r()*1.0);
+    const lf   = life*(0.5+r()*0.9);
+    const age  = t-born;
+    if(age<0||age>lf) continue;
+    const x = o.x + Math.cos(ang)*spd*age + (r()-.5)*10;
+    const y = o.y + Math.sin(ang)*spd*age + 0.5*gv*age*age;
+    const k = 1-age/lf;
+    const sz = (o.size||3)*(0.4+k*1.1);
+    ctx.globalAlpha = Math.pow(k,.7)*(o.alpha===undefined?1:o.alpha);
+    // 尾を引く
+    ctx.strokeStyle = k>.65 ? C.hot : C.spark;
+    ctx.lineWidth = sz*0.9; ctx.lineCap="round";
+    ctx.beginPath();
+    ctx.moveTo(x,y);
+    ctx.lineTo(x-Math.cos(ang)*spd*0.016, y-Math.sin(ang)*spd*0.016-gv*age*0.016);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+/* ---- 切粉 ---- */
+function chips(t, o){
+  if(t<o.t0||t>o.t1+.9) return;
+  const n=o.n||26, r=rng(o.seed||11);
+  ctx.save();
+  for(let i=0;i<n;i++){
+    const born=o.t0+r()*(o.t1-o.t0), lf=.55+r()*.5, age=t-born;
+    if(age<0||age>lf) continue;
+    const ang=(o.dir===undefined?-2.3:o.dir)+(r()-.5)*1.5, spd=180+r()*260;
+    const x=o.x+Math.cos(ang)*spd*age, y=o.y+Math.sin(ang)*spd*age+0.5*1500*age*age;
+    const k=1-age/lf;
+    ctx.globalAlpha=k*.85; ctx.strokeStyle="#9aa6b1"; ctx.lineWidth=1.6;
+    ctx.save(); ctx.translate(x,y); ctx.rotate(age*10*(r()>.5?1:-1));
+    ctx.beginPath();
+    for(let a=0;a<8;a++){ const rr=4+a*1.5, aa=a*.9; ctx.lineTo(Math.cos(aa)*rr, Math.sin(aa)*rr*.6); }
+    ctx.stroke(); ctx.restore();
+  }
+  ctx.restore();
+}
+
+/* ---- 人物シルエット（個人を特定しない抽象形） ---- */
+function person(x, groundY, h, dir, pose, rim, rimOff){
+  const s = h/180;
+  const ro = rimOff || [-7,-5];
+  // 腕のポーズ（肩→肘→手）
+  const ARM = {
+    reach: [[20,-130],[42,-116],[64,-108]],
+    look:  [[20,-130],[36,-104],[22,-86]],
+    idle:  [[20,-130],[26,-102],[22,-76]]
+  };
+  const arm = ARM[pose] || ARM.idle;
+
+  function path(){
+    // 胴（肩幅から腰へ）
+    ctx.beginPath();
+    ctx.moveTo(-22*s,-134*s); ctx.lineTo(22*s,-134*s);
+    ctx.lineTo(19*s,-104*s); ctx.lineTo(17*s,-74*s);
+    ctx.lineTo(-17*s,-74*s); ctx.lineTo(-19*s,-104*s);
+    ctx.closePath();
+  }
+  function limbs(w){
+    ctx.lineWidth = w*s; ctx.lineCap="round"; ctx.lineJoin="round";
+    // 脚
+    ctx.beginPath();
+    ctx.moveTo(-9*s,-76*s); ctx.lineTo(-11*s,-40*s); ctx.lineTo(-12*s,-4*s);
+    ctx.moveTo(9*s,-76*s);  ctx.lineTo(12*s,-40*s);  ctx.lineTo(11*s,-4*s);
+    ctx.stroke();
+    // 腕（手前側）
+    ctx.beginPath();
+    ctx.moveTo(arm[0][0]*s, arm[0][1]*s);
+    ctx.lineTo(arm[1][0]*s, arm[1][1]*s);
+    ctx.lineTo(arm[2][0]*s, arm[2][1]*s);
+    ctx.stroke();
+    // 腕（奥側）
+    ctx.beginPath();
+    ctx.moveTo(-20*s,-130*s); ctx.lineTo(-25*s,-104*s); ctx.lineTo(-21*s,-80*s);
+    ctx.stroke();
+    // 首
+    ctx.lineWidth = 9*s;
+    ctx.beginPath(); ctx.moveTo(0,-136*s); ctx.lineTo(0,-146*s); ctx.stroke();
+  }
+
+  function body(fill){
+    ctx.fillStyle = ctx.strokeStyle = fill;
+    path(); ctx.fill();
+    limbs(12);
+    ctx.lineWidth=6*s; ctx.beginPath();
+    ctx.moveTo(-14*s,-2*s); ctx.lineTo(-2*s,-2*s); ctx.moveTo(9*s,-2*s); ctx.lineTo(21*s,-2*s); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,-158*s, 15*s, 0, 7); ctx.fill();
+  }
+
+  ctx.save(); ctx.translate(x, groundY);
+  if(rim){
+    // 光源側にずらした明るいシルエットを敷き、その上に本体を重ねる
+    // → 輪郭の片側だけが縁として残り、逆光のリムライトになる
+    ctx.save();
+    ctx.translate(ro[0], ro[1]); ctx.scale(dir||1, 1);
+    ctx.shadowColor = rim; ctx.shadowBlur = 14;
+    body(rim);
+    ctx.restore();
+  }
+  ctx.save(); ctx.scale(dir||1, 1); body("#04070a"); ctx.restore();
+  ctx.restore();
+}
+
+/* ---- 門型マシニングセンタ（正面） ---- */
+function gantry(o){
+  o = o||{};
+  const sx = o.spindleX===undefined?960:o.spindleX;
+  const sy = o.spindleY===undefined?0:o.spindleY;   // 追加降下量
+  const ghost = o.ghost;
+  const st = ghost ? "rgba(120,150,175,.20)" : null;
+
+  if(ghost){
+    ctx.save(); ctx.strokeStyle=st; ctx.lineWidth=2; ctx.fillStyle="rgba(10,14,18,.85)";
+    const rects=[[500,830,940,90],[540,250,110,580],[1290,250,110,580],[520,170,900,90],
+                 [sx-90,260,180,150],[sx-26,410,52,110],[560,770,820,62]];
+    for(let i=0;i<rects.length;i++){ ctx.fillRect.apply(ctx,rects[i]); ctx.strokeRect.apply(ctx,rects[i]); }
+    ctx.restore(); return;
+  }
+  // ベッド
+  metalRect(500,830,940,90,.35);
+  // コラム
+  metalRect(540,250,110,580,.15);
+  metalRect(1290,250,110,580,.15);
+  // クロスビーム
+  metalRect(520,170,900,90,0);
+  ctx.fillStyle="rgba(255,255,255,.05)"; ctx.fillRect(520,170,900,3);
+  // ビームのリニアガイド
+  ctx.fillStyle="#39424b"; ctx.fillRect(540,252,860,10);
+  ctx.fillStyle="rgba(255,255,255,.12)"; ctx.fillRect(540,252,860,2);
+  // サドル＋主軸頭
+  metalRect(sx-92,258,184,152,.05);
+  ctx.fillStyle="#0f151a"; ctx.fillRect(sx-60,286,120,44);
+  ctx.fillStyle="rgba(120,200,225,.35)"; ctx.fillRect(sx-54,292,36,4);
+  ctx.fillStyle="rgba(120,200,225,.18)"; ctx.fillRect(sx-54,302,66,3);
+  // 主軸
+  metalRect(sx-30,410+sy,60,116);
+  // ツールホルダ＋刃先
+  toolHolder(sx, 526+sy, 596+sy, 22, (o.rot||0));
+  ctx.fillStyle="#c8d2db";
+  ctx.beginPath(); ctx.moveTo(sx-16,596+sy); ctx.lineTo(sx+16,596+sy); ctx.lineTo(sx+9,624+sy); ctx.lineTo(sx-9,624+sy); ctx.closePath(); ctx.fill();
+  // テーブル
+  metalRect(560,770,820,62,.2);
+  ctx.save(); ctx.beginPath(); ctx.rect(560,770,820,62); ctx.clip();
+  for(let x=576;x<1380;x+=44){ ctx.fillStyle="rgba(0,0,0,.5)"; ctx.fillRect(x,770,7,62); }
+  ctx.restore();
+}
+
+/* ============================================================
+   S1  オープニング 0-5s
+   ============================================================ */
+function sceneOP(t){
+  const p = inv(t,0,5);
+  bg("#0a0f15");
+  ctx.save();
+  const z = lerp(1.2, 1.0, eo(clamp(p/0.94,0,1)));
+  ctx.translate(W/2,H*0.55); ctx.scale(z,z); ctx.translate(-W/2,-H*0.55);
+
+  // 奥の門型シルエット
+  const gs = fade(t,2.0,5,1.4,0);
+  if(gs>0){
+    ctx.save(); ctx.globalAlpha=gs*.62;
+    ctx.translate(W/2,H*.52); ctx.scale(1.28,1.28); ctx.translate(-W/2,-H*.52);
+    gantry({ghost:true, spindleX:1180});
+    ctx.restore();
+  }
+  // 手前のツールホルダ（主役）
+  ctx.save();
+  ctx.translate(W*0.42, 0);
+  toolHolder(0, -140, 700, 152, t*0.30);
+  // テーパ部
+  ctx.beginPath();
+  ctx.moveTo(-152,700); ctx.lineTo(152,700); ctx.lineTo(78,850); ctx.lineTo(-78,850); ctx.closePath();
+  const tg = ctx.createLinearGradient(-152,0,152,0);
+  tg.addColorStop(0,"#070a0d"); tg.addColorStop(.4,"#7c8994"); tg.addColorStop(.58,"#4d565f"); tg.addColorStop(1,"#05080a");
+  ctx.fillStyle=tg; ctx.fill();
+  // 刃先インサート
+  ctx.fillStyle="#cfd9e2";
+  ctx.beginPath(); ctx.moveTo(-64,850); ctx.lineTo(64,850); ctx.lineTo(40,916); ctx.lineTo(-40,916); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.6)"; ctx.fillRect(-64,850,128,3);
+  ctx.restore();
+  ctx.restore();
+
+  // ライトスイープ
+  const sw = fade(t,0.4,3.2,.5,1.2);
+  if(sw>0){
+    ctx.save(); ctx.globalAlpha=sw*.5; ctx.globalCompositeOperation="lighter";
+    const px = lerp(-400, W+400, inv(t,0.4,3.4));
+    const g = ctx.createLinearGradient(px-260,0,px+260,H);
+    g.addColorStop(0,"rgba(150,190,230,0)"); g.addColorStop(.5,"rgba(160,200,240,.20)"); g.addColorStop(1,"rgba(150,190,230,0)");
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H); ctx.restore();
+  }
+  // 起動を示す小さな火花
+  sparks(t,{x:W*0.42,y:916,t0:3.5,t1:4.6,n:34,speed:300,spread:2.0,size:2.4,life:.5,seed:7,alpha:.9,g:1100});
+
+  vignette(1.0);
+  telop(t,{text:"1948年創業。", a:1.0, b:3.4, x:150, y:H-250, size:56, ls:12, rule:true});
+  telop(t,{text:"ものづくりを支える、技術力。", a:3.3, b:5.0, fo:.35, x:150, y:H-250, size:52, ls:10, rule:true});
+  fadeFromBlack(t,0,0.9);
+  grain(t,.055);
+}
+
+/* ============================================================
+   S2  専用機 5-15s
+   ============================================================ */
+const CAD_SEGS = [
+  // [x1,y1,x2,y2, 開始, 終了]
+  [500,830,1440,830, 0.00,0.10],[500,920,1440,920, 0.02,0.12],[500,830,500,920,0.04,0.10],[1440,830,1440,920,0.04,0.10],
+  [540,250,540,830, 0.10,0.22],[650,250,650,830, 0.12,0.24],
+  [1290,250,1290,830,0.14,0.26],[1400,250,1400,830,0.16,0.28],
+  [520,170,1420,170, 0.26,0.36],[520,260,1420,260, 0.28,0.38],[520,170,520,260,0.30,0.36],[1420,170,1420,260,0.30,0.36],
+  [868,258,1052,258, 0.36,0.44],[868,410,1052,410, 0.37,0.45],[868,258,868,410,0.38,0.45],[1052,258,1052,410,0.38,0.45],
+  [930,410,930,526, 0.44,0.50],[990,410,990,526, 0.44,0.50],[930,526,990,526,0.46,0.51],
+  [560,770,1380,770, 0.48,0.58],[560,832,1380,832, 0.49,0.59],[560,770,560,832,0.50,0.57],[1380,770,1380,832,0.50,0.57],
+  [700,650,1240,650, 0.54,0.63],[700,770,1240,770, 0.55,0.64],[700,650,700,770,0.56,0.63],[1240,650,1240,770,0.56,0.63]
+];
+function sceneSPEC(t){
+  const p = inv(t,5,15);
+  bg("#070c11");
+
+  // CADグリッド
+  const ga = fade(t,5.0,11.2,.5,1.6);
+  if(ga>0){
+    ctx.save(); ctx.globalAlpha=ga*.8;
+    ctx.strokeStyle="rgba(95,200,222,.20)"; ctx.lineWidth=1.2;
+    const off = (t*8)%60;
+    ctx.beginPath();
+    for(let x=-off;x<W;x+=60){ ctx.moveTo(x,0); ctx.lineTo(x,H); }
+    for(let y=-off;y<H;y+=60){ ctx.moveTo(0,y); ctx.lineTo(W,y); }
+    ctx.stroke();
+    ctx.strokeStyle="rgba(95,200,222,.30)"; ctx.lineWidth=1.4;
+    ctx.beginPath();
+    for(let x=-off;x<W;x+=300){ ctx.moveTo(x,0); ctx.lineTo(x,H); }
+    for(let y=-off;y<H;y+=300){ ctx.moveTo(0,y); ctx.lineTo(W,y); }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  const solid = inv(p,0.42,0.62);           // 線 → 実体
+  const run   = inv(p,0.60,1.0);            // 稼働
+  const sx = lerp(960, 1108, eio(clamp(run*1.4,0,1)));
+  const sy = lerp(0, 58, eio(clamp(inv(run,0.35,0.85),0,1)));
+
+  // 実体化が進むにつれて工場空間が立ち上がる
+  factoryBack(t, solid*0.85);
+
+  ctx.save();
+  stageX(lerp(0.88,0.84,eio(p)), -100);
+
+  // 実体
+  if(solid>0){
+    ctx.save(); ctx.globalAlpha=solid;
+    gantry({spindleX:sx, spindleY:sy, rot:t*1.2});
+    // ワーク
+    plate(700,650,540,120,"#3b454f","#131a20");
+    ctx.fillStyle="rgba(255,255,255,.10)"; ctx.fillRect(700,650,540,2);
+    ctx.restore();
+  }
+  // ワイヤーフレーム
+  const wf = 1-inv(p,0.44,0.66);
+  if(wf>0){
+    ctx.save(); ctx.globalAlpha=wf;
+    ctx.strokeStyle="rgba(140,228,246,1)"; ctx.lineWidth=3.2; ctx.lineCap="round";
+    ctx.shadowColor="rgba(95,200,222,.9)"; ctx.shadowBlur=14;
+    for(let i=0;i<CAD_SEGS.length;i++){
+      const s = CAD_SEGS[i];
+      const k = inv(p, s[4]*0.70, s[5]*0.70); if(k<=0) continue;
+      ctx.beginPath(); ctx.moveTo(s[0],s[1]);
+      ctx.lineTo(lerp(s[0],s[2],k), lerp(s[1],s[3],k)); ctx.stroke();
+    }
+    ctx.restore();
+    // 寸法線
+    const da = fade(t, 9.0, 11.4, .5, .8);
+    if(da>0){
+      ctx.save(); ctx.globalAlpha=da*wf*1.4;
+      ctx.strokeStyle="rgba(226,163,60,.9)"; ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.moveTo(500,990); ctx.lineTo(1440,990);
+      ctx.moveTo(500,975); ctx.lineTo(500,1005); ctx.moveTo(1440,975); ctx.lineTo(1440,1005); ctx.stroke();
+      setFont(24,700); ctx.fillStyle="rgba(240,215,170,.95)";
+      tracked("SPECIAL PURPOSE MACHINE",970,982,4,"center");
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+
+  // 稼働時の切削
+  if(run>0.45){
+    ctx.save(); stageX(lerp(0.88,0.84,eio(p)), -100);
+    const cx = sx, cy = 650;
+    sparks(t,{x:cx,y:cy,t0:11.6,t1:14.4,n:56,speed:380,spread:2.2,size:3,life:.42,seed:23,g:1300,alpha:.95});
+    ctx.save(); ctx.globalCompositeOperation="lighter";
+    flare(cx,cy,190, fade(t,11.6,14.4,.4,.5)*.5); ctx.restore();
+    ctx.restore();
+  }
+
+  floorFade(700);
+  vignette(.8);
+  telop(t,{text:"専用機 設計・製作", a:6.2, b:14.3, fo:.55, x:150, y:H-240, size:70, ls:10, rule:true,
+           sub:"世界にひとつの機械を、カタチにする。", subDelay:1.1, subSize:26, subLs:6});
+  fadeFromBlack(t,5.0,5.35);
+  grain(t,.05);
+}
+
+/* ============================================================
+   S3  大物精密機械加工 15-28s（見せ場）
+   ============================================================ */
+function sceneBIG(t){
+  // a) 15.0-18.2 吊り下ろし / b) 18.2-22.4 切削 / c) 22.4-25.2 超接写 / d) 25.2-28 完成部品
+  if(t < 18.2)       bigCrane(t);
+  else if(t < 22.4)  bigCut(t);
+  else if(t < 25.2)  bigMacro(t);
+  else               bigPart(t);
+
+  vignette(.82);
+  telop(t,{text:"大物精密機械加工", a:16.0, b:20.6, fo:.5, x:150, y:H-165, size:96, ls:14, rule:true});
+  telop(t,{text:"大型ワーク × 高精度加工", a:20.9, b:24.6, fo:.5, x:150, y:H-165, size:62, ls:10, rule:true});
+  grain(t,.055);
+}
+
+function bigCrane(t){
+  const p = inv(t,15,18.2);
+  bg("#0a1017");
+  factoryBack(t, 1);
+
+  const land = clamp((p-0.72)*11,0,1);
+  const shake = Math.sin(t*46)*land*3.2*(1-inv(p,0.80,0.92));
+  ctx.save(); ctx.translate(shake, shake*0.35);
+  ctx.save();
+  stageX(lerp(1.02,0.92,eo(p)), -86);
+
+  // 機械本体
+  gantry({spindleX:960, rot:0});
+
+  // 天井クレーン（ワークを手前に吊り込んでくる）
+  ctx.fillStyle="#161d24"; ctx.fillRect(0,54,W,34);
+  ctx.fillStyle="rgba(160,190,215,.12)"; ctx.fillRect(0,54,W,2);
+  const dropY = lerp(-820, 0, eio(inv(p,0,0.75)));
+  const wx = 1000, wh = 250, wyEnd = 520;
+  // ホイスト本体
+  ctx.fillStyle="#232c34"; ctx.fillRect(wx-90, 88, 180, 58);
+  ctx.fillStyle="rgba(190,215,240,.14)"; ctx.fillRect(wx-90, 88, 180, 2);
+  // ワイヤ
+  const wy = wyEnd + dropY;
+  ctx.strokeStyle="#5a6570"; ctx.lineWidth=4;
+  ctx.beginPath();
+  ctx.moveTo(wx-150, 146); ctx.lineTo(wx-150, wy-28);
+  ctx.moveTo(wx+150, 146); ctx.lineTo(wx+150, wy-28); ctx.stroke();
+
+  // 巨大ワーク（吊り下ろされ、機械のテーブルに着座する）
+  ctx.save();
+  ctx.shadowColor="rgba(0,0,0,.75)"; ctx.shadowBlur=40; ctx.shadowOffsetY=16;
+  const pg = ctx.createLinearGradient(0,wy,0,wy+wh);
+  pg.addColorStop(0,"#a3b0bc"); pg.addColorStop(.30,"#6b7681"); pg.addColorStop(1,"#1d252c");
+  ctx.fillStyle=pg; ctx.fillRect(wx-360, wy, 720, wh);
+  ctx.restore();
+  ctx.fillStyle="rgba(230,242,255,.32)"; ctx.fillRect(wx-360, wy, 720, 4);
+  // 側面のリブ／肉抜き
+  ctx.save(); ctx.beginPath(); ctx.rect(wx-360,wy,720,wh); ctx.clip();
+  for(let x=wx-306;x<wx+360;x+=112){
+    ctx.fillStyle="rgba(0,0,0,.42)"; ctx.fillRect(x,wy+40,60,190);
+    ctx.fillStyle="rgba(210,228,245,.10)"; ctx.fillRect(x,wy+40,60,2);
+  }
+  ctx.restore();
+  ctx.strokeStyle="rgba(0,0,0,.65)"; ctx.lineWidth=2; ctx.strokeRect(wx-360,wy,720,wh);
+  // 吊り金具
+  ctx.fillStyle="#39434c"; ctx.fillRect(wx-162,wy-30,24,34); ctx.fillRect(wx+138,wy-30,24,34);
+
+  // 着座の粉塵
+  if(land>0){
+    ctx.save(); ctx.globalAlpha=land*(1-inv(p,.78,.95))*.6;
+    const dg = ctx.createRadialGradient(1000,776,10,1000,776,300+land*300);
+    dg.addColorStop(0,"rgba(185,200,218,.45)"); dg.addColorStop(.55,"rgba(170,188,208,.16)"); dg.addColorStop(1,"rgba(160,180,200,0)");
+    ctx.fillStyle=dg;
+    ctx.beginPath(); ctx.ellipse(1000, 776, 300+land*300, 42, 0,0,7); ctx.fill(); ctx.restore();
+  }
+
+  // スケール対比の人物（個人を特定しない抽象シルエット）
+  const pa = fade(t,15.4,18.2,.9,0);
+  if(pa>0){
+    ctx.save(); ctx.globalAlpha=pa;
+    person(1600, 920, 190, -1, "look", "rgba(150,190,225,.7)", [-3,-2]);
+    ctx.restore();
+  }
+  ctx.restore();
+  ctx.restore();
+
+  // 上からの作業灯
+  ctx.save(); ctx.globalCompositeOperation="lighter"; ctx.globalAlpha=.4;
+  const lg = ctx.createLinearGradient(0,0,0,H);
+  lg.addColorStop(0,"rgba(160,195,230,.32)"); lg.addColorStop(.55,"rgba(120,155,190,.06)"); lg.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.fillStyle=lg; ctx.fillRect(560,0,980,H); ctx.restore();
+
+  floorFade(760);
+  fadeFromBlack(t,15.0,15.4);
+}
+
+function bigCut(t){
+  const p = inv(t,18.2,22.4);
+  bg("#070c10");
+  factoryBack(t, 0.8);
+
+  const shake = Math.sin(t*52)*1.7 + Math.sin(t*31)*1.2;
+  ctx.save(); ctx.translate(shake, shake*0.4);
+  ctx.save();
+  stageX(lerp(0.86,1.05,eio(p)), -86);
+
+  const sx = lerp(700, 1240, eio(clamp(inv(p,0.06,0.98),0,1)));
+  const cx = sx, cy = 628;
+
+  // ワーク（削り込まれていく大型ワーク）— 機械より先に描き、工具が食い込んで見えるようにする
+  const wg = ctx.createLinearGradient(0,620,0,772);
+  wg.addColorStop(0,"#78848f"); wg.addColorStop(.3,"#4c565f"); wg.addColorStop(1,"#151b21");
+  ctx.fillStyle=wg; ctx.fillRect(670,620,660,152);
+  ctx.fillStyle="rgba(235,245,255,.22)"; ctx.fillRect(670,620,660,4);
+  ctx.save(); ctx.beginPath(); ctx.rect(670,620,660,152); ctx.clip();
+  const cutTo = clamp((sx-700)/540,0,1);
+  // 切削済みの段差
+  ctx.fillStyle="rgba(0,0,0,.5)"; ctx.fillRect(670, 620, 660*cutTo, 18);
+  const mg = ctx.createLinearGradient(0,638,0,646);
+  mg.addColorStop(0,"rgba(215,232,248,.45)"); mg.addColorStop(1,"rgba(150,170,190,0)");
+  ctx.fillStyle=mg; ctx.fillRect(670, 638, 660*cutTo, 8);
+  // ツールマーク
+  for(let x=674;x<670+660*cutTo;x+=15){
+    ctx.fillStyle="rgba(255,255,255,.06)"; ctx.fillRect(x,640,5,128);
+  }
+  ctx.restore();
+  ctx.strokeStyle="rgba(0,0,0,.6)"; ctx.lineWidth=2; ctx.strokeRect(670,620,660,152);
+
+  gantry({spindleX:sx, spindleY:74, rot:t*3.4});
+
+  // クーラントノズル（主軸に追従）＋ 噴射
+  ctx.save();
+  ctx.fillStyle="#2f3841";
+  ctx.fillRect(cx-104, 500, 62, 20); ctx.fillRect(cx+42, 500, 62, 20);
+  const ca = fade(t,18.5,22.4,.4,.3);
+  if(ca>0){
+    ctx.globalCompositeOperation="lighter";
+    ctx.globalAlpha = ca*.5;
+    ctx.strokeStyle="rgba(200,228,248,.85)"; ctx.lineWidth=3.5; ctx.lineCap="round";
+    const r2 = rng(88 + Math.floor(t*24));
+    for(let side=-1; side<=1; side+=2){
+      for(let i=0;i<9;i++){
+        const j = (r2()-.5)*16;
+        const x0 = cx + side*76 + j, y0 = 520;
+        ctx.globalAlpha = ca*(.18+r2()*.32);
+        ctx.beginPath(); ctx.moveTo(x0, y0);
+        ctx.quadraticCurveTo(x0 - side*22, (y0+cy)/2, cx + side*10 + j*.3, cy-4);
+        ctx.stroke();
+      }
+    }
+    // ミスト
+    ctx.globalAlpha = ca*.20;
+    flare(cx, cy-30, 190, .5, "rgba(190,220,245,");
+  }
+  ctx.restore();
+
+  // 切削点
+  sparks(t,{x:cx,y:cy,t0:18.5,t1:22.4,n:190,speed:760,spread:2.7,size:4,life:.62,seed:41,g:1500});
+  chips(t,{x:cx,y:cy,t0:18.5,t1:22.4,n:44,seed:5});
+  ctx.save(); ctx.globalCompositeOperation="lighter";
+  const fa = fade(t,18.4,22.4,.35,.3);
+  flare(cx,cy,300, fa*.75);
+  flare(cx,cy,90,  fa*.9, "rgba(255,235,190,");
+  ctx.restore();
+  // 切削点からワークへの照り返し（切削点を中心に減衰）
+  ctx.save(); ctx.globalCompositeOperation="lighter"; ctx.globalAlpha=fa*.30;
+  const rg = ctx.createRadialGradient(cx,cy,0,cx,cy,300);
+  rg.addColorStop(0,"rgba(255,186,110,.5)"); rg.addColorStop(1,"rgba(255,150,60,0)");
+  ctx.fillStyle=rg;
+  ctx.beginPath(); ctx.rect(670,620,660,152); ctx.clip(); ctx.fillRect(670,620,660,152);
+  ctx.restore();
+
+  ctx.restore();
+  ctx.restore();
+  floorFade(790);
+}
+
+function bigMacro(t){
+  const p = inv(t,22.4,25.2);
+  bg("#05080b");
+  const z = lerp(1.0,1.12,eo(p));
+  ctx.save();
+  ctx.translate(W/2,H/2); ctx.scale(z,z); ctx.translate(-W/2,-H/2);
+  ctx.translate(-lerp(0,120,eo(p)), 0);
+
+  // 被削材（大きな面）
+  const g = ctx.createLinearGradient(0,600,0,H);
+  g.addColorStop(0,"#8b98a4"); g.addColorStop(.12,"#5a656f"); g.addColorStop(.4,"#333c44"); g.addColorStop(1,"#0c1116");
+  ctx.fillStyle=g; ctx.fillRect(-200,600,W+400,H-500);
+  // 削り面のツールマーク
+  ctx.save(); ctx.beginPath(); ctx.rect(-200,600,W+400,520); ctx.clip();
+  for(let x=-200;x<W+400;x+=26){
+    ctx.fillStyle="rgba(0,0,0,.26)"; ctx.fillRect(x,600,9,520);
+    ctx.fillStyle="rgba(235,245,255,.09)"; ctx.fillRect(x+9,600,4,520);
+  }
+  ctx.restore();
+  // 加工面（削り上がった面はひときわ明るい）
+  const sg2 = ctx.createLinearGradient(0,600,0,668);
+  sg2.addColorStop(0,"rgba(215,230,244,.55)"); sg2.addColorStop(1,"rgba(180,200,220,0)");
+  ctx.fillStyle=sg2; ctx.fillRect(-200,600,W+400,68);
+  ctx.fillStyle="rgba(240,250,255,.6)"; ctx.fillRect(-200,600,W+400,5);
+
+  // 工具インサート（超接写）
+  const tx = lerp(1180, 980, eio(p));
+  ctx.save();
+  ctx.translate(tx, 0);
+  const ig = ctx.createLinearGradient(-260,0,260,0);
+  ig.addColorStop(0,"#0a0e12"); ig.addColorStop(.35,"#8e9aa5"); ig.addColorStop(.5,"#cbd5de"); ig.addColorStop(.7,"#5c666f"); ig.addColorStop(1,"#0c1115");
+  ctx.fillStyle=ig;
+  ctx.beginPath(); ctx.moveTo(-250,80); ctx.lineTo(250,80); ctx.lineTo(150,606); ctx.lineTo(-150,606); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.55)"; ctx.fillRect(-150,596,300,8);
+  ctx.strokeStyle="rgba(0,0,0,.6)"; ctx.lineWidth=3; ctx.stroke();
+  ctx.restore();
+
+  // 切粉のカール
+  ctx.save();
+  ctx.strokeStyle="#c3cfda"; ctx.lineWidth=8; ctx.lineCap="round";
+  for(let k=0;k<2;k++){
+    ctx.beginPath();
+    for(let a=0;a<26;a++){
+      const th = a*0.33 + t*6 + k*2.6;
+      const rr = 16 + a*3.2;
+      ctx.lineTo(tx-186 - Math.cos(th)*rr*0.85, 566 - Math.sin(th)*rr*0.5 - a*1.6);
+    }
+    ctx.globalAlpha = .5-k*.18; ctx.stroke();
+  }
+  ctx.restore();
+
+  sparks(t,{x:tx-150,y:598,t0:22.4,t1:25.2,n:240,speed:900,spread:1.9,dir:-2.45,size:5,life:.6,seed:63,g:1700});
+  ctx.save(); ctx.globalCompositeOperation="lighter";
+  flare(tx-150,598,460,.7);
+  flare(tx-150,598,130,.95,"rgba(255,240,205,");
+  ctx.restore();
+  ctx.restore();
+
+  // 精度のオーバーレイ
+  const oa = fade(t,23.4,25.2,.5,.25);
+  if(oa>0){
+    ctx.save(); ctx.globalAlpha=oa;
+    ctx.strokeStyle="rgba(226,163,60,.85)"; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(1420,300); ctx.lineTo(1760,300); ctx.moveTo(1420,290); ctx.lineTo(1420,310);
+    ctx.moveTo(1760,290); ctx.lineTo(1760,310); ctx.stroke();
+    setFont(30,700); ctx.fillStyle="rgba(245,225,190,.95)";
+    tracked("0.01 mm", 1590, 274, 5, "center");
+    setFont(17,500); ctx.fillStyle="rgba(200,212,224,.7)";
+    tracked("PRECISION TOLERANCE", 1590, 344, 4, "center");
+    ctx.restore();
+  }
+}
+
+function bigPart(t){
+  const p = inv(t,25.2,28);
+  bg("#06090d");
+  ctx.save();
+  ctx.translate(W/2, H*0.52);
+  const rot = lerp(-0.16, -0.03, eo(p));
+  const z = lerp(1.12, 1.0, eo(p));
+  ctx.scale(z,z); ctx.rotate(rot*0.18);
+
+  // 完成した大型部品（等角風）
+  const dx = 620, dy = 150, dz = 92;
+  // 上面
+  ctx.beginPath(); ctx.moveTo(-dx,-dy); ctx.lineTo(dx,-dy+40); ctx.lineTo(dx-70,dy-30); ctx.lineTo(-dx-70,dy-70); ctx.closePath();
+  const tg = ctx.createLinearGradient(-dx,-dy,dx,dy);
+  tg.addColorStop(0,"#8d99a4"); tg.addColorStop(.45,"#cad4dd"); tg.addColorStop(.7,"#6e7982"); tg.addColorStop(1,"#39424b");
+  ctx.fillStyle=tg; ctx.fill();
+  // ツールマーク
+  ctx.save(); ctx.clip();
+  for(let i=-40;i<40;i++){
+    ctx.strokeStyle= i%2 ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.10)";
+    ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(-dx+i*20,-dy-40); ctx.lineTo(-dx+i*20+120, dy+40); ctx.stroke();
+  }
+  ctx.restore();
+  // ポケット穴
+  const holes=[[-380,-20],[-120,10],[150,40],[420,70]];
+  for(let i=0;i<holes.length;i++){
+    ctx.save(); ctx.translate(holes[i][0],holes[i][1]);
+    ctx.beginPath(); ctx.ellipse(0,0,52,26,0,0,7);
+    ctx.fillStyle="#10161b"; ctx.fill();
+    ctx.strokeStyle="rgba(220,235,250,.35)"; ctx.lineWidth=2.5; ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0,-5,52,26,0,3.4,6.0);
+    ctx.strokeStyle="rgba(255,255,255,.5)"; ctx.lineWidth=2; ctx.stroke();
+    ctx.restore();
+  }
+  // 前面
+  ctx.beginPath(); ctx.moveTo(-dx-70,dy-70); ctx.lineTo(dx-70,dy-30); ctx.lineTo(dx-70,dy-30+dz); ctx.lineTo(-dx-70,dy-70+dz); ctx.closePath();
+  const fg2 = ctx.createLinearGradient(0,dy-70,0,dy+dz);
+  fg2.addColorStop(0,"#4a545e"); fg2.addColorStop(1,"#161c22");
+  ctx.fillStyle=fg2; ctx.fill();
+  ctx.restore();
+
+  // 反射光
+  ctx.save(); ctx.globalCompositeOperation="lighter"; ctx.globalAlpha=fade(t,25.4,28,.6,.6)*.5;
+  const sweepX = lerp(200, W-200, eo(inv(t,25.4,27.6)));
+  const sg = ctx.createLinearGradient(sweepX-300,0,sweepX+300,0);
+  sg.addColorStop(0,"rgba(180,215,245,0)"); sg.addColorStop(.5,"rgba(190,225,255,.28)"); sg.addColorStop(1,"rgba(180,215,245,0)");
+  ctx.fillStyle=sg; ctx.fillRect(0,H*0.25,W,H*0.5); ctx.restore();
+
+  telop(t,{text:"多品種・少量にも対応", a:25.8, b:27.9, fi:.4, fo:.4, x:W-150, y:270, size:40, ls:8, align:"right", color:"#dbe4ec"});
+  fadeToBlack(t,27.75,28);
+}
+
+/* ============================================================
+   S4  幅広い技術 28-38s
+   ============================================================ */
+const PANELS = [
+  {a:28.0, b:30.0, label:"自動車",     en:"AUTOMOTIVE"},
+  {a:30.0, b:32.0, label:"航空宇宙",   en:"AEROSPACE"},
+  {a:32.0, b:34.0, label:"半導体関連", en:"SEMICONDUCTOR"},
+  {a:34.0, b:36.0, label:"工作機械",   en:"MACHINE TOOL"},
+  {a:36.0, b:38.0, label:"先端素材",   en:"ADVANCED MATERIALS"}
+];
+function sceneFIELDS(t){
+  bg("#06090d");
+  let idx = 0;
+  for(let i=0;i<PANELS.length;i++){ if(t>=PANELS[i].a) idx=i; }
+  const P = PANELS[idx], p = inv(t,P.a,P.b);
+  const app = eo(clamp(p/0.16,0,1));
+  const out = 1-inv(p,0.90,1.0);
+
+  // ヒーローの背後に置く弱いキーライト（金属の陰影を読ませる）
+  ctx.save(); ctx.globalCompositeOperation="lighter"; ctx.globalAlpha=out*lerp(0,1,app);
+  flare(W*0.5, H*0.40, 620, .16, "rgba(150,185,220,");
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = out;
+  ctx.translate(lerp(70,0,app), 0);
+  ctx.save();
+  ctx.translate(W*0.5, H*0.42);
+  ctx.globalAlpha = out*lerp(0,1,app);
+  if(idx===0) fAuto(t-P.a);
+  if(idx===1) fAero(t-P.a);
+  if(idx===2) fSemi(t-P.a);
+  if(idx===3) fMachine(t-P.a);
+  if(idx===4) fMaterial(t-P.a);
+  ctx.restore();
+  ctx.restore();
+
+  // ラベル
+  ctx.save(); ctx.globalAlpha = out;
+  telop(t,{text:P.label, a:P.a+0.12, b:P.b, fi:.25, fo:.25, x:150, y:H-212, size:74, ls:12, rule:true});
+  const ea = fade(t,P.a+0.35,P.b,.3,.25);
+  if(ea>0){ ctx.globalAlpha=out*ea*.75; setFont(17,500); ctx.fillStyle="#8d99a5"; tracked(P.en,150,H-142,7,"left"); }
+  ctx.restore();
+
+  // 進行ティッカー
+  ctx.save(); ctx.globalAlpha=.5;
+  for(let i=0;i<PANELS.length;i++){
+    ctx.fillStyle = i<=idx ? C.accent : "#2a333b";
+    ctx.fillRect(W-150-(PANELS.length-1-i)*34, H-176, 22, 3);
+  }
+  ctx.restore();
+
+  vignette(.9);
+  fadeFromBlack(t,28,28.25);
+  grain(t,.05);
+}
+function fAuto(u){
+  // 歯車＋クランク
+  ctx.save();
+  ctx.rotate(u*0.5);
+  ctx.strokeStyle="#93a0ab"; ctx.lineWidth=8; ctx.fillStyle="#161d23";
+  ctx.beginPath(); ctx.arc(0,0,190,0,7); ctx.fill(); ctx.stroke();
+  for(let i=0;i<24;i++){
+    const a=i/24*Math.PI*2;
+    ctx.save(); ctx.rotate(a); ctx.fillStyle="#7e8b96";
+    ctx.fillRect(-16,-232,32,48); ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(0,0,74,0,7); ctx.strokeStyle="#5f6b75"; ctx.lineWidth=6; ctx.stroke();
+  ctx.restore();
+  // クランク
+  ctx.save(); ctx.translate(330,40); ctx.strokeStyle="#6f7b86"; ctx.lineWidth=14; ctx.lineCap="round";
+  const ph=Math.sin(u*3.2);
+  ctx.beginPath(); ctx.moveTo(0,-120+ph*40); ctx.lineTo(0,80); ctx.stroke();
+  ctx.fillStyle="#8b98a3"; ctx.fillRect(-56,-190+ph*40,112,74);
+  ctx.restore();
+}
+function fAero(u){
+  // インペラ（後退角のついたブレード）
+  ctx.save(); ctx.rotate(u*1.5);
+  // シュラウド
+  ctx.beginPath(); ctx.arc(0,0,306,0,7);
+  ctx.strokeStyle="rgba(150,172,192,.22)"; ctx.lineWidth=3; ctx.stroke();
+  for(let i=0;i<9;i++){
+    ctx.save(); ctx.rotate(i/9*Math.PI*2);
+    const g=ctx.createLinearGradient(-60,-90,50,-290);
+    g.addColorStop(0,"#39434c"); g.addColorStop(.35,"#8996a2"); g.addColorStop(.7,"#c6d2dd"); g.addColorStop(1,"#4a545e");
+    ctx.fillStyle=g;
+    ctx.beginPath();
+    ctx.moveTo(-26,-84);
+    ctx.bezierCurveTo(-62,-158, -58,-238, -8,-294);   // 前縁
+    ctx.lineTo(24,-284);                               // 翼端
+    ctx.bezierCurveTo(32,-212, 44,-146, 24,-84);       // 後縁
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle="rgba(228,240,252,.30)"; ctx.lineWidth=1.8; ctx.stroke();
+    // 前縁のハイライト
+    ctx.beginPath();
+    ctx.moveTo(-26,-84); ctx.bezierCurveTo(-62,-158, -58,-238, -8,-294);
+    ctx.strokeStyle="rgba(240,250,255,.55)"; ctx.lineWidth=2.6; ctx.stroke();
+    ctx.restore();
+  }
+  // ハブ＋ノーズコーン
+  ctx.beginPath(); ctx.arc(0,0,98,0,7);
+  const hg=ctx.createRadialGradient(-34,-36,8,0,0,98);
+  hg.addColorStop(0,"#dbe4ed"); hg.addColorStop(.55,"#66717c"); hg.addColorStop(1,"#1b222a");
+  ctx.fillStyle=hg; ctx.fill();
+  ctx.beginPath(); ctx.arc(0,0,42,0,7);
+  ctx.fillStyle="#10161c"; ctx.fill();
+  ctx.strokeStyle="rgba(200,220,240,.25)"; ctx.lineWidth=2; ctx.stroke();
+  ctx.restore();
+}
+function fSemi(u){
+  // シリコンウェハ
+  ctx.save();
+  ctx.beginPath(); ctx.arc(0,0,270,0,7); ctx.closePath();
+  const g=ctx.createLinearGradient(-270,-270,270,270);
+  g.addColorStop(0,"#2b3a44"); g.addColorStop(.42,"#8fa6b4"); g.addColorStop(.55,"#c3d3de"); g.addColorStop(1,"#1d262d");
+  ctx.fillStyle=g; ctx.fill();
+  ctx.save(); ctx.clip();
+  ctx.strokeStyle="rgba(10,16,20,.5)"; ctx.lineWidth=2;
+  for(let x=-280;x<280;x+=44){ ctx.beginPath(); ctx.moveTo(x,-280); ctx.lineTo(x,280); ctx.stroke(); }
+  for(let y=-280;y<280;y+=44){ ctx.beginPath(); ctx.moveTo(-280,y); ctx.lineTo(280,y); ctx.stroke(); }
+  // 虹色の干渉光
+  ctx.globalCompositeOperation="lighter"; ctx.globalAlpha=.22;
+  const sx=lerp(-320,320,(u/2));
+  const sg=ctx.createLinearGradient(sx-160,0,sx+160,0);
+  sg.addColorStop(0,"rgba(120,190,230,0)"); sg.addColorStop(.5,"rgba(180,225,255,.9)"); sg.addColorStop(1,"rgba(120,190,230,0)");
+  ctx.fillStyle=sg; ctx.fillRect(-300,-300,600,600);
+  ctx.restore();
+  // ノッチ
+  ctx.globalCompositeOperation="source-over";
+  ctx.beginPath(); ctx.moveTo(-22,-270); ctx.lineTo(22,-270); ctx.lineTo(0,-234); ctx.closePath();
+  ctx.fillStyle=C.bg0; ctx.fill();
+  ctx.strokeStyle="rgba(220,235,250,.35)"; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(0,0,270,0,7); ctx.stroke();
+  ctx.restore();
+}
+function fMachine(u){
+  // 主軸＋ATCアーム
+  ctx.save();
+  metalRect(-90,-260,180,240,.05);
+  toolHolder(0,-20,150,44,u*1.8);
+  ctx.fillStyle="#c8d2db";
+  ctx.beginPath(); ctx.moveTo(-32,150); ctx.lineTo(32,150); ctx.lineTo(18,208); ctx.lineTo(-18,208); ctx.closePath(); ctx.fill();
+  // ATCアーム（両端にツールを掴むグリッパ）
+  ctx.save(); ctx.translate(0,230); ctx.rotate(Math.sin(u*1.5)*0.55);
+  const ag=ctx.createLinearGradient(0,-20,0,20);
+  ag.addColorStop(0,"#8c98a4"); ag.addColorStop(1,"#39434c");
+  ctx.fillStyle=ag; ctx.fillRect(-260,-18,520,36);
+  ctx.fillStyle="#a3aeb9";
+  for(let sgn=-1; sgn<=1; sgn+=2){
+    ctx.save(); ctx.translate(sgn*258,0);
+    ctx.fillRect(-24,-40,48,80);
+    ctx.fillStyle="#12181e"; ctx.fillRect(-12,-26,24,52);
+    ctx.fillStyle="#a3aeb9";
+    ctx.restore();
+  }
+  ctx.restore();
+  // ツールマガジン
+  ctx.save(); ctx.translate(470,-40); ctx.rotate(u*0.6);
+  ctx.strokeStyle="#5c6873"; ctx.lineWidth=6;
+  ctx.beginPath(); ctx.arc(0,0,132,0,7); ctx.stroke();
+  for(let i=0;i<12;i++){
+    ctx.save(); ctx.rotate(i/12*Math.PI*2);
+    const tg2=ctx.createLinearGradient(-14,0,14,0);
+    tg2.addColorStop(0,"#2b333b"); tg2.addColorStop(.5,"#b0bcc7"); tg2.addColorStop(1,"#2b333b");
+    ctx.fillStyle=tg2; ctx.fillRect(-14,-158,28,46);
+    ctx.fillStyle="#cdd7e0"; ctx.beginPath();
+    ctx.moveTo(-10,-112); ctx.lineTo(10,-112); ctx.lineTo(5,-92); ctx.lineTo(-5,-92); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+  ctx.restore();
+}
+function fMaterial(u){
+  // 結晶（石英・セラミック・サファイア のイメージ）
+  ctx.save();
+  ctx.rotate(Math.sin(u*0.8)*0.12);
+  const facets=[["#1f3a46","#78c3d8"],["#243a44","#a9d8e6"],["#16252c","#4f97ad"]];
+  for(let k=0;k<3;k++){
+    ctx.save(); ctx.translate((k-1)*250, Math.sin(u*1.2+k)*14); ctx.rotate((k-1)*0.16);
+    const g=ctx.createLinearGradient(-110,-220,110,220);
+    g.addColorStop(0,facets[k][0]); g.addColorStop(.5,facets[k][1]); g.addColorStop(1,facets[k][0]);
+    ctx.fillStyle=g; ctx.globalAlpha=.92;
+    ctx.beginPath();
+    ctx.moveTo(0,-250); ctx.lineTo(104,-140); ctx.lineTo(104,150); ctx.lineTo(0,250); ctx.lineTo(-104,150); ctx.lineTo(-104,-140);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle="rgba(220,245,255,.45)"; ctx.lineWidth=2; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,-250); ctx.lineTo(0,250); ctx.moveTo(-104,-140); ctx.lineTo(104,150);
+    ctx.strokeStyle="rgba(220,245,255,.18)"; ctx.stroke();
+    // グリント
+    ctx.globalCompositeOperation="lighter";
+    flare(lerp(-90,90,((u*0.5+k*0.3)%1)), -60, 90, .35, "rgba(200,240,255,");
+    ctx.restore();
+  }
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha=.72; setFont(20,500); ctx.fillStyle="#93b8c6";
+  tracked("シリコン ／ 石英 ／ セラミック ／ サファイア ／ 難削材", 0, 380, 6, "center");
+  ctx.restore();
+}
+
+/* ============================================================
+   S5  人・技術・未来 38-44s
+   ============================================================ */
+function scenePEOPLE(t){
+  bg("#070b10");
+  if(t < 40.0)      pOperator(t);
+  else if(t < 41.6) pInspect(t);
+  else              pFactory(t);
+
+  vignette(.9);
+  telop(t,{text:"技術力 × 設計力 × 設備力 × 人間力", a:38.5, b:41.3, fi:.4, fo:.4, x:150, y:H-175, size:52, ls:8, rule:true});
+  telop(t,{text:"技術革新で選ばれ続ける、100年企業へ。", a:41.6, b:44.0, fi:.45, fo:.4, x:150, y:H-175, size:52, ls:8, rule:true});
+  grain(t,.05);
+  fadeFromBlack(t,38,38.3);
+  fadeToBlack(t,43.7,44);
+}
+function pOperator(t){
+  const p=inv(t,38,40);
+  ctx.save();
+  const z=lerp(1.10,1.0,eo(p)); ctx.translate(W/2,H*.6); ctx.scale(z,z); ctx.translate(-W/2,-H*.6);
+
+  // 逆光：機械の隙間から差す光（人物をシルエットとして抜くための光源）
+  ctx.save(); ctx.globalCompositeOperation="lighter";
+  const kg = ctx.createLinearGradient(0,0,0,H);
+  kg.addColorStop(0,"rgba(150,190,225,.08)"); kg.addColorStop(.42,"rgba(168,208,242,.30)"); kg.addColorStop(1,"rgba(120,155,190,.03)");
+  ctx.fillStyle=kg; ctx.fillRect(1120,0,700,H);
+  flare(1500, 460, 700, .28, "rgba(175,210,245,");
+  ctx.restore();
+
+  // 機械のバルク（前景の暗部）
+  ctx.fillStyle="#080d12"; ctx.fillRect(-40,120,780,960);
+  ctx.fillStyle="rgba(190,218,245,.18)"; ctx.fillRect(720,120,6,960);
+  ctx.fillStyle="rgba(200,225,250,.09)"; ctx.fillRect(-40,120,780,3);
+  ctx.fillStyle="#070c11"; ctx.fillRect(1820,180,180,900);
+
+  // 技術者（逆光に抜けるシルエット）。操作盤に手を伸ばす
+  person(1690, 1250, 640, -1, "reach", "rgba(185,218,248,.8)", [7,-5]);
+
+  // 操作盤（ペンダント）— 技術者の手の先
+  ctx.save(); ctx.translate(1290, 730);
+  ctx.fillStyle="#1a232b"; ctx.fillRect(-160,-180,320,380);
+  ctx.fillStyle="rgba(205,228,250,.18)"; ctx.fillRect(-160,-180,320,3);
+  ctx.fillStyle="#060b10"; ctx.fillRect(-132,-152,264,196);
+  const ga=0.65+0.35*Math.sin(t*8);
+  ctx.fillStyle="rgba(120,215,240,"+(0.75*ga)+")";
+  for(let i=0;i<8;i++) ctx.fillRect(-114,-134+i*23, (46+((i*57)%160)), 6);
+  ctx.fillStyle="rgba(226,163,60,.9)"; ctx.fillRect(-114, 58, 110, 7);
+  for(let r=0;r<3;r++) for(let c=0;c<5;c++){
+    ctx.fillStyle = (r*5+c)%4===0 ? "rgba(160,230,250,.75)" : "rgba(130,145,158,.6)";
+    ctx.beginPath(); ctx.arc(-104+c*50, 82+r*40, 10, 0, 7); ctx.fill();
+  }
+  ctx.restore();
+  // 画面の照り返し
+  ctx.save(); ctx.globalCompositeOperation="lighter"; ctx.globalAlpha=.42;
+  flare(1290,660,480,.55,"rgba(110,200,235,"); ctx.restore();
+  ctx.restore();
+}
+function pInspect(t){
+  const p=inv(t,40,41.6);
+  // 作業台の面
+  const dg = ctx.createLinearGradient(0,H*0.2,0,H);
+  dg.addColorStop(0,"#0a0f14"); dg.addColorStop(.42,"#131b22"); dg.addColorStop(1,"#05080b");
+  ctx.fillStyle=dg; ctx.fillRect(0,0,W,H);
+  // 上からの手元灯
+  ctx.save(); ctx.globalCompositeOperation="lighter";
+  flare(W*0.40, H*0.52, 760, .22, "rgba(180,215,245,"); ctx.restore();
+
+  ctx.save();
+  ctx.translate(W/2,H/2); const z=lerp(1.07,1.0,eo(p)); ctx.scale(z,z); ctx.translate(-W/2,-H/2);
+
+  // 図面
+  ctx.save(); ctx.translate(W*0.38,H*0.52); ctx.rotate(-0.045);
+  ctx.shadowColor="rgba(0,0,0,.7)"; ctx.shadowBlur=40; ctx.shadowOffsetY=14;
+  ctx.fillStyle="#1a2530"; ctx.fillRect(-430,-270,860,540);
+  ctx.shadowBlur=0; ctx.shadowOffsetY=0;
+  ctx.strokeStyle="rgba(120,215,238,.55)"; ctx.lineWidth=1.6;
+  ctx.strokeRect(-404,-244,808,488);
+  // 図形
+  ctx.strokeStyle="rgba(150,228,246,.85)"; ctx.lineWidth=2.4;
+  ctx.beginPath();
+  ctx.rect(-300,-150,450,250);
+  ctx.moveTo(-300,-50); ctx.lineTo(150,-50); ctx.moveTo(-60,-150); ctx.lineTo(-60,100);
+  ctx.stroke();
+  ctx.strokeStyle="rgba(150,228,246,.5)"; ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.arc(250,-70,58,0,7); ctx.moveTo(250,-140); ctx.lineTo(250,0); ctx.moveTo(180,-70); ctx.lineTo(320,-70); ctx.stroke();
+  // 中心線
+  ctx.save(); ctx.setLineDash([14,8,3,8]);
+  ctx.strokeStyle="rgba(150,228,246,.35)";
+  ctx.beginPath(); ctx.moveTo(-380,-25); ctx.lineTo(380,-25); ctx.stroke(); ctx.restore();
+  // 寸法
+  ctx.strokeStyle="rgba(226,163,60,.9)"; ctx.lineWidth=1.8;
+  ctx.beginPath(); ctx.moveTo(-300,170); ctx.lineTo(150,170);
+  ctx.moveTo(-300,156); ctx.lineTo(-300,184); ctx.moveTo(150,156); ctx.lineTo(150,184); ctx.stroke();
+  setFont(24,700); ctx.fillStyle="rgba(240,220,180,.95)"; tracked("2400",-75,162,3,"center");
+  // 表題欄
+  ctx.strokeStyle="rgba(120,215,238,.4)"; ctx.lineWidth=1.4;
+  ctx.strokeRect(120,180,284,64);
+  ctx.beginPath(); ctx.moveTo(120,212); ctx.lineTo(404,212); ctx.stroke();
+  ctx.restore();
+
+  // ノギス／マイクロメータ（図面の上に置かれている）
+  ctx.save(); ctx.translate(W*0.70,H*0.63); ctx.rotate(-0.20+Math.sin(t*1.6)*0.015);
+  ctx.shadowColor="rgba(0,0,0,.6)"; ctx.shadowBlur=26; ctx.shadowOffsetY=12;
+  // フレーム
+  ctx.fillStyle="#4e5a65"; ctx.fillRect(-230,-18,420,36);
+  ctx.shadowBlur=0; ctx.shadowOffsetY=0;
+  ctx.fillStyle="rgba(230,242,252,.28)"; ctx.fillRect(-230,-18,420,3);
+  // アンビル／スピンドル
+  ctx.fillStyle="#6f7b87"; ctx.fillRect(-268,-54,44,108);
+  ctx.fillStyle="#8b98a4"; ctx.fillRect(-224,-13,120,26);
+  // シンブル
+  ctx.fillStyle="#39434d"; ctx.fillRect(60,-40,150,80);
+  for(let i=0;i<9;i++){ ctx.fillStyle="rgba(215,230,244,.18)"; ctx.fillRect(68+i*16,-40,3,80); }
+  // デジタル表示
+  ctx.fillStyle="#070d12"; ctx.fillRect(-96,-62,190,52);
+  ctx.fillStyle="rgba(226,163,60,.35)"; ctx.fillRect(-96,-62,190,2);
+  setFont(30,700); ctx.fillStyle="rgba(150,232,250,.95)"; tracked("0.005",-2,-24,1,"center");
+  ctx.restore();
+
+  // 図面をのぞき込む技術者
+  person(1800, 1420, 800, -1, "look", "rgba(160,205,238,.7)", [-8,-6]);
+  ctx.restore();
+  vignette(.95);
+}
+function pFactory(t){
+  const p=inv(t,41.6,44);
+  // 夜明けの空
+  const g=ctx.createLinearGradient(0,0,0,H*0.80);
+  g.addColorStop(0,"#060b13"); g.addColorStop(.30,"#122130"); g.addColorStop(.62,"#31465c"); g.addColorStop(1,"#6d5c3c");
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H*0.62);
+  ctx.fillStyle="#06090d"; ctx.fillRect(0,H*0.62,W,H*0.38);
+  ctx.save(); ctx.globalCompositeOperation="lighter"; ctx.globalAlpha=lerp(.5,.95,eo(p));
+  flare(W*0.66, H*0.44, 900, .30, "rgba(236,176,96,");
+  flare(W*0.66, H*0.44, 380, .34, "rgba(250,216,152,");
+  ctx.restore();
+
+  ctx.save();
+  const z=lerp(1.14,1.0,eo(p)); ctx.translate(W/2,H*.70); ctx.scale(z,z); ctx.translate(-W/2,-H*.70+(-70)/z);
+  // のこぎり屋根の工場
+  ctx.fillStyle="#04070a";
+  ctx.beginPath(); ctx.moveTo(140,860);
+  for(let i=0;i<6;i++){ const x=140+i*250; ctx.lineTo(x,620); ctx.lineTo(x+130,516); ctx.lineTo(x+130,620); ctx.lineTo(x+250,620); }
+  ctx.lineTo(1780,860); ctx.closePath(); ctx.fill();
+  ctx.fillRect(140,620,1640,240);
+  const lit = 0.30+0.55*fade(t,41.8,44,.9,0);
+  // のこぎり屋根の採光面（ここから工場の灯りが漏れる）
+  for(let i=0;i<6;i++){
+    const x=140+i*250;
+    ctx.beginPath();
+    ctx.moveTo(x+130,516); ctx.lineTo(x+130,620); ctx.lineTo(x+8,620); ctx.closePath();
+    ctx.fillStyle="rgba(238,196,128,"+(lit*0.5)+")"; ctx.fill();
+    // 桟
+    ctx.save(); ctx.clip();
+    ctx.strokeStyle="rgba(10,14,18,.75)"; ctx.lineWidth=4;
+    ctx.beginPath();
+    for(let k=0;k<5;k++){ ctx.moveTo(x+18+k*26, 620); ctx.lineTo(x+130, 530+k*20); }
+    ctx.stroke(); ctx.restore();
+  }
+  // 屋根のエッジに夜明けの光
+  ctx.strokeStyle="rgba(248,206,146,.45)"; ctx.lineWidth=2.5;
+  ctx.beginPath();
+  for(let i=0;i<6;i++){ const x=140+i*250; ctx.moveTo(x,620); ctx.lineTo(x+130,516); }
+  ctx.stroke();
+  // 灯りの点いた窓
+  const r=rng(31);
+  for(let i=0;i<52;i++){
+    const x=170+i*31, y=680;
+    ctx.fillStyle = r()>0.34 ? "rgba(246,208,142,"+(lit*(0.55+r()*0.45))+")" : "rgba(20,30,40,.75)";
+    ctx.fillRect(x,y,16,40);
+  }
+  ctx.fillStyle="rgba(10,15,20,.9)"; ctx.fillRect(140,672,1640,4);
+  // 煙突
+  ctx.fillStyle="#04070a"; ctx.fillRect(1560,330,52,300);
+  ctx.fillRect(0,860,W,240);
+  ctx.restore();
+  floorFade(820);
+  vignette(1);
+}
+
+/* ============================================================
+   S6  エンドカード 44-48s
+   ============================================================ */
+function sceneEND(t){
+  ctx.fillStyle="#030507"; ctx.fillRect(0,0,W,H);
+  // わずかな光
+  ctx.save(); ctx.globalCompositeOperation="lighter"; ctx.globalAlpha=fade(t,44.2,48,1.0,.9)*.5;
+  flare(W/2,H*0.42,760,.16,"rgba(150,180,215,"); ctx.restore();
+
+  const cy = H*0.44;
+  // 社名
+  const f1=fade(t,44.3,47.9,.7,.45);
+  if(f1>0){
+    ctx.save(); ctx.globalAlpha=f1;
+    setFont(78,900); ctx.fillStyle=C.hi;
+    tracked("株式会社 原マシナリー", W/2, cy, lerp(28,14,eo(inv(t,44.3,45.6))), "center");
+    ctx.restore();
+  }
+  const f2=fade(t,45.0,47.9,.6,.45);
+  if(f2>0){
+    ctx.save(); ctx.globalAlpha=f2;
+    setFont(28,500); ctx.fillStyle="#aab6c2";
+    tracked("HARA MACHINERY", W/2, cy+76, 18, "center");
+    ctx.restore();
+  }
+  // 罫線
+  const f3=inv(t,45.4,46.2);
+  if(f3>0){
+    ctx.save(); ctx.globalAlpha=fade(t,45.4,47.9,.2,.45);
+    ctx.fillStyle=C.accent;
+    ctx.fillRect(W/2-lerp(0,150,eo(f3)), cy+126, lerp(0,300,eo(f3)), 2);
+    ctx.restore();
+  }
+  const f4=fade(t,45.9,47.9,.6,.45);
+  if(f4>0){
+    ctx.save(); ctx.globalAlpha=f4;
+    setFont(24,500); ctx.fillStyle="#b3bec9";
+    tracked("1948 -", W/2, cy+186, 14, "center");
+    ctx.restore();
+  }
+  const f5=fade(t,46.4,48,.7,.5);
+  if(f5>0){
+    ctx.save(); ctx.globalAlpha=f5;
+    setFont(34,700); ctx.fillStyle="#dde5ec";
+    tracked("技術で、未来のものづくりを支える。", W/2, cy+286, 9, "center");
+    ctx.restore();
+  }
+  grain(t,.04);
+  fadeToBlack(t,47.86,48);
+}
+
+/* ============================================================
+   レンダラ
+   ============================================================ */
+function render(t){
+  if(!cv.width) return;
+  base();
+  ctx.clearRect(0,0,W,H);
+  if(t < SC.op[1])          sceneOP(t);
+  else if(t < SC.spec[1])   sceneSPEC(t);
+  else if(t < SC.big[1])    sceneBIG(t);
+  else if(t < SC.fields[1]) sceneFIELDS(t);
+  else if(t < SC.people[1]) scenePEOPLE(t);
+  else                      sceneEND(t);
+  updateSubs(t);
+}
+
+/* ============================================================
+   音（BGM / SE をプログラム生成）
+   ============================================================ */
+let actx = null, comp = null, live = [], soundOn = true;
+function ensureCtx(){
+  if(actx) return;
+  const AC = window.AudioContext||window.webkitAudioContext;
+  if(!AC) { soundOn=false; return; }
+  actx = new AC();
+  comp = actx.createDynamicsCompressor();
+  comp.threshold.value=-14; comp.ratio.value=4; comp.attack.value=.004; comp.release.value=.22;
+  comp.connect(actx.destination);
+}
+let noiseBuf = null;
+function noise(){
+  if(!noiseBuf){
+    noiseBuf = actx.createBuffer(1, actx.sampleRate*3, actx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+  }
+  const s = actx.createBufferSource(); s.buffer=noiseBuf; s.loop=true; return s;
+}
+function valueAt(pts, x){
+  if(x<=pts[0][0]) return pts[0][1];
+  for(let i=1;i<pts.length;i++){
+    if(x<=pts[i][0]){
+      const k=(x-pts[i-1][0])/(pts[i][0]-pts[i-1][0]);
+      return lerp(pts[i-1][1], pts[i][1], k);
+    }
+  }
+  return pts[pts.length-1][1];
+}
+function env(param, pts, from, now, mul){
+  mul = mul===undefined?1:mul;
+  param.setValueAtTime(Math.max(0.0001, valueAt(pts,from)*mul), now);
+  for(let i=0;i<pts.length;i++){
+    if(pts[i][0] > from) param.linearRampToValueAtTime(Math.max(0.0001, pts[i][1]*mul), now + (pts[i][0]-from));
+  }
+}
+function hit(when, gain, lowF){
+  if(when < 0) return;
+  const now = actx.currentTime + when;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type="sine"; o.frequency.setValueAtTime(lowF||110, now);
+  o.frequency.exponentialRampToValueAtTime(34, now+0.5);
+  g.gain.setValueAtTime(gain, now); g.gain.exponentialRampToValueAtTime(0.0005, now+0.75);
+  o.connect(g); g.connect(master()); o.start(now); o.stop(now+0.85); live.push(o);
+  const n = noise(), ng = actx.createGain(), f = actx.createBiquadFilter();
+  f.type="highpass"; f.frequency.value=900;
+  ng.gain.setValueAtTime(gain*0.5, now); ng.gain.exponentialRampToValueAtTime(0.0005, now+0.30);
+  n.connect(f); f.connect(ng); ng.connect(master()); n.start(now); n.stop(now+0.4); live.push(n);
+}
+let _master = null;
+function master(){ return _master; }
+
+function buildAudio(from){
+  ensureCtx(); if(!actx) return;
+  if(actx.state==="suspended") actx.resume();
+  stopAudio();
+  const now = actx.currentTime + 0.05;
+  _master = actx.createGain();
+  _master.gain.setValueAtTime(0, now);
+  _master.gain.linearRampToValueAtTime(soundOn?1:0, now+0.12);
+  _master.connect(comp); live.push(_master);
+
+  /* --- ドローン（低音の基盤） --- */
+  const dl = actx.createBiquadFilter(); dl.type="lowpass"; dl.frequency.value=340; dl.Q.value=1.2;
+  const dg = actx.createGain(); dl.connect(dg); dg.connect(_master);
+  env(dg.gain, [[0,0.001],[0.6,0.09],[5,0.11],[14.6,0.15],[15,0.22],[22,0.26],[27.9,0.16],[28,0.19],
+                [37.9,0.15],[38,0.14],[43.9,0.11],[46.5,0.07],[48,0.0005]], from, now);
+  [55, 82.5, 110].forEach(function(f,i){
+    const o=actx.createOscillator(); o.type= i===2?"triangle":"sawtooth";
+    o.frequency.value=f; o.detune.value=(i-1)*6;
+    const g=actx.createGain(); g.gain.value= i===2?0.35:0.6;
+    o.connect(g); g.connect(dl); o.start(now); o.stop(now+(DUR-from)+1); live.push(o);
+  });
+  const lfo=actx.createOscillator(), lg=actx.createGain();
+  lfo.frequency.value=0.09; lg.gain.value=160; lfo.connect(lg); lg.connect(dl.frequency);
+  lfo.start(now); lfo.stop(now+(DUR-from)+1); live.push(lfo);
+
+  /* --- パッド（和音） --- */
+  function pad(t0,t1,freqs,gain){
+    if(t1<=from) return;
+    const s=Math.max(0,t0-from), e=t1-from;
+    const g=actx.createGain(); g.connect(_master);
+    g.gain.setValueAtTime(0.0001, now+s);
+    g.gain.linearRampToValueAtTime(gain, now+s+1.1);
+    g.gain.setValueAtTime(gain, now+Math.max(s+1.1, e-1.4));
+    g.gain.linearRampToValueAtTime(0.0001, now+e);
+    const f=actx.createBiquadFilter(); f.type="lowpass"; f.frequency.value=1500; f.connect(g);
+    freqs.forEach(function(fr,i){
+      const o=actx.createOscillator(); o.type="triangle"; o.frequency.value=fr; o.detune.value=(i%2?7:-7);
+      const og=actx.createGain(); og.gain.value=0.32/freqs.length*3;
+      o.connect(og); og.connect(f); o.start(now+s); o.stop(now+e+0.2); live.push(o);
+    });
+  }
+  pad(15.0, 28.2, [220, 261.63, 329.63], 0.055);     // Am
+  pad(28.0, 38.2, [246.94, 293.66, 369.99], 0.05);   // 転回
+  pad(38.0, 44.5, [261.63, 329.63, 392.00], 0.062);  // C（上向き）
+  pad(44.2, 48.0, [174.61, 261.63, 349.23], 0.052);  // 余韻
+
+  /* --- パルス（拍） --- */
+  const grid = [[5,15,1.5,0.16],[15,28,0.75,0.30],[28,38,0.75,0.24],[38,44,1.5,0.18]];
+  for(let s=0;s<grid.length;s++){
+    for(let bt=grid[s][0]; bt<grid[s][1]; bt+=grid[s][2]){
+      if(bt<from) continue;
+      const w = bt-from;
+      const o=actx.createOscillator(), g=actx.createGain();
+      o.type="sine"; o.frequency.setValueAtTime(78, now+w);
+      o.frequency.exponentialRampToValueAtTime(40, now+w+0.14);
+      g.gain.setValueAtTime(grid[s][3], now+w);
+      g.gain.exponentialRampToValueAtTime(0.0005, now+w+0.30);
+      o.connect(g); g.connect(_master); o.start(now+w); o.stop(now+w+0.34); live.push(o);
+    }
+  }
+
+  /* --- インパクト --- */
+  [[15.0,0.5],[18.2,0.36],[22.4,0.4],[25.2,0.3],[28.0,0.42],[38.0,0.34],[44.2,0.5]].forEach(function(h){
+    if(h[0]>=from) hit(h[0]-from, h[1], 120);
+  });
+  // ワーク着座
+  if(17.9>=from){
+    const w=17.9-from, n=noise(), f=actx.createBiquadFilter(), g=actx.createGain();
+    f.type="bandpass"; f.frequency.value=1800; f.Q.value=1.6;
+    g.gain.setValueAtTime(0.30, now+w); g.gain.exponentialRampToValueAtTime(0.0005, now+w+0.7);
+    n.connect(f); f.connect(g); g.connect(_master); n.start(now+w); n.stop(now+w+0.8); live.push(n);
+  }
+
+  /* --- 工場のアンビエンス（機械のハム） --- */
+  const hn=noise(), hf=actx.createBiquadFilter(), hg=actx.createGain();
+  hf.type="lowpass"; hf.frequency.value=260; hf.Q.value=0.8;
+  env(hg.gain, [[0,0.001],[1.2,0.035],[15,0.055],[22,0.06],[28,0.04],[38,0.03],[43.5,0.02],[46,0.004],[48,0.0005]], from, now);
+  hn.connect(hf); hf.connect(hg); hg.connect(_master);
+  hn.start(now); hn.stop(now+(DUR-from)+0.5); live.push(hn);
+
+  /* --- 切削音 --- */
+  const cn=noise(), cf=actx.createBiquadFilter(), cg=actx.createGain();
+  cf.type="bandpass"; cf.frequency.value=2600; cf.Q.value=1.1;
+  env(cg.gain, [[0,0.0005],[11.5,0.0005],[11.9,0.022],[14.4,0.0005],[18.3,0.0005],[18.6,0.05],
+                [22.4,0.055],[22.5,0.075],[25.1,0.05],[25.3,0.0005],[48,0.0005]], from, now);
+  const cl=actx.createOscillator(), clg=actx.createGain();
+  cl.frequency.value=13; clg.gain.value=1200; cl.connect(clg); clg.connect(cf.frequency);
+  cl.start(now); cl.stop(now+(DUR-from)+0.5); live.push(cl);
+  cn.connect(cf); cf.connect(cg); cg.connect(_master);
+  cn.start(now); cn.stop(now+(DUR-from)+0.5); live.push(cn);
+
+  /* --- クレーンのモーター音 --- */
+  if(18.2>from){
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type="sawtooth"; o.frequency.value=180;
+    const f=actx.createBiquadFilter(); f.type="lowpass"; f.frequency.value=700;
+    env(g.gain, [[0,0.0005],[15,0.0005],[15.3,0.016],[17.6,0.014],[18.0,0.0005],[48,0.0005]], from, now);
+    o.connect(f); f.connect(g); g.connect(_master);
+    o.start(now); o.stop(now+Math.max(0.1, 18.3-from)); live.push(o);
+  }
+
+  /* --- エアブロー --- */
+  [29.9, 33.9, 35.9].forEach(function(at){
+    if(at<from) return;
+    const w=at-from, n=noise(), f=actx.createBiquadFilter(), g=actx.createGain();
+    f.type="highpass"; f.frequency.value=3200;
+    g.gain.setValueAtTime(0.0001, now+w);
+    g.gain.linearRampToValueAtTime(0.030, now+w+0.05);
+    g.gain.exponentialRampToValueAtTime(0.0005, now+w+0.42);
+    n.connect(f); f.connect(g); g.connect(_master); n.start(now+w); n.stop(now+w+0.5); live.push(n);
+  });
+
+  /* --- 見せ場へのライザー --- */
+  if(15>from){
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type="sawtooth";
+    const st=Math.max(0, 12.4-from);
+    o.frequency.setValueAtTime(90, now+st);
+    o.frequency.exponentialRampToValueAtTime(760, now+Math.max(st+0.1, 15-from));
+    const f=actx.createBiquadFilter(); f.type="bandpass"; f.frequency.value=900; f.Q.value=2.4;
+    g.gain.setValueAtTime(0.0001, now+st);
+    g.gain.linearRampToValueAtTime(0.05, now+Math.max(st+0.1, 14.9-from));
+    g.gain.linearRampToValueAtTime(0.0001, now+Math.max(st+0.2, 15.25-from));
+    o.connect(f); f.connect(g); g.connect(_master);
+    o.start(now+st); o.stop(now+Math.max(st+0.3, 15.4-from)); live.push(o);
+  }
+}
+function stopAudio(){
+  for(let i=0;i<live.length;i++){
+    try{ if(live[i].stop) live[i].stop(); }catch(e){}
+    try{ live[i].disconnect(); }catch(e){}
+  }
+  live = [];
+}
+
+/* ============================================================
+   字幕
+   ============================================================ */
+const subsEl = document.getElementById("subs");
+const subText = document.getElementById("subtext");
+let ccOn = true, lastSub = null;
+function updateSubs(t){
+  let s = "";
+  for(let i=0;i<NARR.length;i++){ if(t>=NARR[i][0] && t<=NARR[i][1]) s = NARR[i][2]; }
+  if(s !== lastSub){ lastSub = s; subText.textContent = s; }
+  const covered = !coverEl.classList.contains("hide");
+  subsEl.style.opacity = (ccOn && s && !covered) ? "1" : "0";
+}
+
+/* ============================================================
+   トランスポート
+   ============================================================ */
+let playing = false, pos = 0, last = 0, raf = 0;
+const playBtn = document.getElementById("play");
+const playIcon= document.getElementById("playicon");
+const coverEl = document.getElementById("cover");
+const fillEl  = document.getElementById("fill");
+const rangeEl = document.getElementById("range");
+const timeEl  = document.getElementById("time");
+
+const ICON_PLAY  = "M7 4l14 8-14 8z";
+const ICON_PAUSE = "M6 4h4v16H6zM14 4h4v16h-4z";
+
+function fmt(s){
+  s = Math.max(0, Math.floor(s));
+  return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+}
+function ui(){
+  const k = pos/DUR;
+  fillEl.style.width = (k*100)+"%";
+  rangeEl.value = pos;
+  timeEl.textContent = fmt(pos)+" / "+fmt(DUR);
+  let idx = 0;
+  for(let i=0;i<CHAPTERS.length;i++) if(pos>=CHAPTERS[i].t) idx=i;
+  const els = chapsEl.children;
+  for(let i=0;i<els.length;i++) els[i].classList.toggle("on", i===idx);
+}
+function loop(now){
+  raf = requestAnimationFrame(loop);
+  const dt = last ? (now-last)/1000 : 0;
+  last = now;
+  if(playing){
+    pos += Math.min(dt, 0.12);
+    if(pos >= DUR){ pos = DUR; pause(); }
+  }
+  render(pos);
+  ui();
+}
+function play(){
+  if(pos >= DUR-0.02) pos = 0;
+  playing = true;
+  playIcon.setAttribute("d", ICON_PAUSE);
+  playBtn.setAttribute("aria-label","一時停止");
+  coverEl.classList.add("hide");
+  buildAudio(pos);
+}
+function pause(){
+  playing = false;
+  playIcon.setAttribute("d", ICON_PLAY);
+  playBtn.setAttribute("aria-label","再生");
+  stopAudio();
+  if(pos >= DUR-0.02) coverEl.classList.remove("hide");
+}
+function seek(v){
+  pos = clamp(v, 0, DUR);
+  render(pos); ui();
+  if(playing) buildAudio(pos);
+}
+
+playBtn.addEventListener("click", function(){ playing ? pause() : play(); });
+coverEl.addEventListener("click", function(){ play(); });
+document.getElementById("restart").addEventListener("click", function(){ seek(0); if(!playing) play(); });
+rangeEl.addEventListener("input", function(){ seek(parseFloat(rangeEl.value)); });
+
+const soundBtn = document.getElementById("sound");
+soundBtn.addEventListener("click", function(){
+  soundOn = !soundOn;
+  soundBtn.setAttribute("aria-pressed", String(soundOn));
+  soundBtn.textContent = soundOn ? "音声 ON" : "音声 OFF";
+  if(_master && actx) _master.gain.setTargetAtTime(soundOn?1:0, actx.currentTime, 0.03);
+});
+const ccBtn = document.getElementById("cc");
+ccBtn.addEventListener("click", function(){
+  ccOn = !ccOn;
+  ccBtn.setAttribute("aria-pressed", String(ccOn));
+  ccBtn.textContent = ccOn ? "字幕 ON" : "字幕 OFF";
+  updateSubs(pos);
+});
+document.addEventListener("keydown", function(e){
+  if(e.code==="Space"){ e.preventDefault(); playing?pause():play(); }
+  if(e.code==="ArrowRight") seek(pos+1);
+  if(e.code==="ArrowLeft")  seek(pos-1);
+});
+
+/* チャプター */
+const chapsEl = document.getElementById("chaps");
+CHAPTERS.forEach(function(c){
+  const b = document.createElement("button");
+  b.className = "chap";
+  b.innerHTML = "<b>"+c.n+"</b><i>"+c.r+"</i>";
+  b.addEventListener("click", function(){ seek(c.t); });
+  chapsEl.appendChild(b);
+});
+// スクラブのシーンマーカー
+const scrubEl = document.getElementById("scrub");
+CHAPTERS.forEach(function(c){
+  if(c.t===0) return;
+  const m = document.createElement("div");
+  m.className = "mark"; m.style.left = (c.t/DUR*100)+"%";
+  scrubEl.appendChild(m);
+});
+
+/* カット表 */
+const cutsEl = document.getElementById("cuts");
+CUTS.forEach(function(c){
+  const d = document.createElement("div");
+  d.className = "cut";
+  d.innerHTML =
+    '<div class="tc">'+c.tc+'<small>'+c.d+'</small></div>'+
+    '<div><h3>'+c.h+'</h3><p>'+c.p+'</p>'+
+    c.tel.map(function(x){ return '<span class="telop">'+x+'</span>'; }).join("")+
+    '<div class="nar">'+c.n+'</div></div>';
+  cutsEl.appendChild(d);
+});
+
+/* 起動 */
+function boot(){
+  resize();
+  pos = 2.2;              // ポスターフレーム
+  render(pos); ui();
+  pos = 0; ui();
+  raf = requestAnimationFrame(loop);
+}
+if(document.fonts && document.fonts.load){
+  Promise.all([
+    document.fonts.load('900 80px "Noto Sans JP"'),
+    document.fonts.load('700 40px "Noto Sans JP"'),
+    document.fonts.load('500 24px "Noto Sans JP"')
+  ]).catch(function(){}).then(function(){
+    boot();
+    // ポスターフレームを描画（未再生時）
+    if(!playing){ base(); ctx.clearRect(0,0,W,H); sceneOP(2.2); }
+  });
+}else{
+  boot();
+  if(!playing){ base(); ctx.clearRect(0,0,W,H); sceneOP(2.2); }
+}
+})();
+</script>
+<!-- ARTIFACT:END -->
+</body>
+</html>
