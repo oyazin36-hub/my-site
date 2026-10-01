@@ -25,15 +25,20 @@ REFS = {
     "okazaki":  PLACE.format(d="the city of Okazaki in Aichi seen from a hill, with the Yahagi River flowing through it"),
 }
 
-for name, prompt in REFS.items():
-    if len(sys.argv) > 1 and name not in sys.argv[1:]:
-        continue
-    r = call("POST", "models/gemini-3.1-flash-image:generateContent", {
-        "contents": [{"parts": [{"text": prompt + STYLE}]}],
-        "generationConfig": {"responseModalities": ["IMAGE"], "imageConfig": {"aspectRatio": "16:9"}},
-    })
-    parts = r["candidates"][0]["content"]["parts"]
-    img = next(p["inlineData"] for p in parts if "inlineData" in p)
-    ext = "png" if "png" in img["mimeType"] else "jpg"
-    open(f"refs/{name}.{ext}", "wb").write(base64.b64decode(img["data"]))
-    print("ok", name, img["mimeType"], flush=True)
+def main():
+    for name, prompt in REFS.items():
+        if len(sys.argv) > 1 and name not in sys.argv[1:]:
+            continue
+        r = call("POST", "models/gemini-3.1-flash-image:generateContent", {
+            "contents": [{"parts": [{"text": prompt + STYLE}]}],
+            "generationConfig": {"responseModalities": ["IMAGE"], "imageConfig": {"aspectRatio": "16:9"}},
+        })
+        parts = r["candidates"][0]["content"]["parts"]
+        img = next(p["inlineData"] for p in parts if "inlineData" in p)
+        ext = "png" if "png" in img["mimeType"] else "jpg"
+        open(f"refs/{name}.{ext}", "wb").write(base64.b64decode(img["data"]))
+        print("ok", name, img["mimeType"], flush=True)
+
+
+if __name__ == "__main__":
+    main()
