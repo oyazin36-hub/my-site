@@ -1,9 +1,10 @@
 # カット表の未生成カットを Veo 3.1 Fast でまとめて生成する: python3 make_all.py [カット番号...]
-import os, subprocess, sys, time, urllib.request
+import base64, os, subprocess, sys, time, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from common import call, b64, KEY
 from cuts import CUTS
 from make_clip import STYLE, NEGATIVE, MODEL
+MODEL = os.environ.get("VEO_MODEL", MODEL)
 
 def generate(cut):
     no = cut["no"]
@@ -18,7 +19,22 @@ def generate(cut):
         last = f"frames/cut{cut['frame']}_last.jpg"
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-sseof", "-0.1", "-i", prev, "-frames:v", "1", last], check=True)
         inst["image"] = {"bytesBase64Encoded": b64(last), "mimeType": "image/jpeg"}
-    if cut.get("refs"):
+    if cut.get("refs") and "lite" in MODEL:
+        # Lite は参照画像を受け付けないので、参照画像から最初のコマを絵にして、それを動かす
+        first = f"frames/cut{no}_first.jpg"
+        if not os.path.exists(first):
+            parts = [{"inlineData": {"mimeType": "image/jpeg", "data": b64(f"refs/{r}.jpg")}} for r in cut["refs"]]
+            parts.append({"text": "Using the attached character and location references (keep faces, hair, clothing and "
+                          "places exactly the same), draw the first frame of this shot as a single 16:9 film still: "
+                          f"{cut['prompt']} {STYLE}"})
+            r = call("POST", "models/gemini-3.1-flash-image:generateContent", {
+                "contents": [{"parts": parts}],
+                "generationConfig": {"responseModalities": ["IMAGE"], "imageConfig": {"aspectRatio": "16:9"}},
+            })
+            img = next(p["inlineData"] for p in r["candidates"][0]["content"]["parts"] if "inlineData" in p)
+            open(first, "wb").write(base64.b64decode(img["data"]))
+        inst["image"] = {"bytesBase64Encoded": b64(first), "mimeType": "image/jpeg"}
+    elif cut.get("refs"):
         inst["referenceImages"] = [{"image": {"bytesBase64Encoded": b64(f"refs/{r}.jpg"), "mimeType": "image/jpeg"},
                                     "referenceType": "asset"} for r in cut["refs"]]
     params = {"aspectRatio": "16:9", "durationSeconds": 8}
