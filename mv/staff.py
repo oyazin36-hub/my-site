@@ -4,9 +4,9 @@
 STAFF = {
  "part_pony":   ("パート（掃除・雑務）50代女性、ポニーテール", "a beautiful Japanese woman in her fifties with dark brown hair in a neat ponytail, part-time staff in a light work apron, gentle smile"),
  "part_okami":  ("パート・先代社長の奥さん 70代女性、暗めの茶髪", "a warm Japanese woman in her seventies with soft dark brown hair, cardigan over a work apron, the late founder's wife who watches over everyone"),
- "new_shy":     ("新人 20代男性、少し内気", "a slightly shy young Japanese man in his twenties with short black hair, new navy work uniform, modest reserved expression"),
- "new_viet":    ("新人 35歳くらいのベトナム人男性、おしゃべりで一生懸命", "a cheerful Vietnamese man around thirty-five with short black hair and a big friendly grin, navy work uniform, talkative and hardworking"),
- "new_pony_m":  ("新人 50代男性、ポニーテール、気さく", "a friendly easygoing Japanese man in his fifties with long jet-black hair (no grey at all) tied in a ponytail, navy work uniform"),
+ "new_shy":     ("新人（大物金属加工） 20代男性、少し内気", "a slightly shy young Japanese man in his twenties with short black hair, new navy work uniform, modest reserved expression"),
+ "new_viet":    ("新人（大物金属加工） 35歳くらいのベトナム人男性、おしゃべりで一生懸命", "a cheerful Vietnamese man around thirty-five with short black hair and a big friendly grin, navy work uniform, talkative and hardworking"),
+ "new_pony_m":  ("新人（大物金属加工） 50代男性、ポニーテール、気さく", "a friendly easygoing Japanese man in his fifties with long jet-black hair (no grey at all) tied in a ponytail, navy work uniform"),
  "new_glasses": ("新人 55歳くらいの男性、メガネ、物知り", "a knowledgeable Japanese man around fifty-five with glasses and neatly combed black hair, navy work uniform, thoughtful look"),
  "machinist":   ("金属加工の熟練工 50代男性、眼鏡・短髪・細身", "a slim Japanese master machinist in his fifties with short black hair and glasses, navy work uniform, calm focused eyes"),
  "assembler":   ("装置組付けの熟練工 50代男性、眼鏡・髭・大柄", "a sturdy, slightly large Japanese master assembler in his fifties with short black hair, glasses and a short black beard, navy work uniform, reliable presence"),
