@@ -19,7 +19,8 @@ parts, STANDINS = [], []
 for i, (no, s, e) in enumerate(TIMELINE):
     src, dst, dur = f"clips/cut{no}.mp4", f"out/trim/{i:02d}_{no}.mp4", e - s
     if not os.path.exists(src):
-        src = f"clips/cut{STANDIN[no]}.mp4"
+        old = f"clips/fictional/cut{no}.mp4"  # 社員版がまだなら、前の架空の人物版を仮に使う
+        src = old if os.path.exists(old) else f"clips/cut{STANDIN[no]}.mp4"
         STANDINS.append((s, e, no))
     off = min((CLIP - dur) / 2, 1.5) if dur < CLIP else 0
     speed = f"setpts=PTS*{dur / CLIP:.4f}," if dur > CLIP else ""

@@ -157,3 +157,39 @@ TAGS = [(2.1, 7.1, "1948"), (7.7, 14.0, "2026"), (21.2, 27.1, "岡崎"), (158.4,
 
 # 最後の社名（ロゴの代わり）の表示開始秒
 LOGO_AT = 259.5
+
+# 社員の皆さんで作り直すカット（架空の人物から差し替え）。ここにある番号は CUTS の同じ番号を上書きする
+RECAST = {
+ "04": (["part_okami", "factory"], "In the bright present-day factory, the late founder's elderly wife with soft brown hair gently picks up an old sepia photograph of the 1948 workshop and smiles softly."),
+ "05": (["adv_all", "factory"], "Slow dolly back from the dignified senior advisor in his seventies, revealing a bright, spacious modern factory around him; colleagues working in the background."),
+ "07": (["machinist", "factory"], "Close-up. The slim master machinist with glasses measures a polished metal part with a micrometer, focused eyes, then a macro shot of his fingertips adjusting the dial."),
+ "08": (["adv_slim", "des_smile"], "The slim elderly advisor draws a machine design with a pencil at a wooden drafting table, then hands the rolled drawing to the smiling designer with glasses, who receives it with both hands."),
+ "09": (["des_white", "des_smile"], "Two-shot at a workbench. The white-haired senior designer unrolls an old hand-drawn blueprint; the smiling designer with glasses holds a tablet showing the same part in CAD. They compare and nod."),
+ "11": (["machinist", "factory"], "Close-up profile of the slim master machinist with glasses pressing buttons on a machine control panel, determined expression, rim light."),
+ "12": (["des_smile", "office"], "Over-the-shoulder shot of the smiling designer with glasses working in CAD; lines on the monitor assemble into a 3D machine part."),
+ "14": (["des_white", "assembler", "new_glasses"], "A small team gathered around a large blueprint on a table, pointing and laughing together, warm window light."),
+ "15": (["president", "vp", "new_viet"], "Back view of employees walking together toward a wide-open factory door filled with bright light, camera following low."),
+ "18": (["assembler", "new_pony_m"], "Close-up of hands assembling a special-purpose machine, tightening bolts with a torque wrench, then a medium shot of the bearded master assembler teaching the new recruit with a ponytail."),
+ "19": (["des_smile", "assembler"], "The smiling designer with glasses and the bearded master assembler stand in front of a finished machine, exchange a nod and a small smile."),
+ "20": (["insp_woman", "qc_chief"], "A clean inspection room; a coordinate measuring machine probe touches a metal part while the short-haired inspector records results and the quality chief checks over her shoulder."),
+ "21": (["president", "vp"], "A carefully wrapped machine part is loaded onto a truck; the company president and the petite vice president bow politely as the truck departs in the afternoon light."),
+ "22": (["adv_big", "new_shy"], "Close-up: the elderly machining advisor places his weathered hand over the hand of a shy young recruit, guiding how to hold a precision tool."),
+ "23": (["assembler", "new_viet", "part_pony"], "A new machine powers on with its indicator lights; employees around it applaud and smile, the Vietnamese recruit cheering happily."),
+ "24": (["des_white", "new_glasses", "new_shy"], "The white-haired senior designer explains a sketch on a whiteboard to two new recruits who nod with interest."),
+ "27": (["president", "vp", "clerk"], "Morning assembly in the factory: the president speaks to the employees standing in a row, the vice president beside him, everyone listening, soft morning light."),
+ "28": (["new_viet", "part_okami", "part_pony"], "Lunch break: employees laughing together while eating bento boxes at a long table; the talkative Vietnamese recruit tells a story, relaxed and warm."),
+ "29": (["vp", "office"], "The petite vice president by the office window turns toward the camera and smiles warmly, sunlight on her face."),
+ "32": (["machinist", "factory"], "Close-up in full color, present day: the master machinist's hands operate the control panel of a modern machine."),
+ "33": (["adv_slim", "new_shy"], "A pencil-drawn blueprint slowly dissolves into the same design on a CAD screen; an old hand and a young hand rest side by side on the desk."),
+ "34": (["adv_big", "new_pony_m", "factory"], "A massive machined steel part is slowly lifted by an overhead crane, the elderly advisor and a worker guiding it, camera tilting up with it."),
+ "35": (["president", "vp", "adv_all"], "All twenty-one employees of a small company gathered in front of the factory, smiling, the president and vice president in the center; the camera pulls back and rises to reveal the whole group."),
+ "36": (["adv_all", "new_shy"], "The elderly senior advisor and the shy young recruit stand side by side looking up at a finished machine, light on their faces."),
+ "38": (["new_viet", "insp_woman", "clerk"], "Employees look up toward bright light with determined smiles, wind moving their hair, camera slowly pushing in."),
+ "42": (["adv_big", "factory"], "Close-up: the elderly machining advisor slowly runs his fingertip along a freshly machined, mirror-smooth metal surface, checking it against the light with a straightedge, utterly focused."),
+ "43": (["assembler", "des_smile", "factory"], "A cover cloth is pulled off a newly finished special-purpose machine in the factory; the bearded assembler and the designer look at it proudly."),
+ "45": (["president", "des_white", "factory"], "In the factory, the president and the white-haired designer show a finished machine to a visiting client in a suit; the client nods, impressed, and they shake hands."),
+}
+for _c in CUTS:
+    if _c["no"] in RECAST:
+        _c["refs"], _c["prompt"] = RECAST[_c["no"]]
+        _c.pop("frame", None)
