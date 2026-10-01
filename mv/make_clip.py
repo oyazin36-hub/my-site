@@ -1,11 +1,11 @@
 # カット表の 1 カットを Veo 3.1 で生成する: python3 make_clip.py 06
-import sys, time, urllib.request
+import os, sys, time, urllib.request
 from common import call, KEY
 
 STYLE = ("Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, "
          "muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.")
 NEGATIVE = "drilling, plunging down, wobbling, curved path, zigzag, flying metal chips, piles of shavings, debris scattering, stone, concrete, rock, cracks, cracked surface, sparks, flying sparks, sparkles, embers, fire, text, letters, logos, watermark, photorealistic"
-MODEL = "veo-3.1-fast-generate-preview"
+MODEL = os.environ.get("VEO_MODEL", "veo-3.1-fast-generate-preview")
 
 CUTS = {
     "06": "Low-angle side shot. The spindle of a large gantry-type machining center, fitted with a wide face mill, "
