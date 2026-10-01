@@ -18,6 +18,8 @@ STAFF = {
  "adv_all":     ("顧問 70代男性、全部門の相談役（元・装置部門）", "a dignified Japanese man in his seventies, senior advisor to all departments, grey hair, navy work jacket, wise gentle eyes"),
  "adv_big":     ("顧問 70代男性、大物金属加工の相談役", "a strong-looking Japanese man in his seventies, advisor for large-part machining, short white hair, navy work jacket, weathered hands"),
  "adv_slim":    ("顧問 70代男性、細身、装置の構想・技術の相談役", "a slim, intellectual Japanese man in his seventies, advisor on machine design concepts, thin white hair, navy work jacket"),
+ "driver":      ("製品を 3t トラックで運ぶ 70代男性、小柄・丁寧・笑顔", "a small, polite Japanese truck driver in his seventies with a wonderful warm smile, short grey hair, cap and navy work jacket, careful and courteous"),
+ "concept":     ("装置の構想担当 70代男性、少しふくよか・元気で知的・笑顔", "a cheerful, slightly plump Japanese man in his seventies who conceives machine concepts, bright intelligent eyes, always smiling, white shirt and navy work vest, energetic"),
  "president":   ("社長 40歳くらいの男性", "a Japanese company president around forty with neat short black hair, navy company work jacket over a shirt, determined and warm"),
  "vp":          ("副社長 50代の小柄な女性、おっとりしつつキリッと", "a petite Japanese woman in her fifties, the vice president, neat short hair, company work jacket, gentle yet sharp and dignified, motherly"),
 }

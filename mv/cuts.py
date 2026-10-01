@@ -172,10 +172,10 @@ RECAST = {
  "18": (["assembler", "new_pony_m"], "Close-up of hands assembling a special-purpose machine, tightening bolts with a torque wrench, then a medium shot of the bearded master assembler teaching the new recruit with a ponytail."),
  "19": (["des_smile", "assembler"], "The smiling designer with glasses and the bearded master assembler stand in front of a finished machine, exchange a nod and a small smile."),
  "20": (["insp_woman", "qc_chief"], "A clean inspection room; a coordinate measuring machine probe touches a metal part while the short-haired inspector records results and the quality chief checks over her shoulder."),
- "21": (["president", "vp"], "A carefully wrapped machine part is loaded onto a truck; the company president and the petite vice president bow politely as the truck departs in the afternoon light."),
+ "21": (["driver", "president", "vp"], "A carefully wrapped machined metal part is loaded onto a 3-ton truck by the small, smiling elderly driver; he waves from the driver's seat as the president and the petite vice president bow politely, afternoon light."),
  "22": (["adv_big", "new_shy"], "Close-up: the elderly machining advisor places his weathered hand over the hand of a shy young recruit, guiding how to hold a precision tool."),
  "23": (["assembler", "new_viet", "part_pony"], "A new machine powers on with its indicator lights; employees around it applaud and smile, the Vietnamese recruit cheering happily."),
- "24": (["des_white", "new_glasses", "new_shy"], "The white-haired senior designer explains a sketch on a whiteboard to two new recruits who nod with interest."),
+ "24": (["concept", "new_glasses", "new_shy"], "The cheerful, slightly plump elderly concept designer explains a sketch on a whiteboard to two new recruits who nod with interest."),
  "27": (["president", "vp", "clerk"], "Morning assembly in the factory: the president speaks to the employees standing in a row, the vice president beside him, everyone listening, soft morning light."),
  "28": (["new_viet", "part_okami", "part_pony"], "Lunch break: employees laughing together while eating bento boxes at a long table; the talkative Vietnamese recruit tells a story, relaxed and warm."),
  "29": (["vp", "office"], "The petite vice president by the office window turns toward the camera and smiles warmly, sunlight on her face."),
@@ -187,9 +187,14 @@ RECAST = {
  "38": (["new_viet", "insp_woman", "clerk"], "Employees look up toward bright light with determined smiles, wind moving their hair, camera slowly pushing in."),
  "42": (["adv_big", "factory"], "Close-up: the elderly machining advisor slowly runs his fingertip along a freshly machined, mirror-smooth metal surface, checking it against the light with a straightedge, utterly focused."),
  "43": (["assembler", "des_smile", "factory"], "A cover cloth is pulled off a newly finished special-purpose machine in the factory; the bearded assembler and the designer look at it proudly."),
- "45": (["president", "des_white", "factory"], "In the factory, the president and the white-haired designer show a finished machine to a visiting client in a suit; the client nods, impressed, and they shake hands."),
+ "45": (["concept", "president", "office"], "In a meeting room, a client in a suit explains their needs while the cheerful elderly concept designer listens with a big smile and quickly sketches a machine idea; the president nods; the client leans in, delighted."),
+ # お客様・仕入れ先様
+ "48": (["adv_big", "machinist", "factory"], "Early morning at the factory gate: a partner supplier's truck delivers large steel plates; the supplier's staff and the factory's elderly advisor and machinist greet each other with bows and smiles, checking the material together."),
 }
 for _c in CUTS:
     if _c["no"] in RECAST:
         _c["refs"], _c["prompt"] = RECAST[_c["no"]]
         _c.pop("frame", None)
+
+# 最後の社名の下に出す感謝の一文: (開始秒, 終了秒, 文字)
+ENDNOTE = (262.0, 275.8, "お客様・仕入れ先様、そして 21 名の社員に支えられて")

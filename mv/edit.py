@@ -1,7 +1,7 @@
 # 生成したカットを実際の曲に合わせてつなぎ、歌詞テロップと年号・地名・社名を入れて書き出す
 # python3 edit.py [曲ファイル]   → out/mv.mp4
 import os, subprocess, sys
-from cuts import TIMELINE, LYRICS, TAGS, LOGO_AT
+from cuts import TIMELINE, LYRICS, TAGS, LOGO_AT, ENDNOTE
 
 # まだ生成できていないカットは、似た場面の生成済みカットで仮に埋める（右上に「仮」と出す）
 STANDIN = {"26": "01", "32": "11", "33": "09", "34": "13", "35": "27", "36": "09", "37": "10", "38": "15",
@@ -45,6 +45,7 @@ ass = [
 ass += [f"Dialogue: 0,{ts(a)},{ts(b - 0.05)},Lyric,{{\\fad(120,120)}}{t}" for a, b, t in LYRICS]
 ass += [f"Dialogue: 0,{ts(a)},{ts(b)},Tag,{{\\fad(300,300)}}{t}" for a, b, t in TAGS]
 ass += [f"Dialogue: 0,{ts(a)},{ts(b)},Temp,仮（カット{n} 未生成）" for a, b, n in STANDINS]
+ass.append(f"Dialogue: 0,{ts(ENDNOTE[0])},{ts(ENDNOTE[1])},Lyric,{{\\fad(800,1200)}}{ENDNOTE[2]}")
 end = TIMELINE[-1][2]
 ass.append(f"Dialogue: 0,{ts(LOGO_AT)},{ts(end)},Logo,{{\\fad(800,1200)}}原マシナリー\\N{{\\fs34}}since 1948")
 open("out/mv.ass", "w").write("\n".join(ass) + "\n")
