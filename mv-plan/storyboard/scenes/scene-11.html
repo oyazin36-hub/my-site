@@ -1,0 +1,81 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<style>
+.hud{position:absolute;font-size:18px;color:var(--silver);opacity:.7;letter-spacing:.18em}
+.grid{position:absolute;inset:-40px;display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(4,1fr);gap:10px;opacity:.5;transform:rotate(-4deg) scale(1.08)}
+.grid .photo{position:relative}
+.grid .photo::after{font-size:18px;left:14px;bottom:12px}
+.shade{position:absolute;inset:0;background:radial-gradient(ellipse 60% 55% at 50% 42%, rgba(14,22,38,.55), rgba(14,22,38,.92) 80%)}
+.year{position:absolute;left:0;right:0;top:150px;text-align:center;font-size:400px;line-height:1;letter-spacing:.02em;
+ background:linear-gradient(100deg,#8E9BAE 0%,#F4F6FA 30%,#C9D2DE 42%,#FFF3DE 49%,#E8A33D 50.5%,#F4F6FA 53%,#A9B5C6 70%,#E4E9F0 100%);-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 18px 40px rgba(0,0,0,.5))}
+.lyric small{color:var(--silver)}
+#cv{position:absolute;inset:0}
+.word{position:absolute;left:0;right:0;top:300px;text-align:center;font-size:190px;letter-spacing:.12em;padding-left:.12em;
+ color:#C9D2DE;
+ text-shadow:0 1px 0 #AEB9C8,0 2px 0 #A3AEBD,0 3px 0 #97A3B3,0 4px 0 #8C98A9,0 5px 0 #808C9E,0 6px 0 #758194,0 7px 0 #6A768A,0 8px 0 #5F6B80,0 9px 0 #556176,0 10px 0 #4B576C,0 11px 0 #3A4A63,0 12px 0 #2E3B52,0 14px 3px rgba(0,0,0,.5),0 0 60px rgba(14,22,38,.7),0 30px 80px rgba(14,22,38,.8);}
+.wordface{position:absolute;left:0;right:0;top:300px;text-align:center;font-size:190px;letter-spacing:.12em;padding-left:.12em;
+ background:linear-gradient(105deg,#B6C1CF 0%,#EEF2F7 28%,#9AA7B8 40%,#FFFFFF 47%,#FFE2B0 49%,#E8A33D 50%,#FFFFFF 52%,#A7B3C3 62%,#DDE3EB 85%,#9FAABA 100%);-webkit-background-clip:text;color:transparent}
+</style></head><body>
+<div class="frame" id="fr"></div>
+<script>
+const f=new URLSearchParams(location.search).get('f')||'a';
+const fr=document.getElementById('fr');function html(s){fr.insertAdjacentHTML('beforeend',s);}
+if(f==='a'){
+  const labels=['写真：門型5面加工機（HPより）','写真：大型ワーク','写真：社員','写真：設計','写真：工場外観','写真：測定','写真：航空部品','写真：自動車部品','写真：チーム','写真：特殊機械','写真：創業期','写真：ガラス加工','写真：石英部品','写真：現場','写真：NC操作','写真：検査','写真：出荷','写真：仲間','写真：機械図面','写真：工具','写真：サファイア','写真：シリコン','写真：本社','写真：社員集合'];
+  html(`<div class="grid">${labels.map((l,i)=>`<div class="photo" data-label="${l}" ></div>`).join('')}</div><div class="shade"></div>`);
+  html(`<div class="hud mono" style="left:110px;top:52px">FINAL CHORUS ── 03:17–04:15</div><div class="hud mono" style="right:110px;top:52px">MONTAGE ／ 1 CUT = 1 BEAT</div>`);
+  html(`<div class="mono" style="position:absolute;left:0;right:0;top:118px;text-align:center;font-size:24px;letter-spacing:.6em;color:var(--silver)">YEAR</div>`);
+  html(`<div class="year big">2048</div>`);
+  // timeline
+  const x0=260,x1=1660,y=640; let t=`<svg width="1920" height="1080" style="position:absolute;left:0;top:0">`;
+  t+=`<defs><linearGradient id="sh" x1="0" x2="1"><stop offset="0" stop-color="#C9D2DE"/><stop offset=".92" stop-color="#F4F6FA"/><stop offset="1" stop-color="#E8A33D"/></linearGradient></defs>`;
+  t+=`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="#3A4A63" stroke-width="2"/>`;
+  t+=`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="url(#sh)" stroke-width="4"/>`;
+  for(let yr=1948;yr<=2048;yr+=2){const x=x0+(x1-x0)*(yr-1948)/100;const big=yr%10==8;t+=`<line x1="${x}" y1="${y-(big?18:8)}" x2="${x}" y2="${y}" stroke="#C9D2DE" stroke-opacity="${big?.9:.5}"/>`;
+    if(big)t+=`<text x="${x}" y="${y+40}" fill="#C9D2DE" fill-opacity=".75" font-size="18" text-anchor="middle" font-family="Zen Kaku" letter-spacing="2">${yr}</text>`;}
+  [[1948,'創業'],[2026,'現在'],[2048,'創業100年']].forEach(([yr,l])=>{const x=x0+(x1-x0)*(yr-1948)/100;
+    t+=`<circle cx="${x}" cy="${y}" r="${yr==2048?11:7}" fill="${yr==2048?'#F4F6FA':'#0E1626'}" stroke="#F4F6FA" stroke-width="2"/>`;
+    t+=`<line x1="${x}" y1="${y-24}" x2="${x}" y2="${y-56}" stroke="#F4F6FA" stroke-opacity=".7"/>`;
+    t+=`<text x="${x}" y="${y-66}" fill="#F4F6FA" font-size="22" font-weight="700" text-anchor="middle" font-family="Zen Kaku" letter-spacing="4">${l}</text>`;});
+  t+=`<text x="${x0}" y="${y+86}" fill="#C9D2DE" font-size="18" font-family="Zen Kaku" letter-spacing="4">1948 ── 2048　100 YEARS</text>`;
+  t+=`<text x="${x1}" y="${y+86}" fill="#E8A33D" font-size="18" font-family="Zen Kaku" letter-spacing="4" text-anchor="end">100%</text>`;
+  t+=`</svg>`; html(t);
+  html(`<div class="lyric">100年企業へ<small>TOWARD A CENTURY COMPANY</small></div>`);
+} else {
+  // light behind
+  fr.style.background='radial-gradient(ellipse 40% 70% at 50% 45%, #FFFFFF 0%, #F4F6FA 25%, #DCE3EC 50%, #A9B5C6 100%)';
+  // two navy halves split by a diagonal machined cut
+  const gapTop=[1060,1060], gapBot=[860,860];
+  html(`<div style="position:absolute;inset:0;background:linear-gradient(160deg,#172238,#0E1626);clip-path:polygon(0 0,${gapTop[0]-130}px 0,${gapBot[0]-130}px 1080px,0 1080px)"></div>`);
+  html(`<div style="position:absolute;inset:0;background:linear-gradient(200deg,#172238,#0E1626);clip-path:polygon(${gapTop[1]+130}px 0,1920px 0,1920px 1080px,${gapBot[1]+130}px 1080px)"></div>`);
+  let s=`<svg width="1920" height="1080" style="position:absolute;left:0;top:0"><defs>
+   <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8A33D" stop-opacity="0"/><stop offset=".4" stop-color="#FFE2B0"/><stop offset=".6" stop-color="#E8A33D"/><stop offset="1" stop-color="#E8A33D" stop-opacity="0"/></linearGradient>
+   <linearGradient id="lit" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>`;
+  // cut faces (machined bevels)
+  {const L=[gapTop[0]-130,gapBot[0]-130],R=[gapTop[1]+130,gapBot[1]+130];
+  s+=`<polygon points="${L[0]},0 ${L[0]+22},0 ${L[1]+22},1080 ${L[1]},1080" fill="#8C98A9"/>`;
+  s+=`<polygon points="${L[0]+12},0 ${L[0]+18},0 ${L[1]+18},1080 ${L[1]+12},1080" fill="url(#edge)"/>`;
+  s+=`<polygon points="${R[0]},0 ${R[0]-22},0 ${R[1]-22},1080 ${R[1]},1080" fill="#B6C1CF"/>`;
+  s+=`<polygon points="${R[0]-6},0 ${R[0]-12},0 ${R[1]-12},1080 ${R[1]-6},1080" fill="url(#edge)"/>`;}
+  // tool-path guide lines on the panels
+  for(let i=1;i<=6;i++){s+=`<line x1="${gapTop[0]-130-i*40}" y1="0" x2="${gapBot[0]-130-i*40}" y2="1080" stroke="#C9D2DE" stroke-opacity="${.22-i*.03}"/>`;
+    s+=`<line x1="${gapTop[1]+130+i*40}" y1="0" x2="${gapBot[1]+130+i*40}" y2="1080" stroke="#C9D2DE" stroke-opacity="${.22-i*.03}"/>`;}
+  // dimension line across the opening
+  s+=``;
+  s+=`</svg>`; html(s);
+  html(`<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,22,38,0) 64%,rgba(14,22,38,.88) 86%,rgba(14,22,38,.95) 100%)"></div>`);
+  html(`<div style="position:absolute;inset:0;background:radial-gradient(ellipse 30% 45% at 50% 42%,rgba(255,255,255,.28),transparent 70%)"></div>`);
+  // light rays
+  html(`<div style="position:absolute;inset:0;background:repeating-conic-gradient(from 0deg at 50% 45%, rgba(255,255,255,.0) 0deg 6deg, rgba(255,255,255,.18) 7deg 8deg);mix-blend-mode:screen;-webkit-mask:radial-gradient(circle at 50% 45%, #000 0, transparent 60%)"></div>`);
+  html(`<div class="word big">原マシナリー</div><div class="wordface big">原マシナリー</div>`);
+  html(`<div class="mono" style="position:absolute;left:0;right:0;top:560px;text-align:center;font-size:24px;letter-spacing:.5em;padding-left:.5em;color:var(--white);text-shadow:0 0 18px rgba(14,22,38,.95),0 0 4px rgba(14,22,38,.9)">HARA MACHINERY ── SINCE 1948</div>`);
+  // confetti
+  const cv=document.createElement('canvas');cv.id='cv';cv.width=1920;cv.height=1080;fr.appendChild(cv);const c=cv.getContext('2d');
+  let seed=11;const r=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  const cols=['#F4F6FA','#FFFFFF','#C9D2DE','#AEB9C8','#E4E9F0','#DDE3EB'];
+  for(let i=0;i<150;i++){const x=r()*1920,y=r()*1080; if(Math.abs(y-390)<120&&x>300&&x<1620&&r()<.8)continue; if(y>780&&x>560&&x<1360)continue; if(Math.abs(y-570)<30&&x>500&&x<1420)continue;
+    const w=14+r()*14,h=(7+r()*8)*(.25+Math.abs(Math.cos(r()*6))),rot=r()*Math.PI;const col=cols[Math.floor(r()*(r()<.85?4:6))];
+    c.save();c.translate(x,y);c.rotate(rot);c.fillStyle=col;c.globalAlpha=.95;c.fillRect(-w/2,-h/2,w,h);
+    c.fillStyle='rgba(14,22,38,.18)';c.fillRect(-w/2,h/2-2,w,2);c.restore();}
+  html(`<div class="lyric" style="color:var(--white);text-shadow:0 0 28px rgba(14,22,38,.95),0 0 8px rgba(14,22,38,.9)">原マシナリー！<small style="text-shadow:0 0 12px rgba(14,22,38,.95);color:var(--silver)">HARA MACHINERY!</small></div>`);
+}
+</script></body></html>

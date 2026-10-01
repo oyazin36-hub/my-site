@@ -1,0 +1,86 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<style>
+svg,canvas{position:absolute;inset:0}
+.hud{position:absolute;font-size:20px;letter-spacing:.3em;color:var(--silver)}
+.stage{position:absolute;left:0;top:0;width:1920px;height:1080px;perspective:1800px;perspective-origin:50% 40%}
+.card{position:absolute;width:620px;height:560px;left:650px;top:150px;transform-style:preserve-3d}
+.face{position:absolute;inset:0;backface-visibility:hidden;background:linear-gradient(160deg,#1f2b42,#121b2c);border:1px solid #C9D2DE;}
+.face .photo{left:24px;top:24px;width:572px;height:380px}
+.face .photo::after{font-size:22px}
+.face .w{position:absolute;left:28px;bottom:26px;font-family:"Dela";font-size:96px;line-height:1;color:var(--white);letter-spacing:.08em}
+.face .k{position:absolute;right:28px;bottom:36px;font-size:18px;letter-spacing:.35em;color:var(--silver)}
+.back{transform:rotateY(180deg)}
+.edge{position:absolute;top:0;height:560px;width:16px;right:-8px;transform:rotateY(90deg);background:linear-gradient(180deg,#e9eef5,#8796ab 40%,#F4F6FA 52%,#E8A33D 55%,#8796ab 62%,#3A4A63)}
+.ghost{position:absolute;width:620px;height:560px;border:1px dashed rgba(201,210,222,.45)}
+.ghost .photo{left:24px;top:24px;width:572px;height:380px;opacity:.35}
+.ghost .w{position:absolute;left:28px;bottom:26px;font-family:"Dela";font-size:96px;line-height:1;color:rgba(244,246,250,.28);letter-spacing:.08em}
+.tag{position:absolute;font-size:20px;letter-spacing:.3em;color:var(--silver)}
+.lyric.big2{font-size:64px}
+</style></head><body><div class="frame" id="fr"></div>
+<script>
+const f=new URLSearchParams(location.search).get('f')||'a';
+const fr=document.getElementById('fr');
+const NS='http://www.w3.org/2000/svg';
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;}
+if(f==='a'){
+ fr.innerHTML=`<svg width="1920" height="1080" id="s"></svg>
+ <div class="hud mono" style="left:120px;top:96px">TRADITION ／ INNOVATION</div>
+ <div class="hud mono" style="right:120px;top:96px">ROTATE Y &nbsp;<span style="color:#F4F6FA">52°</span> / 180°</div>
+ <div class="ghost" style="left:1320px;top:170px;transform:scale(.62);transform-origin:left top">
+   <div class="photo" data-label="写真：最新設備"></div><div class="w">変える</div></div>
+ <div class="tag mono" style="left:1320px;top:140px">BACK ／ 変える</div>
+ <div class="stage"><div class="card" style="transform:rotateY(-52deg)">
+   <div class="face"><div class="photo" data-label="写真：昔の機械"></div><div class="w">守る</div><div class="k mono">TRADITION</div></div>
+   <div class="face back"><div class="photo" data-label="写真：最新設備"></div><div class="w">変える</div><div class="k mono">INNOVATION</div></div>
+   <div class="edge"></div>
+ </div></div>
+ <div class="lyric">守るべき技術は　守り抜く</div>`;
+ const s=document.getElementById('s');
+ // rotation axis + arc
+ el('line',{x1:960,y1:110,x2:960,y2:760,stroke:'#C9D2DE','stroke-opacity':.4,'stroke-dasharray':'6 6'},s);
+ el('path',{d:'M640 740 A340 70 0 0 0 1280 740',fill:'none',stroke:'#C9D2DE','stroke-opacity':.4},s);
+ el('path',{d:'M640 740 A340 70 0 0 0 1060 806',fill:'none',stroke:'#F4F6FA','stroke-width':1.6},s);
+ el('path',{d:'M1060 806 l-14 -9 m14 9 l-14 8',stroke:'#F4F6FA','stroke-width':1.6,fill:'none'},s);
+ // sheen hairline on the edge highlight
+ // push-right hint
+ el('line',{x1:1460,y1:640,x2:1800,y2:640,stroke:'#C9D2DE','stroke-opacity':.35},s);
+ el('path',{d:'M1786 632 l14 8 l-14 8',stroke:'#C9D2DE','stroke-opacity':.6,fill:'none'},s);
+ const t=el('text',{x:1460,y:670,fill:'#C9D2DE','font-size':16,'letter-spacing':'.3em','font-family':'Zen Kaku'},s);t.textContent='NEXT: PUSH →';
+} else {
+ fr.innerHTML=`<canvas id="c" width="1920" height="1080"></canvas>
+ <div class="hud mono" style="left:120px;top:96px">FLOW ／ VELOCITY ×4.0</div>
+ <div class="hud mono" style="right:120px;top:96px">→ CHORUS</div>
+ <div class="lyric">まだ見ぬ未来へ</div>`;
+ const c=document.getElementById('c').getContext('2d');
+ // seeded rng
+ let seed=7;const R=()=>(seed=(seed*16807)%2147483647)/2147483647;
+ // flow field: lines converge toward a vanishing point on the right
+ const VP={x:2100,y:470};
+ const field=(x,y)=>{const dx=VP.x-x,dy=VP.y-y;const a=Math.atan2(dy,dx);return a+0.35*Math.sin(y*0.006+x*0.002)*(1-x/2000);};
+ c.lineCap='round';
+ for(let i=0;i<420;i++){
+   let x=-100+R()*1500,y=R()*1080;const pts=[[x,y]];
+   const steps=60+R()*120;let sp=4;
+   for(let k=0;k<steps;k++){const a=field(x,y);sp*=1.025;x+=Math.cos(a)*sp;y+=Math.sin(a)*sp;pts.push([x,y]);if(x>2000)break;}
+   const g=c.createLinearGradient(pts[0][0],pts[0][1],pts[pts.length-1][0],pts[pts.length-1][1]);
+   const amber=R()<0.2;
+   const alpha=0.15+R()*0.5;
+   g.addColorStop(0,'rgba(201,210,222,0)');
+   g.addColorStop(.7,`rgba(201,210,222,${alpha*0.6})`);
+   g.addColorStop(.9,amber?`rgba(232,163,61,${Math.min(1,alpha*1.6)})`:`rgba(244,246,250,${alpha})`);
+   g.addColorStop(1,`rgba(244,246,250,${alpha*0.9})`);
+   c.strokeStyle=g;c.lineWidth=0.6+R()*1.4;
+   c.beginPath();c.moveTo(pts[0][0],pts[0][1]);for(const p of pts)c.lineTo(p[0],p[1]);c.stroke();
+ }
+ // central bright band sheen
+ const hg=c.createLinearGradient(0,380,0,560);
+ hg.addColorStop(0,'rgba(244,246,250,0)');hg.addColorStop(.5,'rgba(244,246,250,.06)');hg.addColorStop(1,'rgba(244,246,250,0)');
+ c.fillStyle=hg;c.fillRect(0,380,1920,180);
+ // speed hairlines scale on top
+ c.strokeStyle='rgba(201,210,222,.35)';c.lineWidth=1;
+ for(let i=0;i<40;i++){const x=120+Math.pow(i/39,2.2)*1680;c.beginPath();c.moveTo(x,160);c.lineTo(x,i%5?170:182);c.stroke();}
+ // vignette
+ const vg=c.createRadialGradient(1100,500,200,960,540,1200);vg.addColorStop(0,'rgba(14,22,38,0)');vg.addColorStop(1,'rgba(14,22,38,.85)');
+ c.fillStyle=vg;c.fillRect(0,0,1920,1080);
+}
+</script></body></html>

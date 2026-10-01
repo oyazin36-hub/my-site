@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><title>07 Aメロ3</title>
+<link rel="stylesheet" href="base.css">
+<style>
+.lab { position:absolute; top:690px; width:400px; text-align:center; }
+.lab .ja { font-weight:700; font-size:44px; letter-spacing:.12em; }
+.lab .en { font-size:16px; letter-spacing:.4em; color:var(--silver); margin-top:8px; }
+.lab .no { font-size:15px; letter-spacing:.3em; color:var(--amber); margin-bottom:8px; }
+.panel { position:absolute; top:0; width:640px; height:1080px; overflow:hidden; }
+.pw { position:absolute; left:56px; top:70px; font-size:110px; line-height:1; z-index:3; }
+.pn { position:absolute; left:60px; top:44px; font-size:16px; letter-spacing:.4em; color:var(--silver); z-index:3; }
+.lyricband { position:absolute; left:0; right:0; bottom:60px; height:200px; background:linear-gradient(180deg,rgba(14,22,38,0),rgba(14,22,38,.8) 40%,rgba(14,22,38,.8) 70%,rgba(14,22,38,0)); z-index:4; }
+.lyric { z-index:5; }
+</style></head><body>
+<div class="frame" id="fr"></div>
+<script>
+const f = new URLSearchParams(location.search).get('f') || 'a';
+const fr = document.getElementById('fr');
+const T = (x,y,s,t,o='')=>`<text x="${x}" y="${y}" fill="#C9D2DE" font-family="Zen Kaku" font-size="${s}" letter-spacing="3" ${o}>${t}</text>`;
+if (f === 'a') {
+  const cx = [345, 755, 1165, 1575], cy = 400;
+  const defs = `<defs>
+   <linearGradient id="siBody" x1="0" x2="1"><stop offset="0" stop-color="#15181e"/><stop offset=".22" stop-color="#5b6370"/><stop offset=".3" stop-color="#d9dee6"/><stop offset=".36" stop-color="#4a515c"/><stop offset=".7" stop-color="#1c2027"/><stop offset=".86" stop-color="#6c7480"/><stop offset="1" stop-color="#0f1216"/></linearGradient>
+   <linearGradient id="siTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a929e"/><stop offset=".5" stop-color="#3b414b"/><stop offset="1" stop-color="#a8b0bb"/></linearGradient>
+   <linearGradient id="wafer" x1="0" y1="0" x2="1" y2="0.4"><stop offset="0" stop-color="#2a2f37"/><stop offset=".38" stop-color="#5a6270"/><stop offset=".45" stop-color="#e8edf3"/><stop offset=".5" stop-color="#7f8895"/><stop offset=".75" stop-color="#23272e"/><stop offset="1" stop-color="#4b525d"/></linearGradient>
+   <linearGradient id="sapF1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc4ff" stop-opacity=".55"/><stop offset="1" stop-color="#2a5aa8" stop-opacity=".25"/></linearGradient>
+   <linearGradient id="sapF2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#cfe3ff" stop-opacity=".7"/><stop offset=".5" stop-color="#4f86d8" stop-opacity=".2"/><stop offset="1" stop-color="#1c3f80" stop-opacity=".45"/></linearGradient>
+   <linearGradient id="sapF3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a6cc0" stop-opacity=".4"/><stop offset="1" stop-color="#0f2a5c" stop-opacity=".55"/></linearGradient>
+   <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e6f4f2" stop-opacity=".22"/><stop offset=".45" stop-color="#bfe3df" stop-opacity=".06"/><stop offset=".55" stop-color="#ffffff" stop-opacity=".22"/><stop offset="1" stop-color="#9fd0cb" stop-opacity=".1"/></linearGradient>
+   <linearGradient id="glassEdge" x1="0" x2="1"><stop offset="0" stop-color="#8fd6cc" stop-opacity=".9"/><stop offset="1" stop-color="#3f8f86" stop-opacity=".6"/></linearGradient>
+   <radialGradient id="qz" cx=".45" cy=".4" r=".7"><stop offset="0" stop-color="#ffffff" stop-opacity=".85"/><stop offset=".5" stop-color="#e7ecf2" stop-opacity=".55"/><stop offset="1" stop-color="#b7c1cf" stop-opacity=".35"/></radialGradient>
+   <linearGradient id="qzS" x1="0" x2="1"><stop offset="0" stop-color="#d9e0ea" stop-opacity=".35"/><stop offset=".4" stop-color="#ffffff" stop-opacity=".75"/><stop offset="1" stop-color="#aab5c4" stop-opacity=".3"/></linearGradient>
+   <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+   <mask id="refl"><rect x="0" y="560" width="1920" height="120" fill="url(#fade)"/></mask>
+   <filter id="soft"><feGaussianBlur stdDeviation="6"/></filter>
+   <filter id="soft2"><feGaussianBlur stdDeviation="2"/></filter>
+   <radialGradient id="spot" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#2a3b5c" stop-opacity=".9"/><stop offset="1" stop-color="#0E1626" stop-opacity="0"/></radialGradient>
+  </defs>`;
+  const si = (x)=>`<g transform="translate(${x},${cy})">
+     <rect x="-70" y="-150" width="140" height="250" fill="url(#siBody)"/>
+     <ellipse cx="0" cy="100" rx="70" ry="18" fill="#101318"/>
+     <rect x="-70" y="-150" width="140" height="250" fill="url(#siBody)"/>
+     <ellipse cx="0" cy="-150" rx="70" ry="18" fill="url(#siTop)" stroke="#c9d2de" stroke-opacity=".5"/>
+     <g transform="translate(60,120) rotate(-8)">
+       <ellipse cx="0" cy="6" rx="110" ry="30" fill="#14171c"/>
+       <ellipse cx="0" cy="0" rx="110" ry="30" fill="url(#wafer)" stroke="#dfe5ee" stroke-opacity=".6" stroke-width="1"/>
+       <line x1="-20" y1="29.5" x2="20" y2="29.5" stroke="#0E1626" stroke-width="3"/>
+     </g></g>`;
+  const sap = (x)=>`<g transform="translate(${x},${cy})">
+     <polygon points="-60,-140 60,-140 100,-100 60,-60 -60,-60 -100,-100" fill="url(#sapF2)" stroke="#d6e6ff" stroke-width="1.2"/>
+     <polygon points="-100,-100 -60,-60 -60,130 -100,90" fill="url(#sapF3)" stroke="#a9c8ff" stroke-width="1"/>
+     <polygon points="-60,-60 60,-60 60,130 -60,130" fill="url(#sapF1)" stroke="#cfe0ff" stroke-width="1.2"/>
+     <polygon points="60,-60 100,-100 100,90 60,130" fill="url(#sapF3)" stroke="#a9c8ff" stroke-width="1"/>
+     <g stroke="#e6f0ff" stroke-width="1" opacity=".45" fill="none"><path d="M-60,-60 L-20,130 M60,-60 L20,130 M-100,-100 L60,130"/><path d="M-60,40 L60,-10" opacity=".6"/></g>
+     <polygon points="-48,-56 -30,-56 -30,126 -48,126" fill="#fff" opacity=".28" filter="url(#soft2)"/>
+     <line x1="-58" y1="-138" x2="58" y2="-138" stroke="#fff" stroke-width="2" opacity=".9"/>
+   </g>`;
+  const gl = (x)=>`<g transform="translate(${x},${cy})">
+     <polygon points="-120,-40 40,-150 140,-60 -20,50" fill="url(#glass)" stroke="#e8fbf8" stroke-width="1.2"/>
+     <polygon points="-120,-40 -20,50 -20,64 -120,-26" fill="url(#glassEdge)" opacity=".8"/>
+     <polygon points="-20,50 140,-60 140,-46 -20,64" fill="url(#glassEdge)" opacity=".55"/>
+     <polygon points="-120,40 40,-70 140,20 -20,130" fill="url(#glass)" stroke="#e8fbf8" stroke-width="1.2" opacity=".85"/>
+     <polygon points="-120,40 -20,130 -20,144 -120,54" fill="url(#glassEdge)" opacity=".8"/>
+     <polygon points="-20,130 140,20 140,34 -20,144" fill="url(#glassEdge)" opacity=".55"/>
+     <line x1="-100" y1="-46" x2="30" y2="-136" stroke="#fff" stroke-width="2" opacity=".85"/>
+     <line x1="-60" y1="70" x2="60" y2="-12" stroke="#fff" stroke-width="10" opacity=".12" filter="url(#soft2)"/>
+   </g>`;
+  const qz = (x)=>`<g transform="translate(${x},${cy})">
+     <g filter="url(#soft)" opacity=".5"><polygon points="-55,-80 0,-160 55,-80 55,120 -55,120" fill="#ffffff"/></g>
+     <polygon points="-55,-80 0,-160 0,-70 -55,-80" fill="url(#qzS)" stroke="#f4f6fa" stroke-opacity=".7"/>
+     <polygon points="0,-160 55,-80 0,-70" fill="url(#qz)" stroke="#f4f6fa" stroke-opacity=".7"/>
+     <polygon points="-55,-80 0,-70 0,130 -55,120" fill="url(#qzS)" stroke="#f4f6fa" stroke-opacity=".6"/>
+     <polygon points="0,-70 55,-80 55,120 0,130" fill="url(#qz)" stroke="#f4f6fa" stroke-opacity=".6"/>
+     <g stroke="#ffffff" stroke-opacity=".35"><line x1="-50" y1="-20" x2="-4" y2="-12"/><line x1="-50" y1="40" x2="-4" y2="48"/><line x1="4" y1="10" x2="50" y2="2"/></g>
+     <g transform="translate(-95,85) rotate(-14)" opacity=".85">
+       <polygon points="-22,-30 0,-62 22,-30 22,40 -22,40" fill="url(#qz)" stroke="#f4f6fa" stroke-opacity=".6"/>
+     </g>
+   </g>`;
+  const objs = si(cx[0]) + sap(cx[1]) + gl(cx[2]) + qz(cx[3]);
+  fr.innerHTML = `<svg width="1920" height="1080" style="position:absolute;inset:0">${defs}
+    ${cx.map(x=>`<ellipse cx="${x}" cy="${cy}" rx="230" ry="260" fill="url(#spot)"/>`).join('')}
+    <line x1="120" y1="560" x2="1800" y2="560" stroke="#3A4A63"/>
+    ${cx.map(x=>`<line x1="${x-150}" y1="560" x2="${x+150}" y2="560" stroke="#C9D2DE" stroke-opacity=".6"/>`).join('')}
+    ${objs}
+    <g mask="url(#refl)"><g transform="translate(0,1120) scale(1,-1)" opacity=".5">${objs}</g></g>
+    ${[1,2,3].map(i=>`<line x1="${cx[i]-205}" y1="250" x2="${cx[i]-205}" y2="640" stroke="#3A4A63" stroke-dasharray="2 6"/>`).join('')}
+    ${T(120,90,18,'MATERIALS ― HARD &amp; BRITTLE','letter-spacing="8"')}
+    ${T(1800,90,18,'Si / Al₂O₃ / SiO₂ glass / SiO₂','text-anchor="end" letter-spacing="4"')}
+   </svg>
+   ${[['シリコン','SILICON','01'],['サファイア','SAPPHIRE','02'],['ガラス','GLASS','03'],['石英','QUARTZ','04']].map((m,i)=>`<div class="lab" style="left:${cx[i]-200}px"><div class="no mono">${m[2]}</div><div class="ja">${m[0]}</div><div class="en">${m[1]}</div></div>`).join('')}
+   <div class="lyric">シリコン　サファイア　ガラス　石英</div>`;
+} else {
+  // panel 1: tool path
+  let tp = '';
+  for (let k = 0; k < 9; k++) { const m = k*18; tp += `<rect x="${110+m}" y="${330+m}" width="${420-2*m}" height="${330-2*m}" rx="${Math.max(4,40-m)}" fill="none" stroke="#C9D2DE" stroke-width="1" opacity="${k<6?0.8:0.25}"/>`; }
+  let zig = 'M272 492'; for (let k=0;k<6;k++){ zig += ` H${k%2?272:368} v${k<5?14:0}`; }
+  const p1 = `<div class="panel" style="left:0;background:linear-gradient(160deg,#1a2236,#0E1626)">
+    <svg width="640" height="1080" style="position:absolute;inset:0">
+      <defs><pattern id="gr" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#243149"/></pattern>
+      <filter id="gl"><feGaussianBlur stdDeviation="3"/></filter></defs>
+      <rect width="640" height="1080" fill="url(#gr)"/>
+      <rect x="80" y="300" width="480" height="390" fill="#2a3448" stroke="#5a6a85"/>
+      ${tp}
+      
+      <path d="M110 420 V370 Q110 330 150 330 H380" stroke="#fff" stroke-width="5" fill="none" opacity=".35" filter="url(#gl)"/>
+      <path d="M110 420 V370 Q110 330 150 330 H380" stroke="#fff" stroke-width="2" fill="none"/>
+      <circle cx="380" cy="330" r="16" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="380" cy="330" r="3" fill="#fff"/>
+      <line x1="380" y1="300" x2="380" y2="250" stroke="#C9D2DE"/>
+      
+      <g stroke="#C9D2DE" stroke-width="1" opacity=".7"><line x1="80" y1="715" x2="560" y2="715"/><line x1="80" y1="705" x2="80" y2="725"/><line x1="560" y1="705" x2="560" y2="725"/></g>
+      
+    </svg><div class="pn mono">01 / CUT</div><div class="pw big">削る</div></div>`;
+  const p2 = `<div class="panel" style="left:640px;background:linear-gradient(200deg,#18233a,#0E1626)">
+    <svg width="640" height="1080" style="position:absolute;inset:0">
+      <defs>
+        <linearGradient id="mir" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9eef5"/><stop offset=".35" stop-color="#8e9aac"/><stop offset=".5" stop-color="#2b3548"/><stop offset=".62" stop-color="#5f6c82"/><stop offset="1" stop-color="#cfd7e2"/></linearGradient>
+        <linearGradient id="sh" x1="0" y1="0" x2="1" y2="0.3"><stop offset="0" stop-color="#E8A33D" stop-opacity="0"/><stop offset=".44" stop-color="#E8A33D" stop-opacity="0"/><stop offset=".49" stop-color="#E8A33D" stop-opacity=".65"/><stop offset=".505" stop-color="#FFF3DC" stop-opacity=".95"/><stop offset=".52" stop-color="#E8A33D" stop-opacity=".6"/><stop offset=".58" stop-color="#E8A33D" stop-opacity="0"/></linearGradient>
+        <clipPath id="pc"><polygon points="70,420 450,320 580,560 180,700"/></clipPath>
+      </defs>
+      <polygon points="180,700 580,560 580,584 180,726" fill="#3a465b"/>
+      <polygon points="70,420 180,700 180,726 70,444" fill="#566379"/>
+      <polygon points="70,420 450,320 580,560 180,700" fill="url(#mir)"/>
+      <g clip-path="url(#pc)">
+        <rect x="0" y="250" width="640" height="500" fill="url(#sh)"/>
+        <polygon points="250,360 300,346 330,660 280,676" fill="#fff" opacity=".12"/>
+      </g>
+      <polygon points="70,420 450,320 580,560 180,700" fill="none" stroke="#F4F6FA" stroke-width="1.2"/>
+      <g stroke="#C9D2DE" opacity=".7"></g>
+      
+      
+    </svg><div class="pn mono">02 / POLISH</div><div class="pw big">磨く</div></div>`;
+  // panel 3: exploded view over photo
+  const iso = (x,y,w,d,h)=>{ // simple isometric box, top at y
+    const a=0.5; const p=(u,v,z)=>[x+(u-v)*0.866, y+(u+v)*a*0.5*1.15 - z];
+    const P=(...q)=>q.map(c=>c.map(n=>n.toFixed(1)).join(',')).join(' ');
+    const A=p(0,0,0),B=p(w,0,0),C=p(w,d,0),D=p(0,d,0),A2=p(0,0,-h),B2=p(w,0,-h),C2=p(w,d,-h),D2=p(0,d,-h);
+    return `<polygon points="${P(A,B,C,D)}" fill="rgba(201,210,222,.10)"/><polygon points="${P(D,C,C2,D2)}" fill="rgba(14,22,38,.55)"/><polygon points="${P(B,C,C2,B2)}" fill="rgba(14,22,38,.35)"/>
+      <g fill="none" stroke="#F4F6FA" stroke-width="1.2"><polygon points="${P(A,B,C,D)}"/><polyline points="${P(D,D2,C2,B2,B)}"/><line x1="${C[0]}" y1="${C[1]}" x2="${C2[0]}" y2="${C2[1]}"/></g>`;
+  };
+  const p3 = `<div class="panel" style="left:1280px">
+    <div class="photo" data-label="写真：専用機（HPより）" style="left:0;top:0;width:640px;height:1080px;border:none"></div>
+    <div style="position:absolute;inset:0;background:rgba(14,22,38,.5)"></div>
+    <svg width="640" height="1080" style="position:absolute;inset:0">
+      <g stroke="#C9D2DE" stroke-dasharray="3 6" opacity=".7"><line x1="330" y1="250" x2="330" y2="720"/><line x1="230" y1="300" x2="230" y2="700"/><line x1="430" y1="300" x2="430" y2="700"/></g>
+      ${iso(330,620,240,150,40)}
+      ${iso(330,480,120,90,110)}
+      ${iso(330,330,90,70,60)}
+      <g fill="none" stroke="#F4F6FA" stroke-width="1.2"><ellipse cx="330" cy="268" rx="22" ry="9"/><line x1="308" y1="268" x2="308" y2="230"/><line x1="352" y1="268" x2="352" y2="230"/><ellipse cx="330" cy="230" rx="22" ry="9"/></g>
+      <g fill="#C9D2DE" font-family="Zen Kaku" font-size="14" letter-spacing="2">
+        <line x1="420" y1="250" x2="520" y2="250" stroke="#C9D2DE"/><text x="470" y="244">①</text>
+        <line x1="420" y1="330" x2="520" y2="330" stroke="#C9D2DE"/><text x="470" y="324">②</text>
+        <line x1="440" y1="480" x2="540" y2="480" stroke="#C9D2DE"/><text x="490" y="474">③</text>
+        <line x1="520" y1="640" x2="590" y2="640" stroke="#C9D2DE"/><text x="550" y="634">④</text>
+      </g>
+    </svg><div class="pn mono">03 / ASSEMBLE</div><div class="pw big" style="font-size:96px;top:80px">組み上げる</div></div>`;
+  fr.innerHTML = p1 + p2 + p3 +
+   `<div style="position:absolute;left:639px;top:0;width:2px;height:1080px;background:#C9D2DE;opacity:.5;z-index:3"></div>
+    <div style="position:absolute;left:1279px;top:0;width:2px;height:1080px;background:#C9D2DE;opacity:.5;z-index:3"></div>
+    <div class="lyricband"></div><div class="lyric">削る　磨く　組み上げる</div>`;
+}
+</script></body></html>

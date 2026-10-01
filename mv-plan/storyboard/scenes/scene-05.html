@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><title>05 サビ1</title>
+<link rel="stylesheet" href="base.css">
+<style>
+.q { position:absolute; width:960px; height:540px; overflow:hidden; }
+.q .photo { left:0; top:0; width:960px; height:540px; border:none; }
+.q .shade { position:absolute; inset:0; background:linear-gradient(180deg, rgba(14,22,38,.15), rgba(14,22,38,.55)); }
+.q .idx { position:absolute; left:64px; top:56px; font-size:20px; color:var(--silver); letter-spacing:.3em; }
+.q .idx b { color:var(--amber); font-weight:700; margin-right:14px; }
+.q .word { position:absolute; left:58px; top:96px; font-size:168px; line-height:1; color:var(--white);
+  background:linear-gradient(180deg,#ffffff 0%,#dfe5ee 46%,#9aa7ba 54%,#e9eef5 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; filter:drop-shadow(0 6px 18px rgba(0,0,0,.5)); }
+.q .rule { position:absolute; left:64px; top:300px; width:380px; height:1px; background:var(--silver); opacity:.6; }
+.q .rule::after { content:""; position:absolute; right:0; top:-4px; width:1px; height:9px; background:var(--silver); }
+.q .rule::before { content:""; position:absolute; left:0; top:-4px; width:1px; height:9px; background:var(--silver); }
+.cross-h { position:absolute; left:0; right:0; top:539px; height:2px; background:var(--navy); }
+.cross-v { position:absolute; top:0; bottom:0; left:959px; width:2px; background:var(--navy); }
+.lyricband { position:absolute; left:0; right:0; bottom:60px; height:200px; background:linear-gradient(180deg,rgba(14,22,38,0),rgba(14,22,38,.75) 40%,rgba(14,22,38,.75) 70%,rgba(14,22,38,0)); }
+.hud { position:absolute; font-size:18px; color:var(--silver); letter-spacing:.2em; opacity:.8; }
+/* frame b */
+.half { position:absolute; inset:0; }
+.wm { position:absolute; left:0; right:0; top:300px; text-align:center; font-size:230px; line-height:1; }
+.wm span { position:relative; display:inline-block; }
+.wm .ext { position:absolute; left:0; top:0; color:#2a3548; }
+.wm .face { position:relative; background:linear-gradient(180deg,#f7f9fc 0%,#cfd7e2 40%,#7d8aa0 52%,#b9c3d1 70%,#eef2f7 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.wm .sheen { position:absolute; left:0; top:0; background:linear-gradient(105deg, transparent 0%, transparent 46%, rgba(232,163,61,0) 50%, rgba(232,163,61,.55) 55%, rgba(232,163,61,.95) 59%, #fff3dc 60.5%, rgba(232,163,61,.95) 62%, rgba(232,163,61,.4) 66%, rgba(232,163,61,0) 70%, transparent 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+</style></head><body>
+<div class="frame" id="fr"></div>
+<script>
+const f = new URLSearchParams(location.search).get('f') || 'a';
+const fr = document.getElementById('fr');
+if (f === 'a') {
+  const Q = [
+    ['技術力','TECHNOLOGY','写真：加工の様子',0,0],
+    ['設計力','DESIGN','写真：設計（CAD）',960,0],
+    ['設備力','EQUIPMENT','写真：設備',0,540],
+    ['人間力','PEOPLE','写真：社員',960,540]];
+  fr.innerHTML = Q.map((q,i)=>`<div class="q" style="left:${q[3]}px;top:${q[4]}px">
+     <div class="photo" data-label="${q[2]}"></div><div class="shade"></div>
+     <div class="idx"><b>0${i+1}</b>${q[1]}</div>
+     <div class="word big">${q[0]}</div><div class="rule"></div></div>`).join('') +
+   `<div class="cross-h"></div><div class="cross-v"></div>
+    <svg width="1920" height="1080" style="position:absolute;inset:0">
+      <g stroke="#C9D2DE" stroke-width="1" fill="none" opacity=".9">
+        <circle cx="960" cy="540" r="34"/><circle cx="960" cy="540" r="6"/>
+        <line x1="900" y1="540" x2="1020" y2="540"/><line x1="960" y1="480" x2="960" y2="600"/>
+      </g>
+      <g stroke="#E8A33D" stroke-width="2"><line x1="926" y1="540" x2="944" y2="540"/><line x1="976" y1="540" x2="994" y2="540"/></g>
+    </svg>
+    <div class="lyricband"></div>
+    <div class="lyric">設備力　人間力</div>
+    <div class="hud mono" style="right:48px;top:500px">4 / 4 ― BEAT 04</div>`;
+} else {
+  // diagonal cut from (1180,0) to (700,1080)
+  const grid = (op)=>`<svg width="1920" height="1080" style="position:absolute;inset:0;opacity:${op}"><defs><pattern id="g${op*10|0}" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M80 0H0V80" fill="none" stroke="#3A4A63" stroke-width="1"/></pattern></defs><rect width="1920" height="1080" fill="url(#g${op*10|0})"/></svg>`;
+  fr.innerHTML = `
+   <div class="half" style="background:radial-gradient(1200px 800px at 30% 30%,#1b2842,#0E1626);clip-path:polygon(0 0,1172px 0,692px 1080px,0 1080px);transform:translate(-14px,-6px)">${grid(.5)}</div>
+   <div class="half" style="background:radial-gradient(1200px 800px at 80% 70%,#1e2c47,#0E1626);clip-path:polygon(1188px 0,1920px 0,1920px 1080px,708px 1080px);transform:translate(14px,6px)">${grid(.35)}</div>
+   <svg width="1920" height="1080" style="position:absolute;inset:0">
+    <defs>
+      <linearGradient id="cutg" x1="1180" y1="0" x2="700" y2="1080" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset=".42" stop-color="#fff"/><stop offset=".5" stop-color="#FFF3DC"/><stop offset=".6" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity=".2"/></linearGradient>
+      <filter id="bl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="28"/></filter>
+      <filter id="bl2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+    </defs>
+    <line x1="1180" y1="-20" x2="700" y2="1100" stroke="#cfe0ff" stroke-width="60" opacity=".22" filter="url(#bl)"/>
+    <line x1="1180" y1="-20" x2="700" y2="1100" stroke="#fff" stroke-width="10" opacity=".55" filter="url(#bl2)"/>
+    <line x1="1180" y1="-20" x2="700" y2="1100" stroke="url(#cutg)" stroke-width="2.5"/>
+    <!-- machined edge hairlines -->
+    <line x1="1166" y1="-20" x2="686" y2="1100" stroke="#C9D2DE" stroke-width="1" opacity=".5"/>
+    <line x1="1194" y1="-20" x2="714" y2="1100" stroke="#C9D2DE" stroke-width="1" opacity=".5"/>
+    <!-- dimension annotation of the cut -->
+    <g stroke="#C9D2DE" stroke-width="1" fill="none" opacity=".8">
+      <path d="M1180 0 V140"/><path d="M1180 120 A120 120 0 0 0 1129 120" />
+      <line x1="1300" y1="84" x2="1420" y2="84"/>
+    </g>
+    
+    
+    
+    <!-- logo stroke construction lines -->
+    <g stroke="#C9D2DE" stroke-width="1" opacity=".35">
+      <line x1="200" y1="300" x2="1720" y2="300"/><line x1="200" y1="530" x2="1720" y2="530"/>
+      <line x1="270" y1="270" x2="270" y2="560"/><line x1="1650" y1="270" x2="1650" y2="560"/>
+    </g>
+   </svg>
+   <div class="wm logo"><span>
+      <span class="ext" style="text-shadow:${Array.from({length:14},(_,i)=>`${i*0.7}px ${i+1}px 0 ${i<13?'#1f2a3d':'#0a101c'}`).join(',')}">原マシナリー</span>
+      <span class="face">原マシナリー</span>
+      <span class="sheen">原マシナリー</span>
+   </span></div>
+   <div class="mono" style="position:absolute;left:0;right:0;top:575px;text-align:center;font-size:22px;letter-spacing:.6em;color:var(--silver)">HARA MACHINERY CO., LTD.　SINCE 1948</div>
+   <div class="lyric">未来を　切り拓け</div>`;
+}
+</script></body></html>

@@ -1,0 +1,68 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<style>
+.ph{left:0;top:0;width:1920px;height:1080px;transform-origin:62% 40%;}
+.sepia .ph{background:repeating-linear-gradient(135deg,#3b3124 0 18px,#43382a 18px 36px);border-color:#6b5a43}
+.sepia .ph::after{border-left-color:#c9a878;color:#e8dcc6;background:rgba(40,32,22,.8)}
+.ph::after{bottom:auto;top:470px;left:120px}
+.ph.kbB::after{left:235px;top:540px}
+.grain{position:absolute;inset:0;opacity:.18;mix-blend-mode:overlay;
+ background:repeating-radial-gradient(circle at 30% 40%, rgba(255,255,255,.4) 0 1px, rgba(0,0,0,0) 1px 3px);}
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,22,38,.25) 0%,rgba(14,22,38,0) 30%,rgba(14,22,38,.55) 62%,rgba(14,22,38,.95) 100%)}
+.sepia .shade{background:linear-gradient(180deg,rgba(30,22,14,.35),rgba(30,22,14,0) 30%,rgba(22,18,14,.6) 62%,rgba(14,12,10,.96) 100%),radial-gradient(ellipse 80% 80% at 50% 45%,rgba(0,0,0,0) 50%,rgba(0,0,0,.6))}
+.counter{position:absolute;right:120px;top:96px;text-align:right}
+.counter .y{font-family:"Dela";font-size:168px;line-height:1;letter-spacing:.04em;color:var(--white)}
+.counter .lab{font-size:22px;letter-spacing:.4em;color:var(--silver);margin-bottom:14px}
+.sepia .counter .y{color:#efe3cc}
+.tl{position:absolute;left:120px;right:120px;top:356px;height:40px}
+.kb{position:absolute;border:0 solid var(--silver);width:40px;height:40px;opacity:.7}
+.caret{display:inline-block;width:4px;height:.95em;background:var(--white);vertical-align:-0.1em;margin-left:6px}
+.lyric.lg{font-size:104px;letter-spacing:.1em}
+.lyric.lg::after{content:'';position:absolute;left:50%;margin-left:-260px;bottom:-26px;width:520px;height:1px;background:linear-gradient(90deg,transparent,#C9D2DE,#E8A33D 50%,#C9D2DE,transparent)}
+.lyric.lg .em{background:linear-gradient(100deg,#F4F6FA 0%,#F4F6FA 38%,#E8A33D 47%,#fff 52%,#F4F6FA 60%,#F4F6FA 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
+.rec{position:absolute;left:120px;top:110px;font-size:20px;letter-spacing:.3em;color:var(--silver)}
+</style></head><body><div class="frame" id="fr">
+<div class="photo ph" id="ph"></div>
+<div class="grain" id="gr"></div>
+<div class="shade"></div>
+<svg width="1920" height="1080" style="position:absolute;inset:0" id="s"></svg>
+<div class="rec mono" id="rec"></div>
+<div class="counter"><div class="lab mono">YEAR</div><div class="y mono" id="yr"></div></div>
+<div class="lyric" id="ly"></div>
+</div>
+<script>
+const f=new URLSearchParams(location.search).get('f')||'a';
+const ph=document.getElementById('ph'),s=document.getElementById('s');
+const NS='http://www.w3.org/2000/svg';
+function el(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);s.appendChild(e);return e;}
+// timeline ruler 1948 → 2026
+const L=120,R=1800,Y=400,yr=f==='a'?1948:2026;
+const X=v=>L+(v-1948)/(2026-1948)*(R-L);
+el('line',{x1:L,y1:Y,x2:R,y2:Y,stroke:'#C9D2DE','stroke-opacity':.35});
+for(let v=1948;v<=2026;v++){const big=v%10===0||v===1948||v===2026;el('line',{x1:X(v),y1:Y,x2:X(v),y2:Y-(big?18:7),stroke:'#C9D2DE','stroke-opacity':big?.7:.3});
+ if(big){const t=el('text',{x:X(v),y:Y+30,'text-anchor':'middle',fill:'#C9D2DE','fill-opacity':.7,'font-size':16,'letter-spacing':'.1em','font-family':'Zen Kaku'});t.textContent=v;}}
+el('line',{x1:L,y1:Y,x2:X(yr),y2:Y,stroke:'#F4F6FA','stroke-width':2});
+el('path',{d:`M${X(yr)} ${Y-26} l-8 -12 h16 z`,fill:'#E8A33D'});
+el('line',{x1:X(yr),y1:Y-24,x2:X(yr),y2:Y+4,stroke:'#F4F6FA','stroke-width':1.5});
+// Ken Burns frame guides (crop marks showing zoom target)
+const c=f==='a'?[880,560,1640,800]:[640,500,1720,740];
+[[c[0],c[1],1,1],[c[2],c[1],-1,1],[c[0],c[3],1,-1],[c[2],c[3],-1,-1]].forEach(([x,y,dx,dy])=>{
+ el('path',{d:`M${x} ${y+dy*36} V${y} H${x+dx*36}`,stroke:'#F4F6FA','stroke-opacity':.55,fill:'none','stroke-width':1.5});});
+const t=el('text',{x:c[0],y:c[1]-14,fill:'#F4F6FA','fill-opacity':.6,'font-size':16,'letter-spacing':'.2em','font-family':'Zen Kaku'});t.textContent='KEN BURNS  SCALE 1.00 → 1.12';
+document.getElementById('yr').textContent=yr;
+if(f==='a'){
+ document.getElementById('fr').classList.add('sepia');
+ ph.dataset.label='写真：創業期の工場（社内アーカイブ）';
+ ph.style.transform='scale(1.02)';
+ ph.style.filter='sepia(1) contrast(.9) brightness(.9)';
+ document.getElementById('rec').textContent='ARCHIVE  ／  SEPIA 100%';
+ document.getElementById('ly').innerHTML='1948年　ここから始まった<span class="caret"></span>';
+ document.getElementById('ly').dataset.full='1948年　ここから始まった';
+} else {
+ ph.dataset.label='写真：現在の工場外観（HPより）';
+ ph.classList.add('kbB');Object.assign(ph.style,{left:'-115px',top:'-65px',width:'2150px',height:'1210px'});
+ document.getElementById('gr').style.display='none';
+ document.getElementById('rec').textContent='PRESENT  ／  COLOR 100%';
+ const ly=document.getElementById('ly');ly.classList.add('lg');
+ ly.innerHTML='ものづくりへの　<span class="em">情熱</span>';
+}
+</script></body></html>

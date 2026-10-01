@@ -1,0 +1,28 @@
+/* 原マシナリー MV 絵コンテ 共通スタイル。全シーンでこのファイルを読み込む */
+@font-face { font-family: "Zen Kaku"; font-weight: 400; src: url(fonts/zen-kaku-gothic-new-japanese-400-normal.woff2) format("woff2"), url(fonts/zen-kaku-gothic-new-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Zen Kaku"; font-weight: 700; src: url(fonts/zen-kaku-gothic-new-japanese-700-normal.woff2) format("woff2"), url(fonts/zen-kaku-gothic-new-latin-700-normal.woff2) format("woff2"); }
+@font-face { font-family: "Dela"; src: url(fonts/dela-gothic-one-japanese-400-normal.woff2) format("woff2"), url(fonts/dela-gothic-one-latin-400-normal.woff2) format("woff2"); }
+:root {
+  --navy: #0E1626;      /* 背景の濃紺 */
+  --navy-2: #172238;    /* 一段明るい濃紺 */
+  --steel: #3A4A63;     /* スチール */
+  --silver: #C9D2DE;    /* 削り出した金属面 */
+  --white: #F4F6FA;
+  --amber: #E8A33D;     /* 切削面の光沢（差し色。火花には絶対に使わない） */
+  --warm: #F2E6D3;      /* Cメロの温かい色調 */
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--navy); color: var(--white); font-family: "Zen Kaku", sans-serif; }
+.frame { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--navy); }
+/* 歌詞テロップ（画面下 1/3、全シーン共通の位置と書体） */
+.lyric { position: absolute; left: 0; right: 0; bottom: 120px; text-align: center; font-weight: 700; font-size: 64px; letter-spacing: .08em; color: var(--white); text-shadow: 0 2px 24px rgba(0,0,0,.55); }
+.lyric small { display: block; font-size: 28px; font-weight: 400; letter-spacing: .3em; color: var(--silver); margin-top: 14px; }
+/* 大見出し（サビの1語など） */
+.big { font-family: "Dela", sans-serif; letter-spacing: .04em; }
+/* 写真が入る位置のプレースホルダー（HP 画像が取得でき次第差し替え） */
+.photo { position: absolute; overflow: hidden; background: repeating-linear-gradient(135deg, #1d2a40 0 18px, #213049 18px 36px); border: 1px solid #3A4A63; }
+.photo::after { content: attr(data-label); position: absolute; left: 24px; bottom: 20px; font-size: 24px; color: var(--silver); letter-spacing: .06em; background: rgba(14,22,38,.75); padding: 6px 14px; border-left: 3px solid var(--amber); }
+/* 寸法・目盛りなどの数値 */
+.mono { font-family: "Zen Kaku", monospace; font-variant-numeric: tabular-nums; letter-spacing: .12em; }
+/* ロゴ（正式ロゴ取得までの仮のワードマーク） */
+.logo { font-family: "Dela", sans-serif; letter-spacing: .12em; color: var(--white); }

@@ -1,0 +1,182 @@
+<title>原マシナリー MV 絵コンテ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: 映像と同じ濃紺の上映室。曲の時間軸を上に置き、パートごとに 2 コマ＋メモを縦に並べる。映像の世界に合わせて単一のダークテーマ */
+:root {
+  --navy: #0E1626; --navy-2: #152036; --line: #2A3854; --steel: #8D9AB0; --silver: #C9D2DE; --white: #F4F6FA; --amber: #E8A33D;
+  --f-display: "Dela Gothic One", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --f-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--navy); color: var(--white); font-family: var(--f-body); font-size: 15px; line-height: 1.75; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 24px; padding-block: 48px 80px; }
+@media (max-width: 520px) { .wrap { padding-inline: 16px; } }
+.eyebrow { font-size: 12px; letter-spacing: .24em; color: var(--steel); margin: 0 0 10px; }
+h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(30px, 5vw, 52px); line-height: 1.2; margin: 0 0 16px; letter-spacing: .04em; text-wrap: balance; }
+.lead { max-width: 70ch; color: var(--silver); margin: 0; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 22px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--steel); }
+.facts b { color: var(--white); font-weight: 700; font-variant-numeric: tabular-nums; margin-left: 6px; }
+.rules { margin-top: 22px; display: grid; gap: 6px; font-size: 13.5px; color: var(--silver); max-width: 80ch; }
+.rules p { margin: 0; padding-left: 12px; border-left: 2px solid var(--line); }
+.rules strong { color: var(--white); }
+
+/* 曲の時間軸（パートの長さに比例） */
+.toc { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in srgb, var(--navy) 92%, transparent); backdrop-filter: blur(8px); margin: 36px -4px 8px; padding: 10px 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.toc nav { display: flex; gap: 3px; min-width: 760px; }
+.toc a { min-width: 0; text-decoration: none; color: var(--silver); border-top: 3px solid var(--line); padding-top: 6px; font-size: 11.5px; line-height: 1.35; display: grid; overflow: hidden; }
+.toc a b { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toc a span { color: var(--steel); font-variant-numeric: tabular-nums; }
+.toc a:hover, .toc a:focus-visible { border-top-color: var(--amber); color: var(--white); outline: none; }
+
+.part { padding-top: 44px; scroll-margin-top: 70px; }
+.ph { display: grid; grid-template-columns: auto auto 1fr auto; align-items: baseline; gap: 4px 14px; margin-bottom: 16px; }
+.no { font-family: var(--f-display); color: var(--amber); font-size: 15px; letter-spacing: .08em; }
+h2 { font-family: var(--f-display); font-weight: 400; font-size: 26px; margin: 0; letter-spacing: .04em; }
+.tc { grid-column: 4; font-variant-numeric: tabular-nums; color: var(--silver); font-size: 14px; }
+.bar { grid-column: 1 / -1; position: relative; height: 3px; background: var(--line); border-radius: 2px; }
+.bar i { position: absolute; top: 0; bottom: 0; background: var(--amber); border-radius: 2px; }
+
+.frames { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 760px) { .frames { grid-template-columns: 1fr; } }
+figure { margin: 0; min-width: 0; }
+figure img { display: block; width: 100%; height: auto; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; border: 1px solid var(--line); background: var(--navy-2); }
+figcaption { font-size: 13px; color: var(--silver); margin-top: 8px; }
+figcaption span { display: inline-block; font-size: 11px; letter-spacing: .12em; color: var(--navy); background: var(--silver); border-radius: 3px; padding: 0 6px; margin-right: 8px; line-height: 18px; vertical-align: 1px; }
+
+.notes { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 14px 28px; margin-top: 18px; padding: 18px 0 0; border-top: 1px solid var(--line); }
+@media (max-width: 900px) { .notes { grid-template-columns: 1fr; } }
+.notes > div { min-width: 0; }
+h3 { font-size: 11.5px; letter-spacing: .2em; color: var(--steel); font-weight: 500; margin: 0 0 4px; }
+.notes p { margin: 0 0 12px; font-size: 14px; color: var(--silver); }
+.lyr { color: var(--white) !important; line-height: 1.9; }
+.chips { list-style: none; margin: 2px 0 12px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.chips li { font-size: 12.5px; border: 1px solid var(--line); border-radius: 999px; padding: 1px 10px; color: var(--white); }
+footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--steel); max-width: 80ch; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+html { scroll-behavior: smooth; }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">STORYBOARD ／ PROMOTION MUSIC VIDEO</p>
+  <h1>原マシナリー MV 絵コンテ</h1>
+  <p class="lead">会社の曲に合わせた宣伝ミュージックビデオの完成イメージです。12 のパートそれぞれについて、冒頭と見せ場の 2 コマを、実際の映像と同じ方法でコードから描画しました。</p>
+  <ul class="facts"><li>長さ<b>4:36</b></li><li>テンポ<b>144 BPM</b></li><li>パート<b>12</b></li><li>コマ数<b>24</b></li><li>画面<b>16:9・1920×1080</b></li></ul>
+  <div class="rules">
+    <p><strong>火花は使いません。</strong>切削は、工具の軌跡の細い光の線と、削った面を走る金属の光沢で表現しています。</p>
+    <p><strong>写真の枠について：</strong>斜線の枠は、ホームページの写真が入る位置です。サイトにまだ接続できないため、枠の中に入れる写真の名前を書いています。</p>
+    <p><strong>時刻について：</strong>各パートの時刻は、曲の自動解析による推定です。実際に聴いて確定させてください。</p>
+  </div>
+  <div class="toc"><nav aria-label="曲の構成"><a href="#p01" style="flex:9.1"><b>イントロ</b><span>0:00</span></a><a href="#p02" style="flex:22.3"><b>Aメロ1</b><span>0:09</span></a><a href="#p03" style="flex:22.4"><b>Aメロ2</b><span>0:31</span></a><a href="#p04" style="flex:15.2"><b>Bメロ1</b><span>0:53</span></a><a href="#p05" style="flex:29.1"><b>サビ1</b><span>1:09</span></a><a href="#p06" style="flex:6.8"><b>間奏</b><span>1:38</span></a><a href="#p07" style="flex:17.1"><b>Aメロ3</b><span>1:44</span></a><a href="#p08" style="flex:15.0"><b>Bメロ2</b><span>2:02</span></a><a href="#p09" style="flex:29.2"><b>サビ2</b><span>2:17</span></a><a href="#p10" style="flex:30.6"><b>Cメロ</b><span>2:46</span></a><a href="#p11" style="flex:58.3"><b>ラストサビ</b><span>3:16</span></a><a href="#p12" style="flex:20.7"><b>アウトロ</b><span>4:15</span></a></nav></div>
+  <section class="part" id="p01">
+  <header class="ph"><span class="no">01</span><h2>イントロ</h2><span class="tc">0:00 – 0:09</span><span class="bar"><i style="left:0.00%;width:3.30%"></i></span></header>
+  <div class="frames"><figure><img src="frames/01-a.jpg" alt="イントロの絵コンテ 1" loading="lazy" width="1920" height="1080"><figcaption><span>冒頭</span>暗闇の鋼材の上をエンドミルが静かに一直線に走り、削りたての面を金属光沢が横切っていく。この工具軌跡が折り返して数字の輪郭を描き始める。</figcaption></figure><figure><img src="frames/01-b.jpg" alt="イントロの絵コンテ 2" loading="lazy" width="1920" height="1080"><figcaption><span>見せ場</span>工具軌跡の細い光の線が等高線状に重なって「1948」を描き切り、光沢が数字の上を斜めに通過する。工具が退避して次の年号カウンターへつながる。</figcaption></figure></div>
+  <div class="notes">
+    <div><h3>映像の内容</h3><p>暗闇に鉄のブロック。エンドミルが静かに表面をなぞり、削られた面に金属の光沢が走る。工具の軌跡が光の線になって「1948」を描く。</p><h3>音との合わせ方</h3><p>拍ごとに軌跡の線が1本ずつ増える。最後の拍で「1948」が完成</p></div>
+    <div><h3>歌詞</h3><p class="lyr">（歌なし・演奏のみ）</p></div>
+    <div><h3>組み合わせるスタイル</h3><ul class="chips"><li>シェーダー（金属の質感）</li><li>光沢の走り（シェーダー）</li><li>線を描く（SVG）</li></ul><h3>使う素材</h3><p>（素材不要・CGで制作）</p></div>
+  </div>
+</section>
+<section class="part" id="p02">
+  <header class="ph"><span class="no">02</span><h2>Aメロ1</h2><span class="tc">0:09 – 0:31</span><span class="bar"><i style="left:3.30%;width:8.09%"></i></span></header>
+  <div class="frames"><figure><img src="frames/02-a.jpg" alt="Aメロ1の絵コンテ 1" loading="lazy" width="1920" height="1080"><figcaption><span>冒頭</span>セピア色の創業期の工場写真がゆっくりズームし、年号カウンターは1948、歌詞「1948年　ここから始まった」がタイピングで現れる。年表のマーカーが右へ進み始める。</figcaption></figure><figure><img src="frames/02-b.jpg" alt="Aメロ1の絵コンテ 2" loading="lazy" width="1920" height="1080"><figcaption><span>見せ場</span>カウンターが2026に到達し写真はカラーの現在の工場外観へ。歌詞「ものづくりへの　情熱」が大きく表示され、「情熱」に光沢が走ってAメロ2の加工シーンへ。</figcaption></figure></div>
+  <div class="notes">
+    <div><h3>映像の内容</h3><p>年号が 1948 → 現在 へカウントアップ。創業期〜現在の工場写真をゆっくりズーム。セピアから徐々にカラーへ。歌詞はタイピングで1行ずつ。</p><h3>音との合わせ方</h3><p>1小節ごとに写真を切り替え。「情熱」で色が完全にカラーに</p></div>
+    <div><h3>歌詞</h3><p class="lyr">1948年　ここから始まった<br>受け継いだ技術　積み重ねた想い<br>時代が変わっても<br>変わらないものがある<br>ものづくりへの　情熱</p></div>
+    <div><h3>組み合わせるスタイル</h3><ul class="chips"><li>カウントアップ</li><li>Ken Burns（ゆっくりズーム）</li><li>タイピング</li><li>色補正</li></ul><h3>使う素材</h3><p>会社沿革の写真、工場外観、創業期の写真（あれば）</p></div>
+  </div>
+</section>
+<section class="part" id="p03">
+  <header class="ph"><span class="no">03</span><h2>Aメロ2</h2><span class="tc">0:31 – 0:53</span><span class="bar"><i style="left:11.39%;width:8.12%"></i></span></header>
+  <div class="frames"><figure><img src="frames/03-a.jpg" alt="Aメロ2の絵コンテ 1" loading="lazy" width="1920" height="1080"><figcaption><span>冒頭</span>門型5面加工機の写真の上で大型ワークの上面に工具軌跡が一行ずつ描かれ、5200 mm／2600 mmの寸法線が伸びる。歌詞「大きな素材に　挑み続ける」。次に定規へズームインする。</figcaption></figure><figure><img src="frames/03-b.jpg" alt="Aメロ2の絵コンテ 2" loading="lazy" width="1920" height="1080"><figcaption><span>見せ場</span>定規の1 mmを×30、さらに10 μmを×1000に拡大する2段のインセットで1 μmまで寄っていく。歌詞「一ミリ　一ミクロン」、精度表示0.001 mmのままBメロへ。</figcaption></figure></div>
+  <div class="notes">
+    <div><h3>映像の内容</h3><p>門型5面加工機と大物ワーク。工具の軌跡（ツールパス）が線で描かれる。「一ミリ 一ミクロン」で目盛りが 1mm→1μm まで拡大。最大ワーク 5200×2600mm をカウンター表示。</p><h3>音との合わせ方</h3><p>「一ミリ」「一ミクロン」の2拍でズームが2段階で入る</p></div>
+    <div><h3>歌詞</h3><p class="lyr">鉄を削り　形を生み出す<br>大きな素材に　挑み続ける<br>一ミリ　一ミクロン<br>その先にある精度を追い<br>見えないところまで<br>妥協せず　向き合う<br>技術は　人から人へ<br>想いは　未来へ</p></div>
+    <div><h3>組み合わせるスタイル</h3><ul class="chips"><li>線を描く（SVG）</li><li>3D モデル</li><li>カウントアップ</li><li>スライド・拡大縮小</li><li>Ken Burns（ゆっくりズーム）</li></ul><h3>使う素材</h3><p>門型5面加工機の写真、大物加工中の写真、加工部品の写真</p></div>
+  </div>
+</section>
+<section class="part" id="p04">
+  <header class="ph"><span class="no">04</span><h2>Bメロ1</h2><span class="tc">0:53 – 1:09</span><span class="bar"><i style="left:19.51%;width:5.51%"></i></span></header>
+  <div class="frames"><figure><img src="frames/04-a.jpg" alt="Bメロ1の絵コンテ 1" loading="lazy" width="1920" height="1080"><figcaption><span>冒頭</span>「守る」（昔の機械）の面を見せたカードが3D回転し始め、裏面「変える」（最新設備）へ反転していく途中。歌詞「守るべき技術は　守り抜く」。反転後に画面が右へ押し出される。</figcaption></figure><figure><img src="frames/04-b.jpg" alt="Bメロ1の絵コンテ 2" loading="lazy" width="1920" height="1080"><figcaption><span>見せ場</span>銀色の光の流線が右の消失点へ向かって加速し、ところどころ琥珀色の光沢が走る。歌詞「まだ見ぬ未来へ」で光が一点に収束しサビへ突入する。</figcaption></figure></div>
+  <div class="notes">
+    <div><h3>映像の内容</h3><p>「守る／変える」を表と裏の3Dカードで対比（表：受け継ぐ技術、裏：新しい設備）。「昨日を超えて」「今日を超えて」で画面が右へ押し出され、光の流れが加速していく。</p><h3>音との合わせ方</h3><p>サビ前の4小節で流れの速度と明るさを上げていく</p></div>
+    <div><h3>歌詞</h3><p class="lyr">守るべき技術は　守り抜く<br>変えるべきものは　変えていく<br>昨日を超えて<br>今日を超えて<br>まだ見ぬ未来へ</p></div>
+    <div><h3>組み合わせるスタイル</h3><ul class="chips"><li>3D カード反転</li><li>ページ遷移（スライド）</li><li>フローフィールド</li></ul><h3>使う素材</h3><p>昔の機械と最新設備の写真（対比用）</p></div>
+  </div>
+</section>
+<section class="part" id="p05">
+  <header class="ph"><span class="no">05</span><h2>サビ1</h2><span class="tc">1:09 – 1:38</span><span class="bar"><i style="left:25.02%;width:10.55%"></i></span></header>
+  <div class="frames"><figure><img src="frames/05-a.jpg" alt="サビ1の絵コンテ 1" loading="lazy" width="1920" height="1080"><figcaption><span>冒頭</span>技術力・設計力・設備力・人間力が1拍ごとに1語ずつ大きく現れて画面を4分割で埋め、各分割に写真（加工・CAD・設備・社員）が入った瞬間。中心の照準マークが次のカット線の起点になる。</figcaption></figure><figure><img src="frames/05-b.jpg" alt="サビ1の絵コンテ 2" loading="lazy" width="1920" height="1080"><figcaption><span>見せ場</span>「切り拓け」で画面が精密な斜めの加工線に沿って切り分けられ、切断面から白い光が漏れる中、線で描かれた「原マシナリー」が立体の金属ロゴになり、アンバーの光沢帯が横切っていく。</figcaption></figure></div>
+  <div class="notes">
+    <div><h3>映像の内容</h3><p>「技術力・設計力・設備力・人間力」を1拍1語で画面いっぱいに。4分割画面にそれぞれの写真。「切り拓け」で画面が切削されたように割れ、ロゴが線で描かれて3D化。</p><h3>音との合わせ方</h3><p>4つの力＝4拍。「原マシナリー」でロゴ確定＋光沢がロゴを横切る</p></div>
+    <div><h3>歌詞</h3><p class="lyr">技術力　設計力<br>設備力　人間力<br>すべての力を　ひとつにして<br>まだない価値を　創り出せ<br>この手で<br>この技術で<br>未来を　切り拓け<br>原マシナリー</p></div>
+    <div><h3>組み合わせるスタイル</h3><ul class="chips"><li>1文字ずつ出現</li><li>拍ごとのカット</li><li>3D モデル</li><li>光沢の走り（シェーダー）</li><li>線を描く（SVG）</li></ul><h3>使う素材</h3><p>ロゴ（SVG推奨）、設計・設備・人の写真</p></div>
+  </div>
+</section>
+<section class="part" id="p06">
+  <header class="ph"><span class="no">06</span><h2>間奏</h2><span class="tc">1:38 – 1:44</span><span class="bar"><i style="left:35.57%;width:2.47%"></i></span></header>
+  <div class="frames"><figure><img src="frames/06-a.jpg" alt="間奏の絵コンテ 1" loading="lazy" width="1920" height="1080"><figcaption><span>冒頭</span>ヘアライン仕上げのスチールプレートに、曲の波形が刻印線として彫り込まれ、左上に小さく社名が刻まれた静かな間奏の画。</figcaption></figure><figure><img src="frames/06-b.jpg" alt="間奏の絵コンテ 2" loading="lazy" width="1920" height="1080"><figcaption><span>見せ場</span>同じプレートが水平スライスごとにずれ、シルバーとアンバーに抑えた色ずれが走るグリッチの途中。この崩れを抜けてAメロ3の素材カットへ切り替わる。</figcaption></figure></div>
+  <div class="notes">
+    <div><h3>映像の内容</h3><p>音の波形が鉄板に刻まれるライン表現。グリッチで次のパートへ転換。</p><h3>音との合わせ方</h3><p>波形は音量に連動。最後の1拍でグリッチ</p></div>
+    <div><h3>歌詞</h3><p class="lyr">（歌なし・演奏のみ）</p></div>
+    <div><h3>組み合わせるスタイル</h3><ul class="chips"><li>波のライン</li><li>グリッチ</li></ul><h3>使う素材</h3><p>（素材不要）</p></div>
+  </div>
+</section>
+<section class="part" id="p07">
+  <header class="ph"><span class="no">07</span><h2>Aメロ3</h2><span class="tc">1:44 – 2:02</span><span class="bar"><i style="left:38.03%;width:6.20%"></i></span></header>
+  <div class="frames"><figure><img src="frames/07-a.jpg" alt="Aメロ3の絵コンテ 1" loading="lazy" width="1920" height="1080"><figcaption><span>冒頭</span>シリコン（鏡面の暗灰インゴットとウェハ）・サファイア（透明な青い結晶）・ガラス（エッジが光る透明板）・石英（乳白の半透明結晶）が並び、拍ごとに素材名が点灯していく。</figcaption></figure><figure><img src="frames/07-b.jpg" alt="Aメロ3の絵コンテ 2" loading="lazy" width="1920" height="1080"><figcaption><span>見せ場</span>「削る」「磨く」「組み上げる」の3カットを三連画面で見せる瞬間。左はツールパスの光の線、中央は鏡面にアンバーの光沢が走る研磨面、右は専用機写真の上に分解図の線画が重なる。</figcaption></figure></div>
+  <div class="notes">
+    <div><h3>映像の内容</h3><p>シリコン・サファイア・ガラス・石英を、それぞれの結晶や透明感をシェーダーで表現し、名前を拍で表示。「削る 磨く 組み上げる」は3拍で3カット。専用加工機の写真。</p><h3>音との合わせ方</h3><p>素材名4つ＝4拍で切り替え</p></div>
+    <div><h3>歌詞</h3><p class="lyr">難しい素材も　不可能じゃない<br>シリコン　サファイア　ガラス　石英<br>削る　磨く　組み上げる<br>一つひとつに　技術が宿る<br>設計から　加工まで<br>一貫して　応えていく<br>求められるものの<br>その先へ</p></div>
+    <div><h3>組み合わせるスタイル</h3><ul class="chips"><li>シェーダー（素材の質感）</li><li>1文字ずつ出現</li><li>拍ごとのカット</li><li>Ken Burns（ゆっくりズーム）</li></ul><h3>使う素材</h3><p>専用機（シリコンインゴット・サファイア等の加工機）の写真、加工サンプル</p></div>
+  </div>
+</section>
+<section class="part" id="p08">
+  <header class="ph"><span class="no">08</span><h2>Bメロ2</h2><span class="tc">2:02 – 2:17</span><span class="bar"><i style="left:44.23%;width:5.44%"></i></span></header>
+  <div class="frames"><figure><img src="frames/08-a.jpg" alt="Bメロ2の絵コンテ 1" loading="lazy" width="1920" height="1080"><figcaption><span>冒頭</span>品質・コスト・納期の3つの線画アイコンに順にチェックが入り、右上にISO9001の認証バッジが添えられた瞬間（歌詞「納期を守る」）。</figcaption></figure><figure><img src="frames/08-b.jpg" alt="Bメロ2の絵コンテ 2" loading="lazy" width="1920" height="1080"><figcaption><span>見せ場</span>金属ブロックが一つずつ積み上がり、のこぎり屋根の工場とオフィス棟のシルエットが完成していく途中で、最後の1個が落ちてくる（歌詞「積み上げていく」）。</figcaption></figure></div>
+  <div class="notes">
+    <div><h3>映像の内容</h3><p>品質・コスト・納期の3つをチェックマークのアイコンで提示。「積み上げていく」でブロックが物理演算で積み上がり、会社のシルエットになる。</p><h3>音との合わせ方</h3><p>「品質を追い／コストに挑み／納期を守る」の各頭でチェック</p></div>
+    <div><h3>歌詞</h3><p class="lyr">品質を追い<br>コストに挑み<br>納期を守る<br>信頼は<br>一つひとつの仕事から<br>積み上げていく</p></div>
+    <div><h3>組み合わせるスタイル</h3><ul class="chips"><li>Lottie アイコン</li><li>物理シミュレーション</li><li>スケルトン → 写真への切替</li></ul><h3>使う素材</h3><p>ISO9001 認証の情報、検査風景の写真</p></div>
+  </div>
+</section>
+<section class="part" id="p09">
+  <header class="ph"><span class="no">09</span><h2>サビ2</h2><span class="tc">2:17 – 2:46</span><span class="bar"><i style="left:49.67%;width:10.59%"></i></span></header>
+  <div class="frames"><figure><img src="frames/09-a.jpg" alt="サビ2の絵コンテ 1" loading="lazy" width="1920" height="1080"><figcaption><span>冒頭</span>シルバー基調の抽象ラインマップの中心に「岡崎市」のピンが立ち、「この街から」でカメラが真上へ引いていき地図が地球の一点へ縮んでいく。</figcaption></figure><figure><img src="frames/09-b.jpg" alt="サビ2の絵コンテ 2" loading="lazy" width="1920" height="1080"><figcaption><span>見せ場</span>ワイヤーフレームの地球上で岡崎から世界各地へ弧が伸び、自動車／航空宇宙／工作機械の線アイコンが左右に現れて「世界へ」と重なる。</figcaption></figure></div>
+  <div class="notes">
+    <div><h3>映像の内容</h3><p>4つの力（サビ1と色違い）。「この街から 世界へ」で岡崎の地図から地球までズームアウト。自動車・航空宇宙・工作機械の業界アイコン。</p><h3>音との合わせ方</h3><p>「世界へ」の拍で一気にズームアウト</p></div>
+    <div><h3>歌詞</h3><p class="lyr">技術力　設計力<br>設備力　人間力<br>受け継いだ力を　進化させ<br>次の時代を　創り出せ<br>この街から<br>世界へ<br>未来を　動かせ<br>原マシナリー</p></div>
+    <div><h3>組み合わせるスタイル</h3><ul class="chips"><li>1文字ずつ出現</li><li>拍ごとのカット</li><li>3D モデル</li><li>Lottie アイコン</li><li>光沢の走り（シェーダー）</li></ul><h3>使う素材</h3><p>本社所在地（岡崎市）、取引業界</p></div>
+  </div>
+</section>
+<section class="part" id="p10">
+  <header class="ph"><span class="no">10</span><h2>Cメロ</h2><span class="tc">2:46 – 3:16</span><span class="bar"><i style="left:60.26%;width:11.09%"></i></span></header>
+  <div class="frames"><figure><img src="frames/10-a.jpg" alt="Cメロの絵コンテ 1" loading="lazy" width="1920" height="1080"><figcaption><span>冒頭</span>温かい色調の中、社員・現場・チームの写真がゆっくり横へスライドし、柔らかく大きな光のボケが漂う中で「仲間がいる」が浮かぶ。</figcaption></figure><figure><img src="frames/10-b.jpg" alt="Cメロの絵コンテ 2" loading="lazy" width="1920" height="1080"><figcaption><span>見せ場</span>ほぼ空白の温かい画面中央に静かな大きな文字「だから　できる」だけが残り、1拍の静止のあとグリッチでラストサビへ切り替わる。</figcaption></figure></div>
+  <div class="notes">
+    <div><h3>映像の内容</h3><p>テンポを落とした温かい色調。「人がいる／技術がある／仲間がいる」で社員の写真をゆっくりスライド。光の粒が漂う。「だから できる」で一瞬の静止のあと、グリッチで最後のサビへ。</p><h3>音との合わせ方</h3><p>「だから できる」の直後に 1拍の静止（ブレイク）</p></div>
+    <div><h3>歌詞</h3><p class="lyr">変化を恐れない<br>挑戦を止めない<br>人がいる<br>技術がある<br>仲間がいる<br>だから　できる<br>一つの会社から<br>一つの技術から<br>世界の未来へ</p></div>
+    <div><h3>組み合わせるスタイル</h3><ul class="chips"><li>Ken Burns（ゆっくりズーム）</li><li>雪・光の粒</li><li>タイピング</li><li>グリッチ</li></ul><h3>使う素材</h3><p>社員・現場の写真、代表メッセージの写真</p></div>
+  </div>
+</section>
+<section class="part" id="p11">
+  <header class="ph"><span class="no">11</span><h2>ラストサビ</h2><span class="tc">3:16 – 4:15</span><span class="bar"><i style="left:71.36%;width:21.14%"></i></span></header>
+  <div class="frames"><figure><img src="frames/11-a.jpg" alt="ラストサビの絵コンテ 1" loading="lazy" width="1920" height="1080"><figcaption><span>冒頭</span>1拍ごとに切り替わる写真モンタージュを背景に年号カウンターが1948から2048まで駆け上がり、タイムラインが100年に到達して「100年企業へ」が出る。</figcaption></figure><figure><img src="frames/11-b.jpg" alt="ラストサビの絵コンテ 2" loading="lazy" width="1920" height="1080"><figcaption><span>見せ場</span>「切り拓け」で画面が加工の切削ラインで割れて光が差し込み、金属光沢が走る立体ワードマーク「原マシナリー」と銀・白の紙吹雪の中で「原マシナリー！」が決まる。</figcaption></figure></div>
+  <div class="notes">
+    <div><h3>映像の内容</h3><p>最大の盛り上がり。年号カウンターが 1948 → 2048（100年企業）。全写真を拍ごとに高速モンタージュ。3D ロゴが回転し、「切り拓け」で画面全体が切削されて光が差し込む。紙吹雪と、ロゴを走る金属の光沢。</p><h3>音との合わせ方</h3><p>1拍1カット。「100年企業へ」でカウンターが 2048 に到達</p></div>
+    <div><h3>歌詞</h3><p class="lyr">技術力　設計力<br>設備力　人間力<br>四つの力を　ひとつにして<br>新しい時代を　切り拓け<br>1948年から<br>受け継いだ　ものづくり<br>100年企業へ<br>その先へ<br>まだ見ぬ未来を<br>この手で創る<br>技術で<br>未来を<br>切り拓け<br>原マシナリー！</p></div>
+    <div><h3>組み合わせるスタイル</h3><ul class="chips"><li>カウントアップ</li><li>拍ごとのカット</li><li>3D モデル</li><li>シェーダー（金属の質感）</li><li>光沢の走り（シェーダー）</li><li>紙吹雪</li><li>1文字ずつ出現</li></ul><h3>使う素材</h3><p>これまでの全写真、ロゴ</p></div>
+  </div>
+</section>
+<section class="part" id="p12">
+  <header class="ph"><span class="no">12</span><h2>アウトロ</h2><span class="tc">4:15 – 4:35</span><span class="bar"><i style="left:92.49%;width:7.51%"></i></span></header>
+  <div class="frames"><figure><img src="frames/12-a.jpg" alt="アウトロの絵コンテ 1" loading="lazy" width="1920" height="1080"><figcaption><span>冒頭</span>中央を囲むツールパスの細線が外側から静かに途切れて消えていき、スローガン「受け継ぐ技術　挑み続ける心」が残る。</figcaption></figure><figure><img src="frames/12-b.jpg" alt="アウトロの絵コンテ 2" loading="lazy" width="1920" height="1080"><figcaption><span>見せ場</span>落ち着いた濃紺のエンドカードにワードマーク「原マシナリー」、since 1948、「ものづくりの未来へ」とURLが並び、そのままフェードアウトする。</figcaption></figure></div>
+  <div class="notes">
+    <div><h3>映像の内容</h3><p>工具の軌跡の線が静かに消え、ロゴとスローガン「受け継ぐ技術 挑み続ける心」。最後にURLを表示してフェードアウト。</p><h3>音との合わせ方</h3><p>曲の最後の音でロゴが確定し、余韻でフェード</p></div>
+    <div><h3>歌詞</h3><p class="lyr">受け継ぐ技術<br>挑み続ける心<br>ものづくりの未来へ<br>原マシナリー</p></div>
+    <div><h3>組み合わせるスタイル</h3><ul class="chips"><li>線を描く（SVG）</li><li>フェード</li><li>光沢の走り（シェーダー）</li></ul><h3>使う素材</h3><p>ロゴ、URL（hara-mc1948.co.jp）</p></div>
+  </div>
+</section>
+  <footer>画面の隅にある小さな英字や工具座標などの表示は、雰囲気づくりのための飾りです。会社の実際の仕様を表すものではありません。完成版では、実データに合わせるか削除します。仮のロゴは文字だけで組んでいます。正式なロゴデータを受け取り次第、差し替えます。</footer>
+</div>

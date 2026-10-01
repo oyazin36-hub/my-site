@@ -1,0 +1,49 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<style>
+#cv{position:absolute;inset:0}
+.hud{position:absolute;font-size:18px;color:var(--silver);opacity:.55;letter-spacing:.18em}
+.frame{background:radial-gradient(ellipse 60% 60% at 50% 45%, #172238 0%, #0E1626 70%, #0A101C 100%)}
+.end{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.wm{font-size:150px;background:linear-gradient(100deg,#AEB9C8 0%,#F4F6FA 35%,#C9D2DE 48%,#FFF1DA 52%,#C9D2DE 56%,#F4F6FA 75%,#AEB9C8 100%);-webkit-background-clip:text;color:transparent;padding-left:.12em}
+</style></head><body>
+<div class="frame" id="fr"><canvas id="cv" width="1920" height="1080"></canvas></div>
+<script>
+const f=new URLSearchParams(location.search).get('f')||'a';
+const fr=document.getElementById('fr');function html(s){fr.insertAdjacentHTML('beforeend',s);}
+const c=document.getElementById('cv').getContext('2d');
+function rrect(cx,cy,w,h,r){c.beginPath();c.moveTo(cx-w/2+r,cy-h/2);c.arcTo(cx+w/2,cy-h/2,cx+w/2,cy+h/2,r);c.arcTo(cx+w/2,cy+h/2,cx-w/2,cy+h/2,r);c.arcTo(cx-w/2,cy+h/2,cx-w/2,cy-h/2,r);c.arcTo(cx-w/2,cy-h/2,cx+w/2,cy-h/2,r);c.closePath();}
+if(f==='a'){
+  const cx=960,cy=430;
+  // offset contour tool paths, fading outward and dashed (dissolving)
+  for(let i=0;i<22;i++){const w=520+i*58,h=220+i*40,a=Math.max(0,.55-i*.026);
+    c.strokeStyle=`rgba(201,210,222,${a})`;c.lineWidth=1;
+    const seg=i<6?0:(i-5)*6; c.setLineDash(seg?[60-seg*.6>8?60-seg*.6:8, seg]:[]);
+    rrect(cx,cy,w,h,40+i*20);c.stroke();}
+  c.setLineDash([]);
+  // zig-zag pocketing pass inside, fading left to right
+  for(let k=0;k<28;k++){const x=cx-240+k*17.5;const a=.35*(1-k/28);
+    c.strokeStyle=`rgba(201,210,222,${a})`;c.beginPath();c.moveTo(x,cy-80);c.lineTo(x,cy+80);c.stroke();}
+  // a short amber sheen segment on one contour (highlight)
+  const g=c.createLinearGradient(1180,0,1400,0);g.addColorStop(0,'rgba(232,163,61,0)');g.addColorStop(.5,'rgba(232,163,61,.8)');g.addColorStop(1,'rgba(232,163,61,0)');
+  c.strokeStyle=g;c.lineWidth=1.5;rrect(cx,cy,520+3*58,220+3*40,40+3*20);c.stroke();
+  // crosshair center
+  c.strokeStyle='rgba(201,210,222,.35)';c.lineWidth=1;c.beginPath();c.moveTo(cx-24,cy);c.lineTo(cx+24,cy);c.moveTo(cx,cy-24);c.lineTo(cx,cy+24);c.stroke();
+  // vignette fade
+  const v=c.createRadialGradient(cx,cy,200,cx,cy,1000);v.addColorStop(0,'rgba(14,22,38,0)');v.addColorStop(1,'rgba(14,22,38,.85)');c.fillStyle=v;c.fillRect(0,0,1920,1080);
+  html(`<div class="hud mono" style="left:110px;top:52px">OUTRO ── 04:15–04:36</div><div class="hud mono" style="right:110px;top:52px">TOOL PATH ── FADE OUT</div>`);
+  html(`<div class="mono" style="position:absolute;left:0;right:0;top:${cy-14}px;text-align:center;font-size:22px;letter-spacing:.6em;color:var(--silver);opacity:.6">G01　X0.000　Y0.000</div>`);
+  html(`<div class="lyric">受け継ぐ技術　挑み続ける心<small>INHERITED SKILL, A HEART THAT KEEPS CHALLENGING</small></div>`);
+} else {
+  // faint remaining hairlines
+  c.strokeStyle='rgba(201,210,222,.10)';c.lineWidth=1;rrect(960,500,1500,760,80);c.stroke();
+  c.strokeStyle='rgba(201,210,222,.05)';rrect(960,500,1620,840,110);c.stroke();
+  html(`<div class="end">
+    <div class="mono" style="font-size:20px;letter-spacing:.6em;color:var(--silver);opacity:.7;margin-bottom:34px">株式会社</div>
+    <div class="logo wm">原マシナリー</div>
+    <div style="display:flex;align-items:center;gap:22px;margin-top:40px"><div style="width:120px;height:1px;background:linear-gradient(90deg,transparent,#C9D2DE)"></div><div class="mono" style="font-size:24px;color:var(--silver);letter-spacing:.4em">since 1948</div><div style="width:120px;height:1px;background:linear-gradient(90deg,#C9D2DE,transparent)"></div></div>
+    <div style="margin-top:70px;font-size:28px;letter-spacing:.3em;color:var(--white);opacity:.85">ものづくりの未来へ</div>
+    <div class="mono" style="margin-top:22px;font-size:24px;letter-spacing:.14em;color:var(--silver)">hara-mc1948.co.jp</div>
+  </div>`);
+  html(`<div class="mono" style="position:absolute;left:0;right:0;bottom:56px;text-align:center;font-size:16px;letter-spacing:.3em;color:var(--steel)">愛知県岡崎市　精密機械加工・専用機設計製作</div>`);
+}
+</script></body></html>

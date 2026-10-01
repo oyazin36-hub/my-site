@@ -1,0 +1,111 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<style>
+.frame.silver{background:
+  linear-gradient(118deg, rgba(255,255,255,0) 18%, rgba(255,255,255,.35) 40%, rgba(255,255,255,.5) 47%, rgba(232,163,61,.07) 50%, rgba(255,255,255,0) 66%),
+  repeating-linear-gradient(0deg, rgba(58,74,99,.035) 0 1px, transparent 1px 3px),
+  linear-gradient(160deg,#E4E9F0 0%, var(--silver) 45%, #AEB9C8 100%);}
+.dark{color:var(--navy)}
+.lyric.dk{color:var(--navy);text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.lyric.dk small{color:var(--steel)}
+.tag{position:absolute;font-size:20px;letter-spacing:.3em;color:var(--steel)}
+.hud{position:absolute;font-size:18px;color:var(--steel);letter-spacing:.18em}
+svg{position:absolute;left:0;top:0}
+.chip{position:absolute;display:flex;flex-direction:column;align-items:center;gap:14px;color:var(--navy);font-weight:700;font-size:28px;letter-spacing:.2em}
+.chip small{font-weight:400;font-size:16px;letter-spacing:.3em;color:var(--steel)}
+</style></head><body>
+<div class="frame silver" id="fr">
+<svg id="sv" width="1920" height="1080"></svg>
+</div>
+<script>
+const f=new URLSearchParams(location.search).get('f')||'a';
+const fr=document.getElementById('fr'), sv=document.getElementById('sv');
+const NS='http://www.w3.org/2000/svg';
+function el(t,a,p=sv){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;}
+function html(s){fr.insertAdjacentHTML('beforeend',s);}
+// common: fine grid + frame corners
+const defs=el('defs',{});
+defs.innerHTML=`<pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#3A4A63" stroke-opacity=".10" stroke-width="1"/></pattern>
+<linearGradient id="sheen" x1="0" x2="1"><stop offset="0" stop-color="#E8A33D" stop-opacity="0"/><stop offset=".5" stop-color="#E8A33D" stop-opacity=".9"/><stop offset="1" stop-color="#E8A33D" stop-opacity="0"/></linearGradient>
+<radialGradient id="vig" cx=".5" cy=".45" r=".75"><stop offset=".6" stop-color="#0E1626" stop-opacity="0"/><stop offset="1" stop-color="#0E1626" stop-opacity=".22"/></radialGradient>`;
+el('rect',{width:1920,height:1080,fill:'url(#g)'});
+[[60,60,1,1],[1860,60,-1,1],[60,1020,1,-1],[1860,1020,-1,-1]].forEach(([x,y,sx,sy])=>el('path',{d:`M${x} ${y+40*sy}V${y}H${x+40*sx}`,fill:'none',stroke:'#0E1626','stroke-width':2}));
+html(`<div class="hud mono" style="left:110px;top:52px">CHORUS 2 ── 02:17–02:46</div><div class="hud mono" style="right:110px;top:52px;text-align:right">144 BPM</div>`);
+
+if(f==='a'){
+  // abstract line map of Okazaki: river, roads, contours, district blocks
+  const g=el('g',{transform:'translate(0,-40)'});
+  // contour lines (topographic, east hills)
+  for(let i=0;i<9;i++){let d='';for(let t=0;t<=60;t++){const a=t/60*Math.PI*2;const r=120+i*48+18*Math.sin(a*3+i)+12*Math.cos(a*5-i*.7);const x=1500+r*1.4*Math.cos(a),y=360+r*Math.sin(a);d+=(t?'L':'M')+x.toFixed(1)+' '+y.toFixed(1);}
+    el('path',{d:d+'Z',fill:'none',stroke:'#3A4A63','stroke-opacity':.22-i*.015,'stroke-width':1},g);}
+  // rivers (Yahagi & Oto)
+  el('path',{d:'M760 -20 C 800 200, 700 330, 780 520 S 900 820, 860 1100',fill:'none',stroke:'#3A4A63','stroke-opacity':.55,'stroke-width':10},g);
+  el('path',{d:'M760 -20 C 800 200, 700 330, 780 520 S 900 820, 860 1100',fill:'none',stroke:'#E4E9F0','stroke-width':6},g);
+  el('path',{d:'M1500 160 C 1300 300, 1150 420, 1000 470 S 840 500, 790 540',fill:'none',stroke:'#3A4A63','stroke-opacity':.5,'stroke-width':5},g);
+  // roads grid (slightly rotated)
+  const rd=el('g',{transform:'rotate(-14 960 540)'},g);
+  for(let i=0;i<14;i++){el('line',{x1:200+i*120,y1:-200,x2:200+i*120,y2:1300,stroke:'#3A4A63','stroke-opacity':i%4==0?.45:.18,'stroke-width':i%4==0?2.5:1},rd);}
+  for(let i=0;i<12;i++){el('line',{x1:-200,y1:i*110,x2:2200,y2:i*110,stroke:'#3A4A63','stroke-opacity':i%4==1?.45:.18,'stroke-width':i%4==1?2.5:1},rd);}
+  // highway & rail
+  el('path',{d:'M-20 300 C 400 380, 900 300, 1940 520',fill:'none',stroke:'#0E1626','stroke-opacity':.55,'stroke-width':3},g);
+  el('path',{d:'M-20 760 C 500 700, 1100 760, 1940 640',fill:'none',stroke:'#0E1626','stroke-opacity':.45,'stroke-width':2,'stroke-dasharray':'14 8'},g);
+  // city boundary
+  el('path',{d:'M520 180 L780 120 L1050 170 L1290 130 L1460 260 L1420 470 L1500 640 L1260 720 L1010 690 L860 760 L640 680 L560 520 L470 400Z',fill:'#F4F6FA','fill-opacity':.28,stroke:'#0E1626','stroke-width':2,'stroke-dasharray':'2 7','stroke-linecap':'round'},g);
+  // pin
+  const px=960,py=440;
+  for(let i=0;i<3;i++) el('circle',{cx:px,cy:py,r:60+i*70,fill:'none',stroke:'#0E1626','stroke-opacity':.35-i*.1,'stroke-width':1},g);
+  el('line',{x1:px-280,y1:py,x2:px+280,y2:py,stroke:'#0E1626','stroke-opacity':.35},g);
+  el('line',{x1:px,y1:py-280,x2:px,y2:py+120,stroke:'#0E1626','stroke-opacity':.35},g);
+  el('path',{d:`M${px} ${py} c -8 -26 -38 -46 -38 -78 a38 38 0 0 1 76 0 c 0 32 -30 52 -38 78z`,fill:'#0E1626'},g);
+  el('circle',{cx:px,cy:py-78,r:13,fill:'#C9D2DE'},g);
+  el('path',{d:`M${px-46} ${py-130} h92`,stroke:'url(#sheen)','stroke-width':2},g);
+  el('circle',{cx:px,cy:py,r:5,fill:'#0E1626'},g);
+  html(`<div style="position:absolute;left:1010px;top:300px;color:var(--navy)"><div style="font-weight:700;font-size:44px;letter-spacing:.24em">岡崎市</div><div class="mono" style="font-size:18px;color:var(--steel);margin-top:6px">AICHI / JAPAN</div><div class="mono" style="font-size:18px;color:var(--steel);margin-top:4px">34.95°N　137.17°E</div><div style="width:220px;height:1px;background:var(--navy);margin-top:14px"></div><div style="font-size:18px;color:var(--steel);margin-top:10px;letter-spacing:.2em">株式会社原マシナリー　SINCE 1948</div></div>`);
+  // scale bar & north
+  html(`<div class="hud mono" style="left:110px;top:900px">0 ─── 1 km</div>`);
+  el('path',{d:'M1800 150 l-12 30 l12 -8 l12 8z',fill:'#0E1626'}); html(`<div class="hud mono" style="left:1794px;top:110px">N</div>`);
+  el('rect',{width:1920,height:1080,fill:'url(#vig)'});
+  html(`<div class="lyric dk">この街から<small>FROM THIS CITY</small></div>`);
+} else {
+  // wireframe globe orthographic
+  const R=330,CX=960,CY=430, lon0=168*Math.PI/180, lat0=26*Math.PI/180;
+  function proj(lat,lon,h=1){lat*=Math.PI/180;lon*=Math.PI/180;
+    const x=Math.cos(lat)*Math.sin(lon-lon0);
+    const y=Math.cos(lat0)*Math.sin(lat)-Math.sin(lat0)*Math.cos(lat)*Math.cos(lon-lon0);
+    const z=Math.sin(lat0)*Math.sin(lat)+Math.cos(lat0)*Math.cos(lat)*Math.cos(lon-lon0);
+    return {x:CX+R*h*x,y:CY-R*h*y,z,vis:z>=0||h*Math.hypot(x,y)>1};}
+  el('circle',{cx:CX,cy:CY,r:R+60,fill:'none',stroke:'#0E1626','stroke-opacity':.12});
+  el('circle',{cx:CX,cy:CY,r:R,fill:'#F4F6FA','fill-opacity':.25,stroke:'#0E1626','stroke-width':1.5});
+  function line(pts,attrs,first){let d='',pen=false,done=false;for(const p of pts){if(done)break;if(p.vis){d+=(pen?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1);pen=true}else{if(first&&pen)done=true;pen=false;}}el('path',Object.assign({d,fill:'none'},attrs));}
+  for(let la=-75;la<=75;la+=15){const pts=[];for(let lo=-180;lo<=180;lo+=3)pts.push(proj(la,lo));line(pts,{stroke:'#3A4A63','stroke-opacity':la==0?.6:.3,'stroke-width':1});}
+  for(let lo=-180;lo<180;lo+=15){const pts=[];for(let la=-90;la<=90;la+=3)pts.push(proj(la,lo));line(pts,{stroke:'#3A4A63','stroke-opacity':.3,'stroke-width':1});}
+  // tick ring
+  for(let i=0;i<180;i++){const a=i/180*Math.PI*2,r1=R+60,r2=r1+(i%15==0?18:8);el('line',{x1:CX+r1*Math.cos(a),y1:CY+r1*Math.sin(a),x2:CX+r2*Math.cos(a),y2:CY+r2*Math.sin(a),stroke:'#0E1626','stroke-opacity':.35});}
+  // arcs
+  const jp=[34.95,137.17];
+  const dests=[[42.3,-83.0,'DETROIT'],[48.8,9.2,'EUROPE'],[13.7,100.5,'BANGKOK'],[47.6,-122.3,'SEATTLE'],[-33.9,151.2,'SYDNEY']];
+  function v3(la,lo){la*=Math.PI/180;lo*=Math.PI/180;return [Math.cos(la)*Math.cos(lo),Math.cos(la)*Math.sin(lo),Math.sin(la)];}
+  function toLL(v){const n=Math.hypot(...v);return [Math.asin(v[2]/n)*180/Math.PI,Math.atan2(v[1],v[0])*180/Math.PI];}
+  dests.forEach(([la,lo,name],k)=>{const a=v3(...jp),b=v3(la,lo);const om=Math.acos(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]);const pts=[];
+    for(let i=0;i<=80;i++){const t=i/80;const s1=Math.sin((1-t)*om)/Math.sin(om),s2=Math.sin(t*om)/Math.sin(om);const v=[a[0]*s1+b[0]*s2,a[1]*s1+b[1]*s2,a[2]*s1+b[2]*s2];const [pl,plo]=toLL(v);pts.push(proj(pl,plo,1+0.28*om/Math.PI*Math.sin(Math.PI*t)));}
+    line(pts,{stroke:'#0E1626','stroke-width':2},1);
+    line(pts.slice(0,46),{stroke:'url(#sheen)','stroke-width':1.2,transform:'translate(0,-2)'},1);
+    if(name==='EUROPE'){let last=null;for(const q of pts){if(q.vis)last=q;else if(last)break;}
+      el('circle',{cx:last.x,cy:last.y,r:5,fill:'#0E1626'});el('circle',{cx:last.x,cy:last.y,r:11,fill:'none',stroke:'#0E1626','stroke-opacity':.5});return;}
+    const e=proj(la,lo); if(e.vis){el('circle',{cx:e.x,cy:e.y,r:5,fill:'#0E1626'});el('circle',{cx:e.x,cy:e.y,r:11,fill:'none',stroke:'#0E1626','stroke-opacity':.5});}
+  });
+  const o=proj(...jp); el('circle',{cx:o.x,cy:o.y,r:8,fill:'#0E1626'});el('circle',{cx:o.x,cy:o.y,r:22,fill:'none',stroke:'#0E1626'});
+  html(`<div style="position:absolute;left:${o.x+20}px;top:${o.y+22}px;font-weight:700;font-size:22px;color:var(--navy);letter-spacing:.2em">岡崎</div>`);
+  // industry icons
+  const icons={
+   car:`<svg width="120" height="70" viewBox="0 0 120 70" style="position:static" fill="none" stroke="#0E1626" stroke-width="2.2" stroke-linejoin="round"><path d="M6 48 V38 l10-4 16-16 h42 l20 16 16 4 v10 h-8"/><path d="M28 48 h44"/><circle cx="20" cy="50" r="9"/><circle cx="96" cy="50" r="9"/><path d="M36 21 l-10 12 h40 V21z M72 21 v12 h26 l-14-12z" stroke-width="1.4"/></svg>`,
+   plane:`<svg width="120" height="70" viewBox="0 0 120 70" style="position:static" fill="none" stroke="#0E1626" stroke-width="2.2" stroke-linejoin="round"><path d="M8 38 h80 c12 0 24 -2 26 -4 c-2 -4 -14 -6 -26 -6 h-80 l-4 -16 h-6 z" transform="translate(4,0)"/><path d="M56 28 l-20 -24 h-8 l10 24 M56 38 l-20 26 h-8 l10 -26" /><path d="M90 30 h10" stroke-width="1.4"/></svg>`,
+   mc:`<svg width="120" height="70" viewBox="0 0 120 70" style="position:static" fill="none" stroke="#0E1626" stroke-width="2.2" stroke-linejoin="round"><path d="M14 64 V10 h92 v54"/><path d="M8 64 h104"/><path d="M14 18 h92" stroke-width="1.4"/><rect x="50" y="12" width="20" height="26"/><path d="M57 38 v10 h6 v-10 M60 48 v5"/><rect x="26" y="56" width="68" height="8" stroke-width="1.4"/></svg>`};
+  const items=[['car','自動車','AUTOMOTIVE'],['plane','航空宇宙','AEROSPACE'],['mc','工作機械','MACHINE TOOLS']];
+  items.forEach(([k,j,e],i)=>{const x=[250,1500,1500][i], y=[300,230,470][i];
+    html(`<div class="chip" style="left:${x}px;top:${y}px;width:220px">${icons[k]}<div>${j}</div><small>${e}</small></div>`);});
+  // connector hairlines from globe to icons
+  [[470,380,632,380],[1500,310,1260,310],[1500,550,1250,550]].forEach(([a,b,c,d])=>{el('line',{x1:a,y1:b,x2:c,y2:d,stroke:'#0E1626','stroke-opacity':.4});el('circle',{cx:c,cy:d,r:3,fill:'#0E1626'});});
+  el('rect',{width:1920,height:1080,fill:'url(#vig)'});
+  html(`<div class="lyric dk">世界へ<small>TO THE WORLD</small></div>`);
+}
+</script></body></html>

@@ -1,0 +1,47 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<style>
+.frame.warmdk{background:radial-gradient(ellipse 55% 50% at 70% 22%, rgba(255,214,160,.30), transparent 70%), radial-gradient(ellipse 60% 60% at 20% 70%, rgba(242,230,211,.12), transparent 70%), linear-gradient(180deg,#3B3128 0%,#2A2420 55%,#1C1A1B 100%);}
+.frame.warmlt{background:radial-gradient(ellipse 60% 55% at 50% 46%, #FBF5EB 0%, var(--warm) 55%, #E3D3BC 100%);}
+.photo.w{background:repeating-linear-gradient(135deg,#5A4C3E 0 18px,#5F5142 18px 36px);border:1px solid rgba(242,230,211,.35);box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.photo.w::before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,226,180,.30),rgba(255,226,180,.04) 50%,rgba(242,230,211,.12));}
+.photo.w::after{background:rgba(42,38,33,.8);color:var(--warm)}
+#bk{position:absolute;inset:0}
+.hud{position:absolute;font-size:18px;color:rgba(242,230,211,.6);letter-spacing:.18em}
+.lyric.w{color:#FFF8EE}
+.lyric.w small{color:rgba(242,230,211,.7)}
+.quiet{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#2A2621}
+</style></head><body>
+<div class="frame" id="fr"><canvas id="bk" width="1920" height="1080"></canvas></div>
+<script>
+const f=new URLSearchParams(location.search).get('f')||'a';
+const fr=document.getElementById('fr');const c=document.getElementById('bk').getContext('2d');
+function html(s){fr.insertAdjacentHTML('beforeend',s);}
+let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+function bokeh(n,col,amax,rmin,rmax){for(let i=0;i<n;i++){const x=rnd()*1920,y=rnd()*1080,r=rmin+rnd()*(rmax-rmin),a=.03+rnd()*amax;
+  const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(.7,`rgba(${col},${a*.6})`);g.addColorStop(1,`rgba(${col},0)`);c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,7);c.fill();}}
+if(f==='a'){
+  fr.classList.add('warmdk');
+  bokeh(16,'255,236,205',.10,70,170);
+  html(`<div class="photo w" data-label="写真：社員" style="left:150px;top:150px;width:560px;height:640px;transform:translateY(24px)"></div>
+  <div class="photo w" data-label="写真：現場" style="left:760px;top:110px;width:520px;height:600px"></div>
+  <div class="photo w" data-label="写真：チーム" style="left:1330px;top:190px;width:460px;height:560px;transform:translateY(-16px)"></div>`);
+  // drift arrows hint (slow slide)
+  html(`<div class="hud mono" style="left:110px;top:52px">C-MELODY ── 02:46–03:17</div><div class="hud mono" style="right:110px;top:52px">SLOW DRIFT →</div>`);
+  // foreground soft bokeh over photos
+  const c2=document.createElement('canvas');c2.width=1920;c2.height=1080;c2.style.cssText='position:absolute;inset:0';fr.appendChild(c2);
+  const cc=c;  window.c=c2.getContext('2d');
+  { const ctx=c2.getContext('2d'); const old=c; 
+    for(let i=0;i<9;i++){const x=rnd()*1920,y=rnd()*800,r=60+rnd()*110,a=.07+rnd()*.07;const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(255,246,230,${a})`);g.addColorStop(.75,`rgba(255,246,230,${a*.55})`);g.addColorStop(1,'rgba(255,246,230,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();}
+    const g=ctx.createLinearGradient(0,620,0,1080);g.addColorStop(0,'rgba(22,23,29,0)');g.addColorStop(1,'rgba(22,23,29,.92)');ctx.fillStyle=g;ctx.fillRect(0,620,1920,460);}
+  html(`<div class="lyric w">仲間がいる<small>WE HAVE EACH OTHER</small></div>`);
+} else {
+  fr.classList.add('warmlt');
+  bokeh(10,'255,255,255',.12,90,200);
+  bokeh(6,'214,190,155',.05,80,160);
+  html(`<div class="quiet"><div style="width:1px;height:90px;background:rgba(42,38,33,.35);margin-bottom:56px"></div>
+   <div style="font-weight:700;font-size:132px;letter-spacing:.16em;padding-left:.16em">だから　できる</div>
+   <div class="mono" style="margin-top:40px;font-size:22px;letter-spacing:.5em;color:rgba(42,38,33,.55)">THAT'S WHY WE CAN</div>
+   <div style="width:1px;height:90px;background:rgba(42,38,33,.35);margin-top:56px"></div></div>`);
+  html(`<div class="mono" style="position:absolute;right:110px;bottom:60px;font-size:18px;letter-spacing:.2em;color:rgba(42,38,33,.45)">FREEZE 1 BEAT ── ▶ GLITCH CUT</div>`);
+}
+</script></body></html>

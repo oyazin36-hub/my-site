@@ -1,0 +1,127 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<style>
+svg{position:absolute;inset:0}
+.hud{position:absolute;font-size:20px;letter-spacing:.3em;color:var(--silver)}
+.dim{position:absolute;right:120px;top:84px;text-align:right}
+.dim .v{font-family:"Dela";font-size:64px;letter-spacing:.04em;color:var(--white);line-height:1.1}
+.dim .v span{font-family:"Zen Kaku";font-size:28px;color:var(--silver);letter-spacing:.2em;margin-left:10px}
+.dim .l{font-size:18px;letter-spacing:.4em;color:#8a98ad}
+.photo::after{bottom:auto;top:150px;left:120px}
+.bot{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,22,38,0) 60%,rgba(14,22,38,.92) 82%)}
+</style></head><body><div class="frame" id="fr"></div>
+<script>
+const f=new URLSearchParams(location.search).get('f')||'a';
+const fr=document.getElementById('fr');
+const NS='http://www.w3.org/2000/svg';
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;}
+function tx(p,x,y,str,a={}){const t=el('text',Object.assign({x,y,fill:'#C9D2DE','font-size':18,'letter-spacing':'.18em','font-family':'Zen Kaku'},a),p);t.textContent=str;return t;}
+const DEFS=`<defs>
+<filter id="glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C9D2DE" stop-opacity="0"/><stop offset=".45" stop-color="#F4F6FA" stop-opacity=".0"/><stop offset=".5" stop-color="#F4F6FA" stop-opacity=".5"/><stop offset=".52" stop-color="#E8A33D" stop-opacity=".35"/><stop offset=".58" stop-color="#C9D2DE" stop-opacity="0"/><stop offset="1" stop-color="#C9D2DE" stop-opacity="0"/></linearGradient>
+<marker id="ar" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9" fill="none" stroke="#F4F6FA" stroke-width="1.2"/></marker>
+</defs>`;
+if(f==='a'){
+  fr.innerHTML=`<div class="photo" data-label="写真：門型5面加工機（HPより）" style="left:0;top:0;width:1920px;height:1080px"></div><div class="bot"></div>
+  <svg width="1920" height="1080" id="s">${DEFS}</svg>
+  <div class="hud mono" style="left:120px;top:96px">5-FACE GANTRY ／ TOOL PATH SIM</div>
+  <div class="dim mono"><div class="l">WORK ENVELOPE</div><div class="v">5200 × 2600<span>mm</span></div></div>
+  <div class="lyric">大きな素材に　挑み続ける</div>`;
+  document.querySelector('.photo').style.cssText+=';';
+  const s=document.getElementById('s');
+  // workpiece top face in perspective (quad)
+  const A=[430,640],B=[1530,640],C=[1330,430],D=[620,430];
+  const lerp=(p,q,t)=>[p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t];
+  el('path',{d:`M${A} L${B} L${C} L${D} Z`,fill:'#C9D2DE','fill-opacity':.08,stroke:'#F4F6FA','stroke-opacity':.8,'stroke-width':1.5},s);
+  // block thickness
+  el('path',{d:`M${A} L${A[0]} 700 L${B[0]} 700 L${B}`,fill:'#0E1626','fill-opacity':.35,stroke:'#C9D2DE','stroke-opacity':.5},s);
+  // raster tool path: zigzag across depth, partially complete
+  const N=22,done=14;let d='';
+  for(let i=0;i<=N;i++){const t=i/N;const p=lerp(A,D,t),q=lerp(B,C,t);
+    const pp=i%2?[q,p]:[p,q];
+    d+=(i?` L`:`M`)+pp[0]+' L'+pp[1];
+    if(i===done){el('path',{d,fill:'none',stroke:'#F4F6FA','stroke-width':1.3,filter:'url(#glow)','stroke-linejoin':'round'},s);
+      var head=pp[1];d='M'+pp[1];}
+  }
+  el('path',{d,fill:'none',stroke:'#C9D2DE','stroke-opacity':.35,'stroke-dasharray':'3 7'},s);
+  // sheen band on machined region (clip to quad bottom portion)
+  const clip=el('clipPath',{id:'q'},s);el('path',{d:`M${A} L${B} L${lerp(B,C,done/N)} L${lerp(A,D,done/N)} Z`},clip);
+  el('rect',{x:300,y:400,width:1400,height:320,fill:'url(#sheen)','clip-path':'url(#q)',transform:'skewX(-20)'},s);
+  // tool head marker
+  el('circle',{cx:head[0],cy:head[1],r:9,fill:'#F4F6FA'},s);
+  el('circle',{cx:head[0],cy:head[1],r:22,fill:'none',stroke:'#F4F6FA','stroke-opacity':.5},s);
+  el('line',{x1:head[0],y1:head[1]-22,x2:head[0],y2:head[1]-150,stroke:'#C9D2DE','stroke-opacity':.5,'stroke-dasharray':'2 5'},s);
+  tx(s,head[0]+14,head[1]-130,'SPINDLE  Z −0.050',{});
+  // dimension lines
+  const y=760;
+  el('line',{x1:A[0],y1:705,x2:A[0],y2:y+14,stroke:'#C9D2DE','stroke-opacity':.5},s);
+  el('line',{x1:B[0],y1:705,x2:B[0],y2:y+14,stroke:'#C9D2DE','stroke-opacity':.5},s);
+  el('line',{x1:A[0]+2,y1:y,x2:B[0]-2,y2:y,stroke:'#F4F6FA','marker-start':'url(#ar)','marker-end':'url(#ar)'},s);
+  el('rect',{x:880,y:y-18,width:200,height:36,fill:'#0E1626'},s);
+  tx(s,980,y+8,'5200 mm',{'text-anchor':'middle','font-size':24,fill:'#F4F6FA'});
+  // depth dimension along B→C offset outward
+  const o=[60,0];const b2=[B[0]+o[0],B[1]],c2=[C[0]+o[0]+0,C[1]];
+  el('line',{x1:B[0]+8,y1:B[1],x2:b2[0]+14,y2:b2[1],stroke:'#C9D2DE','stroke-opacity':.5},s);
+  el('line',{x1:C[0]+8,y1:C[1],x2:c2[0]+14,y2:c2[1],stroke:'#C9D2DE','stroke-opacity':.5},s);
+  el('line',{x1:b2[0],y1:b2[1],x2:c2[0],y2:c2[1],stroke:'#F4F6FA','marker-start':'url(#ar)','marker-end':'url(#ar)'},s);
+  const m=lerp(b2,c2,.5);
+  tx(s,m[0]+28,m[1]+8,'2600 mm',{'font-size':24,fill:'#F4F6FA'});
+  // corner crosshairs
+  [A,B,C,D].forEach(p=>{el('path',{d:`M${p[0]-12} ${p[1]} H${p[0]+12} M${p[0]} ${p[1]-12} V${p[1]+12}`,stroke:'#E8A33D','stroke-width':1.2},s);});
+} else {
+  fr.innerHTML=`<svg width="1920" height="1080" id="s">${DEFS}</svg>
+  <div class="hud mono" style="left:120px;top:96px">SCALE ／ 1 mm → 1 μm</div>
+  <div class="dim mono"><div class="l">RESOLUTION</div><div class="v">0.001<span>mm</span></div></div>
+  <div class="lyric">一ミリ　一ミクロン</div>`;
+  const s=document.getElementById('s');
+  // grid bg
+  for(let x=0;x<=1920;x+=48)el('line',{x1:x,y1:0,x2:x,y2:1080,stroke:'#C9D2DE','stroke-opacity':.03},s);
+  for(let y=0;y<=1080;y+=48)el('line',{x1:0,y1:y,x2:1920,y2:y,stroke:'#C9D2DE','stroke-opacity':.03},s);
+  // ruler body (metal bar)
+  const rg=el('linearGradient',{id:'bar',x1:0,y1:0,x2:0,y2:1},s.querySelector('defs'));
+  rg.innerHTML='<stop offset="0" stop-color="#e4e9f0"/><stop offset=".45" stop-color="#9aa7b9"/><stop offset=".55" stop-color="#7d8aa0"/><stop offset="1" stop-color="#3a4a63"/>';
+  const ry=330,rx0=120,rx1=1800;
+  el('rect',{x:rx0,y:ry-70,width:rx1-rx0,height:110,fill:'url(#bar)',rx:3},s);
+  el('rect',{x:rx0,y:ry-70,width:rx1-rx0,height:110,fill:'url(#sheen)',rx:3,opacity:.9},s);
+  const mmpx=28; // px per mm
+  for(let i=0;i*mmpx<=rx1-rx0-20;i++){const x=rx0+20+i*mmpx;const L=i%10===0?46:i%5===0?32:20;
+    el('line',{x1:x,y1:ry-70,x2:x,y2:ry-70+L,stroke:'#0E1626','stroke-width':1.6},s);
+    if(i%10===0)tx(s,x+4,ry+22,String(i/10),{fill:'#0E1626','font-size':20});}
+  tx(s,rx1-60,ry+22,'cm',{fill:'#0E1626','font-size':18});
+  // stage 1 select: 1mm segment
+  const sx=rx0+20+27*mmpx; // mm 27→28
+  el('rect',{x:sx-4,y:ry-80,width:mmpx+8,height:130,fill:'none',stroke:'#E8A33D','stroke-width':1.5},s);
+  // inset 1 (1mm → 100 subdivisions shown as 10x)
+  const I1={x:180,y:540,w:760,h:250};
+  const I2={x:1000,y:540,w:740,h:250};
+  const link=(x1,y1,x2,y2)=>el('line',{x1,y1,x2,y2,stroke:'#E8A33D','stroke-opacity':.6,'stroke-dasharray':'3 5'},s);
+  link(sx-4,ry+50,I1.x,I1.y);link(sx+mmpx+4,ry+50,I1.x+I1.w,I1.y);
+  function inset(I,title,mag){el('rect',{x:I.x,y:I.y,width:I.w,height:I.h,fill:'#0E1626',stroke:'#F4F6FA','stroke-opacity':.7},s);
+    tx(s,I.x,I.y-14,title,{'font-size':18});tx(s,I.x+I.w,I.y-14,mag,{'text-anchor':'end','font-size':18,fill:'#E8A33D'});}
+  inset(I1,'1 mm','× 30');
+  // in inset1: span 1mm across width, ticks every 10μm (100 ticks)
+  const pad=40,W1=I1.w-2*pad;
+  el('rect',{x:I1.x+1,y:I1.y+1,width:I1.w-2,height:120,fill:'url(#bar)',opacity:.9},s);
+  for(let i=0;i<=100;i++){const x=I1.x+pad+i*W1/100;const L=i%50===0?70:i%10===0?48:i%5===0?32:18;
+    el('line',{x1:x,y1:I1.y+1,x2:x,y2:I1.y+1+L,stroke:'#0E1626','stroke-width':i%10===0?1.6:1},s);}
+  tx(s,I1.x+pad,I1.y+160,'0',{'text-anchor':'middle',fill:'#F4F6FA'});tx(s,I1.x+I1.w-pad,I1.y+160,'1.000',{'text-anchor':'middle',fill:'#F4F6FA'});
+  tx(s,I1.x+I1.w/2,I1.y+160,'0.500',{'text-anchor':'middle',fill:'#F4F6FA'});
+  // selection in inset1: 10μm segment
+  const s2=I1.x+pad+62*W1/100,w2=W1/100;
+  el('rect',{x:s2-3,y:I1.y-6,width:w2+6,height:136,fill:'none',stroke:'#E8A33D','stroke-width':1.5},s);
+  link(s2+w2+3,I1.y-6,I2.x,I2.y);link(s2+w2+3,I1.y+130,I2.x,I2.y+I2.h);
+  inset(I2,'10 μm','× 1000');
+  const W2=I2.w-2*pad;
+  el('rect',{x:I2.x+1,y:I2.y+1,width:I2.w-2,height:120,fill:'url(#bar)',opacity:.9},s);
+  el('rect',{x:I2.x+1,y:I2.y+1,width:I2.w-2,height:120,fill:'url(#sheen)'},s);
+  for(let i=0;i<=10;i++){const x=I2.x+pad+i*W2/10;const L=i%5===0?80:52;
+    el('line',{x1:x,y1:I2.y+1,x2:x,y2:I2.y+1+L,stroke:'#0E1626','stroke-width':2},s);
+    tx(s,x,I2.y+160,i+'',{'text-anchor':'middle',fill:'#F4F6FA','font-size':20});}
+  // highlight 1 μm span
+  const hx=I2.x+pad+6*W2/10;
+  el('line',{x1:hx,y1:I2.y+192,x2:hx+W2/10,y2:I2.y+192,stroke:'#F4F6FA','marker-start':'url(#ar)','marker-end':'url(#ar)'},s);
+  el('line',{x1:hx,y1:I2.y+172,x2:hx,y2:I2.y+204,stroke:'#C9D2DE','stroke-opacity':.6},s);
+  el('line',{x1:hx+W2/10,y1:I2.y+172,x2:hx+W2/10,y2:I2.y+204,stroke:'#C9D2DE','stroke-opacity':.6},s);
+  tx(s,hx+W2/20,I2.y+232,'1 μm',{'text-anchor':'middle',fill:'#F4F6FA','font-size':30,filter:'url(#glow)'});
+  tx(s,I2.x+I2.w-pad,I2.y+232,'μm',{'text-anchor':'end','font-size':18});
+}
+</script></body></html>
