@@ -38,7 +38,7 @@ def generate(cut):
         inst["referenceImages"] = [{"image": {"bytesBase64Encoded": b64(f"refs/{r}.jpg"), "mimeType": "image/jpeg"},
                                     "referenceType": "asset"} for r in cut["refs"]]
     params = {"aspectRatio": "16:9", "durationSeconds": 8}
-    if not cut.get("refs"):  # 参照画像を使うときは negativePrompt を受け付けない
+    if not cut.get("refs") and "lite" not in MODEL:  # 参照画像を使うときと Lite は negativePrompt を受け付けない
         params["negativePrompt"] = NEGATIVE
     op = call("POST", f"models/{MODEL}:predictLongRunning", {"instances": [inst], "parameters": params})
     while not op.get("done"):
