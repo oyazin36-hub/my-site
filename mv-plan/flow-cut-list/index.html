@@ -1,0 +1,471 @@
+<title>原マシナリー MV カット表</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@600;700&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: 撮影現場で使う香盤表。パートごとの見出しの下に、カットのカードを縦に並べる。左に場面、右にコピーできるプロンプト */
+:root {
+  --bg: #F5F1E8; --paper: #FFFDF8; --ink: #23262E; --muted: #6B6A66; --line: #DED7C8; --accent: #2C4A7A; --accent-soft: #E3E9F3; --warn: #B3261E; --warn-soft: #FBE9E7; --reuse: #4F6B3A; --reuse-soft: #E8EFE0;
+  --f-head: "Zen Old Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --f-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #16181D; --paper: #1E2128; --ink: #ECE8DF; --muted: #A39F96; --line: #343842; --accent: #9DB6E3; --accent-soft: #263248; --warn: #FF8A80; --warn-soft: #3A2220; --reuse: #B5D198; --reuse-soft: #26301F; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #16181D; --paper: #1E2128; --ink: #ECE8DF; --muted: #A39F96; --line: #343842; --accent: #9DB6E3; --accent-soft: #263248; --warn: #FF8A80; --warn-soft: #3A2220; --reuse: #B5D198; --reuse-soft: #26301F; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.75; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 72px; }
+@media (max-width: 480px) { .wrap { padding-inline: 16px; } }
+h1 { font-family: var(--f-head); font-size: clamp(28px, 5vw, 42px); line-height: 1.3; margin: 0 0 12px; text-wrap: balance; }
+.lead { margin: 0; max-width: 68ch; color: var(--muted); }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 24px; margin: 18px 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--muted); }
+.stats b { color: var(--ink); font-size: 20px; font-variant-numeric: tabular-nums; margin-right: 4px; }
+h2.sec { font-family: var(--f-head); font-size: 22px; margin: 40px 0 6px; }
+.secnote { margin: 0 0 14px; color: var(--muted); font-size: 14px; max-width: 70ch; }
+.ref img { width: 100%; max-width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid var(--line); }
+.ref figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.steps { margin: 0; padding-left: 1.4em; display: grid; gap: 6px; max-width: 72ch; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.list li { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; min-width: 0; }
+.list b { font-size: 15px; }
+.list span { font-size: 14px; color: var(--muted); }
+code, .prompt p { font-family: var(--f-mono); font-size: 12.5px; line-height: 1.6; overflow-wrap: anywhere; }
+.list code { color: var(--accent); }
+.style { background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; }
+.style code { color: var(--ink); }
+
+.toc { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); margin-top: 32px; padding-block: 10px; overflow-x: auto; }
+.toc nav { display: flex; gap: 6px; width: max-content; }
+.toc a { text-decoration: none; color: var(--ink); font-size: 13px; border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 2px 12px; white-space: nowrap; }
+.toc a:hover, .toc a:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+
+.part { padding-top: 34px; scroll-margin-top: 60px; }
+.ph { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding-bottom: 6px; margin-bottom: 14px; }
+.no { font-family: var(--f-mono); color: var(--muted); font-size: 13px; }
+.ph h2 { font-family: var(--f-head); font-size: 24px; margin: 0; }
+.tc { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
+.cuts { display: grid; gap: 12px; }
+.cut { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.chead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 8px; }
+.cno { font-family: var(--f-mono); font-size: 13px; color: var(--muted); }
+.chead h3 { margin: 0; font-size: 17px; }
+.ctime { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tag { margin-left: auto; font-size: 12px; border-radius: 999px; padding: 0 10px; line-height: 22px; background: var(--accent-soft); color: var(--accent); }
+.tag.reuse { background: var(--reuse-soft); color: var(--reuse); }
+.cbody { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; }
+@media (max-width: 760px) { .cbody { grid-template-columns: 1fr; } }
+.cinfo p { margin: 0 0 6px; font-size: 14.5px; }
+.lyr { color: var(--accent); font-weight: 500; }
+dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 8px 0 0; font-size: 13px; }
+dt { color: var(--muted); }
+dd { margin: 0; min-width: 0; }
+.warn { margin-top: 8px !important; font-size: 13px !important; color: var(--warn); background: var(--warn-soft); border-radius: 6px; padding: 4px 10px; display: inline-block; }
+.prompt { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.prompt.muted p { font-family: var(--f-body); font-size: 13.5px; color: var(--muted); margin: 0; }
+.ptop { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; font-size: 12px; color: var(--muted); }
+.prompt p { margin: 0; user-select: all; -webkit-user-select: all; }
+.copy { font: inherit; font-size: 13px; font-weight: 700; color: var(--paper); background: var(--accent); border: 0; border-radius: 6px; padding: 4px 14px; cursor: pointer; }
+.copy.done { background: var(--reuse); }
+.copy:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); max-width: 72ch; display: grid; gap: 6px; }
+footer p { margin: 0; }
+</style>
+
+<div class="wrap">
+  <h1>原マシナリー MV カット表</h1>
+  <p class="lead">参考動画と同じ手描きアニメ調で、Google Flow で作るカットの一覧です。3 世代の技術者が技術を受け継ぐ物語を、曲の流れに沿って並べています。「コピー」を押したプロンプトを、そのまま Flow に貼り付けてください。</p>
+  <ul class="stats"><li><b>41</b>カット</li><li><b>36</b>本を Flow で生成</li><li><b>5</b>本は参考動画を流用</li><li><b>4:36</b>曲の長さ</li></ul>
+
+  <h2 class="sec">目指す画風</h2>
+  <figure class="ref"><img src="ref.jpg" alt="参考動画のコマ一覧。宇宙の地球から岡崎へズームし、年配の職人、製図台の技術者、CAD の若手、図面の手渡し、若い女性社員の笑顔へと続く" width="1200" height="900"><figcaption>いただいた参考動画（22 秒）から 12 コマを抜き出したもの。この画風と人物を全カットで揃えます。</figcaption></figure>
+
+  <h2 class="sec">Flow での進め方</h2>
+  <ol class="steps">
+    <li>下の「登場人物」と「場所」の英語の説明で、先に人物と場所の画像を作ります。</li>
+    <li>各カットを生成するときに、その画像を Ingredients（参照画像、1 カットに最大 3 つ）に入れます。これで顔や工場の見た目が全カットで揃います。</li>
+    <li>「Frames to video」と書いたカットは、前のカットの最後のコマを開始フレームに使い、同じ構図で時代を変えます。</li>
+    <li>生成した動画を送ってもらえれば、曲の拍に合わせた編集と、歌詞テロップ・年号・ロゴ・エンドカードの追加をこちらで行います。</li>
+  </ol>
+
+  <h2 class="sec">画風（全カット共通）</h2>
+  <p class="secnote">各カットのプロンプトの最後に、すでに入っています。画面に文字・ロゴ・火花を入れない指示も含みます。文字とロゴは編集で正確に入れます。</p>
+  <div class="style"><code>Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</code></div>
+
+  <h2 class="sec">登場人物</h2>
+  <p class="secnote">架空の社員です。実在の社員に似せる場合は、本人の同意を得た写真を Ingredients に使ってください。</p>
+  <ul class="list"><li><b>初代の職人（1948年）</b><span>20代の男性。短い黒髪、紺の作業着。創業期の小さな町工場で働く。セピア調の場面だけに登場。</span><code>a Japanese man in his twenties with short black hair, wearing a navy work jacket, in a small 1940s workshop</code></li><li><b>ベテラン職人（現在）</b><span>70代の男性。白髪を後ろへ流し、紺の作業着。手描きの図面と鉛筆。参考動画の1人目と同じ見た目。</span><code>an elderly Japanese craftsman in his seventies with swept-back grey hair, wearing a navy work jacket</code></li><li><b>中堅の技術者</b><span>40代の男性。短い黒髪、袖をまくった白いシャツ。製図台と工作機械の両方に立つ。参考動画の2人目。</span><code>a Japanese man in his forties with short dark hair, white shirt with rolled-up sleeves</code></li><li><b>若手の設計者</b><span>20代の女性。茶色のボブ、丸い眼鏡、白いシャツ。CAD で設計する。参考動画の3人目・最後のカット。</span><code>a young Japanese woman in her twenties with a brown bob haircut and round glasses, wearing a white shirt</code></li><li><b>若手のオペレーター</b><span>20代の男性。短髪、紺の作業服、保護メガネ。門型5面加工機を操作する。</span><code>a young Japanese man in his twenties with short hair, navy work uniform and safety glasses</code></li></ul>
+
+  <h2 class="sec">場所</h2>
+  <ul class="list"><li><b>創業期の町工場（1948年）</b><span>木の梁、窓からの斜光、古い工作機械。セピア調。</span><code>a small 1940s Japanese machine workshop with wooden beams and old machines, sepia tones</code></li><li><b>現在の工場</b><span>天井の高い明るい工場。大型の門型5面加工機。床は清潔。</span><code>a bright, high-ceilinged modern Japanese factory with a large gantry-type five-face machining center, clean floor</code></li><li><b>設計室</b><span>窓際の机、CAD のモニター、壁に貼られた図面。</span><code>a calm design office by the window with CAD monitors and drawings pinned on the wall</code></li><li><b>岡崎の街</b><span>矢作川の流れる街並み。丘の上から見下ろす。</span><code>the city of Okazaki in Aichi seen from a hill, with the Yahagi River flowing through it</code></li></ul>
+
+  <div class="toc"><nav aria-label="パート"><a href="#p01">イントロ</a><a href="#p02">Aメロ1</a><a href="#p03">Aメロ2</a><a href="#p04">Bメロ1</a><a href="#p05">サビ1</a><a href="#p06">間奏</a><a href="#p07">Aメロ3</a><a href="#p08">Bメロ2</a><a href="#p09">サビ2</a><a href="#p10">Cメロ</a><a href="#p11">ラストサビ</a><a href="#p12">アウトロ</a></nav></div>
+  <section class="part" id="p01"><header class="ph"><span class="no">01</span><h2>イントロ</h2><span class="tc">0:00 – 0:09</span></header><div class="cuts">
+<article class="cut">
+  <div class="chead"><span class="cno">01</span><h3>地球から日本へ</h3><span class="ctime">0:00 から 4.5 秒</span><span class="tag reuse">参考動画を流用</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ （演奏）</p><p>宇宙の地球から日本列島へ、ゆっくり寄っていく。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>参考動画を流用</dd><dt>編集で追加</dt><dd>工具の軌跡の線で「1948」を描く</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="0">コピー</button></div><p id="pt0">Slow push-in from space toward Earth, approaching the Japanese archipelago, soft clouds drifting. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">02</span><h3>岡崎の朝</h3><span class="ctime">0:05 から 4.5 秒</span><span class="tag reuse">参考動画を流用</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ （演奏）</p><p>朝もやの岡崎の街と川。工場の屋根に朝日が当たる。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>参考動画を流用＋文字なしで再生成</dd><dt>編集で追加</dt><dd>地名「岡崎」のテロップ</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="1">コピー</button></div><p id="pt1">Aerial descent over the city of Okazaki at dawn, morning mist over the Yahagi River, sunlight touching factory rooftops. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+</div></section>
+<section class="part" id="p02"><header class="ph"><span class="no">02</span><h2>Aメロ1</h2><span class="tc">0:09 – 0:31</span></header><div class="cuts">
+<article class="cut">
+  <div class="chead"><span class="cno">03</span><h3>1948年の町工場</h3><span class="ctime">0:09 から 7.4 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 1948年　ここから始まった</p><p>創業期の小さな町工場で、若い職人が古い機械を手入れしている。</p>
+      <dl><dt>人物</dt><dd>初代の職人</dd><dt>作り方</dt><dd>Ingredients（初代の職人＋創業期の町工場）</dd><dt>編集で追加</dt><dd>年号カウンター 1948、セピア→カラーの色補正</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="2">コピー</button></div><p id="pt2">Medium shot. A young craftsman carefully wipes and adjusts an old machine in a small workshop, dust in the slanted window light. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">04</span><h3>受け継がれる場所</h3><span class="ctime">0:17 から 7.4 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 受け継いだ技術　積み重ねた想い／時代が変わっても</p><p>同じ構図で、現在のベテラン職人が同じ場所に立ち、古い写真を手に取る。</p>
+      <dl><dt>人物</dt><dd>ベテラン職人</dd><dt>作り方</dt><dd>Frames to video（前カットの最終コマを開始フレームに）</dd><dt>編集で追加</dt><dd>年号カウンター 1948→2026</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="3">コピー</button></div><p id="pt3">Same composition as the previous shot, now in the present day. An elderly craftsman stands in the same spot and gently picks up an old photograph, smiling softly. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">05</span><h3>今の工場へ</h3><span class="ctime">0:24 から 7.4 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 変わらないものがある／ものづくりへの　情熱</p><p>カメラが後ろへ引くと、明るく広い現在の工場が広がる。</p>
+      <dl><dt>人物</dt><dd>ベテラン職人</dd><dt>作り方</dt><dd>Ingredients（ベテラン職人＋現在の工場）</dd><dt>編集で追加</dt><dd>歌詞テロップ「情熱」を大きく</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="4">コピー</button></div><p id="pt4">Slow dolly back revealing a bright, spacious modern factory around the elderly craftsman; colleagues working in the background. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+</div></section>
+<section class="part" id="p03"><header class="ph"><span class="no">03</span><h2>Aメロ2</h2><span class="tc">0:31 – 0:54</span></header><div class="cuts">
+<article class="cut">
+  <div class="chead"><span class="cno">06</span><h3>大物を削る</h3><span class="ctime">0:31 から 7.5 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 鉄を削り　形を生み出す／大きな素材に　挑み続ける</p><p>門型5面加工機が大きな鋼材を静かに削る。削った面がなめらかに光る。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>Ingredients（現在の工場）</dd><dt>編集で追加</dt><dd>寸法線 5200×2600mm、工具の軌跡の線</dd></dl><p class="warn">⚠ 火花が出やすい。生成後に必ず確認</p></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="5">コピー</button></div><p id="pt5">Low-angle wide shot. A large gantry-type machining center smoothly and quietly mills a huge steel block; the freshly machined surface gleams like a mirror. Clean, calm cutting. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">07</span><h3>一ミクロンを測る</h3><span class="ctime">0:39 から 7.5 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 一ミリ　一ミクロン／その先にある精度を追い</p><p>若手オペレーターがマイクロメーターで部品を測る。手元と真剣な目のアップ。</p>
+      <dl><dt>人物</dt><dd>若手のオペレーター</dd><dt>作り方</dt><dd>Ingredients（若手のオペレーター）</dd><dt>編集で追加</dt><dd>目盛りが 1mm→1μm に拡大するグラフィック</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="6">コピー</button></div><p id="pt6">Close-up. A young operator measures a polished metal part with a micrometer, focused eyes, then a macro shot of his fingertips adjusting the dial. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">08</span><h3>人から人へ</h3><span class="ctime">0:46 から 7.5 秒</span><span class="tag reuse">参考動画を流用</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 技術は　人から人へ／想いは　未来へ</p><p>職人が鉛筆で図面を引く→製図台→CAD→図面を手渡す（参考動画の場面）。</p>
+      <dl><dt>人物</dt><dd>ベテラン職人・中堅の技術者・若手の設計者</dd><dt>作り方</dt><dd>参考動画を流用</dd><dt>編集で追加</dt><dd>拍に合わせてカット割り、歌詞テロップ</dd></dl></div>
+    <div class="prompt muted"><p>生成は不要です。参考動画の該当部分を編集で使います。</p></div>
+  </div>
+</article>
+</div></section>
+<section class="part" id="p04"><header class="ph"><span class="no">04</span><h2>Bメロ1</h2><span class="tc">0:54 – 1:09</span></header><div class="cuts">
+<article class="cut">
+  <div class="chead"><span class="cno">09</span><h3>守ると変える</h3><span class="ctime">0:54 から 7.6 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 守るべき技術は　守り抜く／変えるべきものは　変えていく</p><p>ベテランが古い手描き図面を広げ、若手設計者がタブレットの CAD と見比べてうなずき合う。</p>
+      <dl><dt>人物</dt><dd>ベテラン職人・若手の設計者</dd><dt>作り方</dt><dd>Ingredients（2人の人物）</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="8">コピー</button></div><p id="pt8">Two-shot at a workbench. The elderly craftsman unrolls an old hand-drawn blueprint; the young designer holds a tablet showing the same part in CAD. They compare and nod to each other. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">10</span><h3>夜明けのシャッター</h3><span class="ctime">1:01 から 7.6 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 昨日を超えて／今日を超えて／まだ見ぬ未来へ</p><p>夜明けの工場。大きなシャッターが上がり、朝日が一気に差し込む。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>Ingredients（現在の工場）</dd><dt>編集で追加</dt><dd>サビへ向けて光の流れが加速</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="9">コピー</button></div><p id="pt9">Inside the factory at dawn, the large shutter door rises and golden morning light floods in across the floor, camera slowly pushing forward. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+</div></section>
+<section class="part" id="p05"><header class="ph"><span class="no">05</span><h2>サビ1</h2><span class="tc">1:09 – 1:38</span></header><div class="cuts">
+<article class="cut">
+  <div class="chead"><span class="cno">11</span><h3>技術力</h3><span class="ctime">1:09 から 5.8 秒</span><span class="tag">Flow で 6 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 技術力</p><p>オペレーターが操作盤に触れる。真剣な横顔。</p>
+      <dl><dt>人物</dt><dd>若手のオペレーター</dd><dt>作り方</dt><dd>Ingredients</dd><dt>編集で追加</dt><dd>「技術力」を画面いっぱいに（1拍）</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="10">コピー</button></div><p id="pt10">Close-up profile of a young operator pressing buttons on a machine control panel, determined expression, rim light. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">12</span><h3>設計力</h3><span class="ctime">1:15 から 5.8 秒</span><span class="tag">Flow で 6 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 設計力</p><p>設計者の CAD 画面で、線が立体に組み上がっていく。</p>
+      <dl><dt>人物</dt><dd>若手の設計者</dd><dt>作り方</dt><dd>Ingredients</dd><dt>編集で追加</dt><dd>「設計力」（1拍）</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="11">コピー</button></div><p id="pt11">Over-the-shoulder shot of a young designer working in CAD; lines on the monitor assemble into a 3D machine part. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">13</span><h3>設備力</h3><span class="ctime">1:21 から 5.8 秒</span><span class="tag">Flow で 6 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 設備力</p><p>門型5面加工機の全景を、下から見上げる迫力のカット。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>Ingredients（現在の工場）</dd><dt>編集で追加</dt><dd>「設備力」（1拍）</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="12">コピー</button></div><p id="pt12">Dramatic low-angle shot slowly tilting up the full height of a huge gantry-type machining center in a bright factory. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">14</span><h3>人間力</h3><span class="ctime">1:26 から 5.8 秒</span><span class="tag">Flow で 6 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 人間力／すべての力を　ひとつにして／まだない価値を　創り出せ</p><p>仲間が図面を囲み、笑顔で話し合う。</p>
+      <dl><dt>人物</dt><dd>全員</dd><dt>作り方</dt><dd>Ingredients（人物2〜3人）</dd><dt>編集で追加</dt><dd>「人間力」（1拍）</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="13">コピー</button></div><p id="pt13">A small team gathered around a large blueprint on a table, pointing and laughing together, warm window light. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">15</span><h3>未来を切り拓け</h3><span class="ctime">1:32 から 5.8 秒</span><span class="tag">Flow で 6 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ この手で／この技術で／未来を　切り拓け／原マシナリー</p><p>工場の大扉が開き、光の中へ社員たちが歩み出る後ろ姿。</p>
+      <dl><dt>人物</dt><dd>全員</dd><dt>作り方</dt><dd>Ingredients</dd><dt>編集で追加</dt><dd>ロゴを中央に（光沢が横切る）</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="14">コピー</button></div><p id="pt14">Back view of employees walking together toward a wide-open factory door filled with bright light, camera following low. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+</div></section>
+<section class="part" id="p06"><header class="ph"><span class="no">06</span><h2>間奏</h2><span class="tc">1:38 – 1:45</span></header><div class="cuts">
+<article class="cut">
+  <div class="chead"><span class="cno">16</span><h3>夕日の機械</h3><span class="ctime">1:38 から 6.8 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ （演奏）</p><p>静かな工場。機械の金属面に夕日が反射する。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>Ingredients（現在の工場）</dd><dt>編集で追加</dt><dd>音の波形のライン、グリッチ転換</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="15">コピー</button></div><p id="pt15">Quiet empty factory at sunset; warm light reflects off the polished metal surfaces of the machines, slow lateral pan. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+</div></section>
+<section class="part" id="p07"><header class="ph"><span class="no">07</span><h2>Aメロ3</h2><span class="tc">1:45 – 2:02</span></header><div class="cuts">
+<article class="cut">
+  <div class="chead"><span class="cno">17</span><h3>4つの素材</h3><span class="ctime">1:45 から 5.7 秒</span><span class="tag">Flow で 6 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 難しい素材も　不可能じゃない／シリコン　サファイア　ガラス　石英</p><p>作業台に、シリコンの塊・サファイア・ガラス・石英が並び、窓の光で輝く。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>Text to video</dd><dt>編集で追加</dt><dd>素材名を1拍ずつテロップ</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="16">コピー</button></div><p id="pt16">Macro tracking shot along a workbench where a silicon ingot, a clear sapphire block, a glass plate and a milky quartz piece are lined up, glowing in window light. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">18</span><h3>組み上げる</h3><span class="ctime">1:51 から 5.7 秒</span><span class="tag">Flow で 6 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 削る　磨く　組み上げる／一つひとつに　技術が宿る</p><p>技術者たちが専用機を組み立てる。ボルトを締める手元のアップ。</p>
+      <dl><dt>人物</dt><dd>中堅の技術者・若手のオペレーター</dd><dt>作り方</dt><dd>Ingredients</dd><dt>編集で追加</dt><dd>「削る／磨く／組み上げる」の3語</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="17">コピー</button></div><p id="pt17">Close-up of hands assembling a special-purpose machine, tightening bolts with a torque wrench, then a medium shot of two engineers working together. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">19</span><h3>一貫して応える</h3><span class="ctime">1:56 から 5.7 秒</span><span class="tag">Flow で 6 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 設計から　加工まで／一貫して　応えていく／求められるものの／その先へ</p><p>完成した専用機の前で、設計者とオペレーターがうなずき合う。</p>
+      <dl><dt>人物</dt><dd>若手の設計者・若手のオペレーター</dd><dt>作り方</dt><dd>Ingredients</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="18">コピー</button></div><p id="pt18">The young designer and the young operator stand in front of a finished machine, exchange a nod and a small smile. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+</div></section>
+<section class="part" id="p08"><header class="ph"><span class="no">08</span><h2>Bメロ2</h2><span class="tc">2:02 – 2:17</span></header><div class="cuts">
+<article class="cut">
+  <div class="chead"><span class="cno">20</span><h3>品質を測る</h3><span class="ctime">2:02 から 7.5 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 品質を追い／コストに挑み／納期を守る</p><p>検査室で三次元測定機が部品を測り、若手が記録する。</p>
+      <dl><dt>人物</dt><dd>若手の設計者</dd><dt>作り方</dt><dd>Ingredients</dd><dt>編集で追加</dt><dd>品質・コスト・納期のチェック表示</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="19">コピー</button></div><p id="pt19">A clean inspection room; a coordinate measuring machine probe touches a metal part while a young staff member records the results on a clipboard. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">21</span><h3>信頼を届ける</h3><span class="ctime">2:10 から 7.5 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 信頼は／一つひとつの仕事から／積み上げていく</p><p>出荷。製品を丁寧にトラックへ積み、お辞儀して見送る。</p>
+      <dl><dt>人物</dt><dd>中堅の技術者</dd><dt>作り方</dt><dd>Ingredients</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="20">コピー</button></div><p id="pt20">A carefully wrapped machine part is loaded onto a truck; the engineer bows politely as the truck departs in the afternoon light. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+</div></section>
+<section class="part" id="p09"><header class="ph"><span class="no">09</span><h2>サビ2</h2><span class="tc">2:17 – 2:46</span></header><div class="cuts">
+<article class="cut">
+  <div class="chead"><span class="cno">22</span><h3>手を取って教える</h3><span class="ctime">2:17 から 5.8 秒</span><span class="tag">Flow で 6 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 技術力　設計力</p><p>ベテランが若手の手に手を添えて、工具の当て方を教える。</p>
+      <dl><dt>人物</dt><dd>ベテラン職人・若手のオペレーター</dd><dt>作り方</dt><dd>Ingredients</dd><dt>編集で追加</dt><dd>「技術力」「設計力」</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="21">コピー</button></div><p id="pt21">Close-up: an elderly craftsman places his hand over a young operator&#x27;s hand, guiding how to hold a precision tool. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">23</span><h3>新しい設備</h3><span class="ctime">2:23 から 5.8 秒</span><span class="tag">Flow で 6 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 設備力　人間力／受け継いだ力を　進化させ</p><p>新しい機械が稼働を始め、社員が拍手する。</p>
+      <dl><dt>人物</dt><dd>全員</dd><dt>作り方</dt><dd>Ingredients</dd><dt>編集で追加</dt><dd>「設備力」「人間力」</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="22">コピー</button></div><p id="pt22">A new machine powers on with its indicator lights; employees around it applaud and smile. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">24</span><h3>次の時代へ</h3><span class="ctime">2:29 から 5.8 秒</span><span class="tag">Flow で 6 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 次の時代を　創り出せ</p><p>設計者がホワイトボードで説明し、仲間がうなずく。</p>
+      <dl><dt>人物</dt><dd>若手の設計者・中堅の技術者</dd><dt>作り方</dt><dd>Ingredients</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="23">コピー</button></div><p id="pt23">The young designer explains a sketch on a whiteboard to colleagues who nod with interest. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">25</span><h3>この街から</h3><span class="ctime">2:35 から 5.8 秒</span><span class="tag">Flow で 6 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ この街から</p><p>夕方、丘の上から岡崎の街と工場を見下ろす。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>Ingredients（岡崎の街）</dd><dt>編集で追加</dt><dd>地名「岡崎」</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="24">コピー</button></div><p id="pt24">Wide shot at golden hour overlooking the city of Okazaki from a hill, a factory roof in the foreground. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">26</span><h3>世界へ</h3><span class="ctime">2:40 から 5.8 秒</span><span class="tag reuse">参考動画を流用</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 世界へ／未来を　動かせ／原マシナリー</p><p>カメラが空へ上がり、地球までズームアウトする。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>参考動画を逆再生して流用</dd><dt>編集で追加</dt><dd>ロゴ</dd></dl></div>
+    <div class="prompt muted"><p>生成は不要です。参考動画の該当部分を編集で使います。</p></div>
+  </div>
+</article>
+</div></section>
+<section class="part" id="p10"><header class="ph"><span class="no">10</span><h2>Cメロ</h2><span class="tc">2:46 – 3:17</span></header><div class="cuts">
+<article class="cut">
+  <div class="chead"><span class="cno">27</span><h3>人がいる</h3><span class="ctime">2:46 から 7.7 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 変化を恐れない／挑戦を止めない／人がいる</p><p>朝礼。社員が並び、前を向く。</p>
+      <dl><dt>人物</dt><dd>全員</dd><dt>作り方</dt><dd>Ingredients</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="26">コピー</button></div><p id="pt26">Morning assembly in the factory: employees stand in a row, listening and looking ahead, soft morning light. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">28</span><h3>仲間がいる</h3><span class="ctime">2:54 から 7.7 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 技術がある／仲間がいる</p><p>昼休み、社員が笑いながら弁当を食べる。</p>
+      <dl><dt>人物</dt><dd>全員</dd><dt>作り方</dt><dd>Ingredients</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="27">コピー</button></div><p id="pt27">Lunch break: employees laughing together while eating bento boxes at a long table, relaxed and warm. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">29</span><h3>だから　できる</h3><span class="ctime">3:02 から 7.7 秒</span><span class="tag reuse">参考動画を流用</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ だから　できる</p><p>窓辺で若手設計者が微笑む（参考動画の最後のカット）。</p>
+      <dl><dt>人物</dt><dd>若手の設計者</dd><dt>作り方</dt><dd>参考動画を流用</dd><dt>編集で追加</dt><dd>1拍の静止 → グリッチでラストサビへ</dd></dl></div>
+    <div class="prompt muted"><p>生成は不要です。参考動画の該当部分を編集で使います。</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">30</span><h3>一つの会社から</h3><span class="ctime">3:09 から 7.7 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 一つの会社から／一つの技術から／世界の未来へ</p><p>夕暮れ、工場の窓に明かりがともる外観。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>Ingredients（現在の工場）</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="29">コピー</button></div><p id="pt29">Exterior of the factory at dusk, windows lighting up one by one, sky turning from orange to blue. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+</div></section>
+<section class="part" id="p11"><header class="ph"><span class="no">11</span><h2>ラストサビ</h2><span class="tc">3:17 – 4:15</span></header><div class="cuts">
+<article class="cut">
+  <div class="chead"><span class="cno">31</span><h3>1948年の手</h3><span class="ctime">3:17 から 7.3 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 技術力　設計力</p><p>セピア調。初代の職人が古い機械のハンドルを回す。</p>
+      <dl><dt>人物</dt><dd>初代の職人</dd><dt>作り方</dt><dd>Ingredients</dd><dt>編集で追加</dt><dd>年号カウンター 1948</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="30">コピー</button></div><p id="pt30">Sepia-toned close-up: a young craftsman&#x27;s hands turn the handle of an old machine in a 1940s workshop. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">32</span><h3>今の手</h3><span class="ctime">3:24 から 7.3 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 設備力　人間力</p><p>同じ構図で、現在のオペレーターが最新機の操作盤を操作する。</p>
+      <dl><dt>人物</dt><dd>若手のオペレーター</dd><dt>作り方</dt><dd>Frames to video（前カットと同じ構図で）</dd><dt>編集で追加</dt><dd>年号カウンター 2026</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="31">コピー</button></div><p id="pt31">Same composition in full color, present day: a young operator&#x27;s hands operate the control panel of a modern machine. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">33</span><h3>図面が重なる</h3><span class="ctime">3:31 から 7.3 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 四つの力を　ひとつにして</p><p>鉛筆の図面が CAD の画面に重なり、一つになる。</p>
+      <dl><dt>人物</dt><dd>ベテラン職人・若手の設計者</dd><dt>作り方</dt><dd>Frames to video</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="32">コピー</button></div><p id="pt32">A pencil-drawn blueprint slowly dissolves into the same design on a CAD screen, two hands—old and young—resting side by side. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">34</span><h3>大物を吊る</h3><span class="ctime">3:39 から 7.3 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 新しい時代を　切り拓け</p><p>大きな加工品がクレーンでゆっくり吊り上げられる。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>Ingredients（現在の工場）</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="33">コピー</button></div><p id="pt33">A massive machined steel part is slowly lifted by an overhead crane, workers guiding it, camera tilting up with it. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">35</span><h3>全員集合</h3><span class="ctime">3:46 から 7.3 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 1948年から／受け継いだ　ものづくり</p><p>工場の前に全社員が集まり、カメラが大きく引いていく。</p>
+      <dl><dt>人物</dt><dd>全員</dd><dt>作り方</dt><dd>Ingredients</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="34">コピー</button></div><p id="pt34">All employees gathered in front of the factory, smiling; the camera pulls back and rises to reveal the whole group. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">36</span><h3>100年企業へ</h3><span class="ctime">3:53 から 7.3 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 100年企業へ／その先へ</p><p>ベテランと若手が並び、完成品を見上げる。</p>
+      <dl><dt>人物</dt><dd>ベテラン職人・若手の設計者</dd><dt>作り方</dt><dd>Ingredients</dd><dt>編集で追加</dt><dd>年号カウンター 2048</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="35">コピー</button></div><p id="pt35">The elderly craftsman and the young designer stand side by side looking up at a finished machine, light on their faces. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">37</span><h3>朝日の工場</h3><span class="ctime">4:01 から 7.3 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ まだ見ぬ未来を／この手で創る</p><p>朝日の中の工場を、上昇しながら映す。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>Ingredients（現在の工場）</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="36">コピー</button></div><p id="pt36">Rising aerial shot of the factory at sunrise, long shadows, birds crossing the sky. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">38</span><h3>切り拓け</h3><span class="ctime">4:08 から 7.3 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 技術で／未来を／切り拓け／原マシナリー！</p><p>社員たちが光の方へ顔を上げる。</p>
+      <dl><dt>人物</dt><dd>全員</dd><dt>作り方</dt><dd>Ingredients</dd><dt>編集で追加</dt><dd>ロゴ＋銀色の紙吹雪</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="37">コピー</button></div><p id="pt37">Employees look up toward bright light with determined smiles, wind moving their hair, camera slowly pushing in. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+</div></section>
+<section class="part" id="p12"><header class="ph"><span class="no">12</span><h2>アウトロ</h2><span class="tc">4:15 – 4:36</span></header><div class="cuts">
+<article class="cut">
+  <div class="chead"><span class="cno">39</span><h3>夕暮れの工場</h3><span class="ctime">4:15 から 6.9 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 受け継ぐ技術</p><p>夕暮れの静かな工場。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>Ingredients（現在の工場）</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="38">コピー</button></div><p id="pt38">Quiet factory exterior at dusk, warm and peaceful, gentle breeze. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">40</span><h3>古い道具と新しい道具</h3><span class="ctime">4:22 から 6.9 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 挑み続ける心／ものづくりの未来へ</p><p>作業台に、古いノギスと新しいデジタル測定器が並ぶ静物。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>Text to video</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="39">コピー</button></div><p id="pt39">Still-life on a wooden workbench: an old vernier caliper next to a modern digital measuring instrument, soft evening window light. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+<article class="cut">
+  <div class="chead"><span class="cno">41</span><h3>空</h3><span class="ctime">4:29 から 6.9 秒</span><span class="tag">Flow で 8 秒生成</span></div>
+  <div class="cbody">
+    <div class="cinfo"><p class="lyr">♪ 原マシナリー</p><p>夕焼けの空。ロゴと URL を重ねるための背景。</p>
+      <dl><dt>人物</dt><dd>―</dd><dt>作り方</dt><dd>Text to video</dd><dt>編集で追加</dt><dd>ロゴ・since 1948・URL</dd></dl></div>
+    <div class="prompt"><div class="ptop"><span>プロンプト（Flow に貼り付け）</span><button type="button" class="copy" data-i="40">コピー</button></div><p id="pt40">Wide evening sky with soft clouds over Okazaki, calm and spacious. Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.</p></div>
+  </div>
+</article>
+</div></section>
+
+  <footer>
+    <p>時刻は曲の自動解析による推定です。実際に聴いて確定させると、各カットの長さも決まります。</p>
+    <p>機械加工のカットは、AI が火花を描き足すことがあります。⚠ の付いたカットは、生成後に必ず確認してください。</p>
+  </footer>
+</div>
+<script>
+(() => {
+  document.querySelectorAll(".copy").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const p = document.getElementById("pt" + btn.dataset.i);
+      const done = () => { btn.textContent = "コピーしました"; btn.classList.add("done"); setTimeout(() => { btn.textContent = "コピー"; btn.classList.remove("done"); }, 1800); };
+      const fallback = () => { const r = document.createRange(); r.selectNodeContents(p); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "選択しました。コピーしてください"; };
+      try { navigator.clipboard.writeText(p.textContent).then(done, fallback); } catch (e) { fallback(); }
+    });
+  });
+})();
+</script>
