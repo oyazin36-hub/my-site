@@ -18,6 +18,8 @@ def ts(t):
 parts, STANDINS = [], []
 for i, (no, s, e) in enumerate(TIMELINE):
     src, dst, dur = f"clips/cut{no}.mp4", f"out/trim/{i:02d}_{no}.mp4", e - s
+    if not os.path.exists(src) and os.path.exists(f"clips/still/cut{no}.mp4"):
+        src = f"clips/still/cut{no}.mp4"  # 動画ができるまでの 1 枚絵版
     if not os.path.exists(src):
         old = f"clips/fictional/cut{no}.mp4"  # 社員版がまだなら、前の架空の人物版を仮に使う
         src = old if os.path.exists(old) else f"clips/cut{STANDIN[no]}.mp4"
