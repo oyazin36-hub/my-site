@@ -118,7 +118,10 @@ TIMELINE = [
  ("47", 195.9, 202.9), ("48", 202.9, 209.8),
  ("31", 209.8, 213.3), ("32", 213.3, 216.9), ("33", 216.9, 222.8), ("34", 222.8, 226.7), ("35", 226.7, 233.3),
  ("36", 233.3, 236.8), ("37", 236.8, 241.3), ("38", 241.3, 247.4),
- ("39", 247.4, 253.9), ("40", 253.9, 258.9), ("41", 258.9, 266.9), ("49", 266.9, 275.8),
+ ("39", 247.4, 253.9), ("40", 253.9, 258.9),
+ # 「原マシナリー」の歌に合わせて、支えてくれる人たちを 2 秒ずつ見せる（お客様 → 仕入れ先様 → 運転手さん → 社員）
+ ("45", 258.9, 260.9), ("48", 260.9, 262.9), ("21", 262.9, 264.9), ("35", 264.9, 266.9),
+ ("50", 266.9, 275.8),
 ]
 
 # 歌詞テロップ: (開始秒, 終了秒, 文字)
@@ -156,7 +159,7 @@ TAGS = [(2.1, 7.1, "1948"), (7.7, 14.0, "2026"), (21.2, 27.1, "岡崎"), (158.4,
         (213.6, 216.6, "2026"), (233.6, 236.5, "2048")]
 
 # 最後の社名（ロゴの代わり）の表示開始秒
-LOGO_AT = 259.5
+LOGO_AT = 268.0
 
 # 社員の皆さんで作り直すカット（架空の人物から差し替え）。ここにある番号は CUTS の同じ番号を上書きする
 RECAST = {
@@ -189,12 +192,14 @@ RECAST = {
  "43": (["assembler", "des_smile", "factory"], "A cover cloth is pulled off a newly finished special-purpose machine in the factory; the bearded assembler and the designer look at it proudly."),
  "45": (["concept", "president", "office"], "In a meeting room, a client in a suit explains their needs while the cheerful elderly concept designer listens with a big smile and quickly sketches a machine idea; the president nods; the client leans in, delighted."),
  # お客様・仕入れ先様
+ "50": (["president", "vp", "driver"], "At golden hour in front of the factory, the company's employees stand together with their customers in suits and partner suppliers in work clothes, a 3-ton truck parked nearby; they smile and look up at the sky as the camera slowly rises toward the evening sky."),
  "48": (["adv_big", "machinist", "factory"], "Early morning at the factory gate: a partner supplier's truck delivers large steel plates; the supplier's staff and the factory's elderly advisor and machinist greet each other with bows and smiles, checking the material together."),
 }
+CUTS.append(dict(no="50", refs=[], prompt=""))
 for _c in CUTS:
     if _c["no"] in RECAST:
         _c["refs"], _c["prompt"] = RECAST[_c["no"]]
         _c.pop("frame", None)
 
 # 最後の社名の下に出す感謝の一文: (開始秒, 終了秒, 文字)
-ENDNOTE = (262.0, 275.8, "お客様、仕入れ先様、そして 21 名の社員に支えられ、\\N原マシナリーはこれからも歩み続けます。")
+ENDNOTE = None  # 感謝は文字ではなく映像（カット 45・48・21・35・50）で表す

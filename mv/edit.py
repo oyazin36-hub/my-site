@@ -41,13 +41,14 @@ ass = [
     f"Style: Lyric,{FONT},40,&H00FFFFFF,&H50000000,&H00000000,0,2,40,40,48,1,2.5,0",
     f"Style: Tag,{FONT},34,&H00FFFFFF,&H60000000,&H00000000,1,7,48,48,40,1,2,0",
     f"Style: Temp,{FONT},20,&H00FFFFFF,&H80000000,&H00000000,0,9,24,24,20,1,1.5,0",
-    f"Style: Logo,{FONT},84,&H00FFFFFF,&H60000000,&H00000000,1,5,40,40,40,1,3,0",
+    f"Style: Logo,{FONT},84,&H00FFFFFF,&H60000000,&H00000000,1,8,40,40,110,1,3,0",
     "", "[Events]", "Format: Layer, Start, End, Style, Text",
 ]
 ass += [f"Dialogue: 0,{ts(a)},{ts(b - 0.05)},Lyric,{{\\fad(120,120)}}{t}" for a, b, t in LYRICS]
 ass += [f"Dialogue: 0,{ts(a)},{ts(b)},Tag,{{\\fad(300,300)}}{t}" for a, b, t in TAGS]
 ass += [f"Dialogue: 0,{ts(a)},{ts(b)},Temp,仮（カット{n} 未生成）" for a, b, n in STANDINS]
-ass.append(f"Dialogue: 0,{ts(ENDNOTE[0])},{ts(ENDNOTE[1])},Lyric,{{\\fad(800,1200)}}{ENDNOTE[2]}")
+if ENDNOTE:
+    ass.append(f"Dialogue: 0,{ts(ENDNOTE[0])},{ts(ENDNOTE[1])},Lyric,{{\\fad(800,1200)}}{ENDNOTE[2]}")
 end = TIMELINE[-1][2]
 ass.append(f"Dialogue: 0,{ts(LOGO_AT)},{ts(end)},Logo,{{\\fad(800,1200)}}原マシナリー\\N{{\\fs34}}since 1948")
 open("out/mv.ass", "w").write("\n".join(ass) + "\n")
