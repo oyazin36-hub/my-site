@@ -14,6 +14,11 @@ REFS = {
     "mid":      CHAR.format(d="a Japanese man in his forties with short dark hair, white shirt with rolled-up sleeves"),
     "designer": CHAR.format(d="a young Japanese woman in her twenties with a brown bob haircut and round glasses, wearing a white shirt"),
     "operator": CHAR.format(d="a young Japanese man in his twenties with short hair, navy work uniform and safety glasses"),
+    # 追加の登場人物
+    "inspector": CHAR.format(d="a Japanese woman in her fifties with grey-streaked hair tied back, light blue work jacket, holding a clipboard, a calm and strict quality inspector"),
+    "newbie":   CHAR.format(d="an eighteen-year-old Japanese new recruit with short black hair, a brand-new slightly oversized navy work uniform and cap, eager nervous smile"),
+    "sales":    CHAR.format(d="a Japanese man in his thirties with neatly side-parted hair, navy business suit and company work jacket over it, friendly smile"),
+    "welder":   CHAR.format(d="a Japanese woman in her thirties with a high ponytail, grey coverall with rolled sleeves, work gloves tucked in her pocket, confident expression"),
     "old_shop": PLACE.format(d="a small 1940s Japanese machine workshop with wooden beams and old machines, slanted window light, sepia tones"),
     "factory":  PLACE.format(d="a bright, high-ceilinged modern Japanese factory with a large gantry-type five-face machining center, clean floor"),
     "office":   PLACE.format(d="a calm design office by the window with CAD monitors and drawings pinned on the wall"),
