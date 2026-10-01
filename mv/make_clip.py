@@ -4,13 +4,14 @@ from common import call, KEY
 
 STYLE = ("Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, "
          "muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.")
-NEGATIVE = "flying metal chips, piles of shavings, debris scattering, stone, concrete, rock, cracks, cracked surface, sparks, flying sparks, sparkles, embers, fire, text, letters, logos, watermark, photorealistic"
+NEGATIVE = "drilling, plunging down, wobbling, curved path, zigzag, flying metal chips, piles of shavings, debris scattering, stone, concrete, rock, cracks, cracked surface, sparks, flying sparks, sparkles, embers, fire, text, letters, logos, watermark, photorealistic"
 MODEL = "veo-3.1-fast-generate-preview"
 
 CUTS = {
-    "06": "Low-angle wide shot. A large gantry-type machining center smoothly and quietly mills a huge solid block of "
-          "smooth, polished silver steel with clean flat faces; the freshly machined metal surface gleams like a mirror. "
-          "Clean, calm cutting with only a few tiny metal shavings falling gently near the tool.",
+    "06": "Low-angle side shot. The spindle of a large gantry-type machining center, fitted with a wide face mill, "
+          "moves slowly and steadily in a perfectly straight horizontal line across the top of a huge solid block of "
+          "polished silver steel, leaving behind a straight, flat, mirror-like machined strip. The tool stays at the same "
+          "height the whole time. Clean, calm cutting with only a few tiny metal shavings.",
 }
 
 no = sys.argv[1]
