@@ -3,6 +3,12 @@
 import os, subprocess, sys
 from cuts import TIMELINE, LYRICS, TAGS, LOGO_AT
 
+# まだ生成できていないカットは、似た場面の生成済みカットで仮に埋める（右上に「仮」と出す）
+STANDIN = {"19": "18", "22": "07", "23": "14", "24": "12", "25": "02", "26": "01", "27": "15", "28": "14",
+           "29": "12", "30": "16", "31": "03", "32": "11", "33": "09", "34": "13", "35": "15", "36": "09",
+           "37": "10", "38": "15", "39": "16", "40": "17", "41": "49", "42": "06", "43": "18", "44": "05",
+           "45": "21", "46": "02", "47": "03", "48": "10"}
+
 os.makedirs("out/trim", exist_ok=True)
 FONT = "WenQuanYi Zen Hei"
 CLIP = 8.0
@@ -11,11 +17,12 @@ def ts(t):
     return f"{int(t // 3600)}:{int(t % 3600 // 60):02d}:{t % 60:05.2f}"
 
 # 1. 各カットを尺に合わせて切る。短い尺は動きの中ほどを使い、8 秒を超える尺は少しだけゆっくり再生する
-parts = []
+parts, STANDINS = [], []
 for i, (no, s, e) in enumerate(TIMELINE):
     src, dst, dur = f"clips/cut{no}.mp4", f"out/trim/{i:02d}_{no}.mp4", e - s
     if not os.path.exists(src):
-        sys.exit(f"missing {src}")
+        src = f"clips/cut{STANDIN[no]}.mp4"
+        STANDINS.append((s, e, no))
     off = min((CLIP - dur) / 2, 1.5) if dur < CLIP else 0
     speed = f"setpts=PTS*{dur / CLIP:.4f}," if dur > CLIP else ""
     fade = ",fade=t=in:d=0.2" if i else ""
@@ -32,11 +39,13 @@ ass = [
     "Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, BackColour, Bold, Alignment, MarginL, MarginR, MarginV, BorderStyle, Outline, Shadow",
     f"Style: Lyric,{FONT},40,&H00FFFFFF,&H50000000,&H00000000,0,2,40,40,48,1,2.5,0",
     f"Style: Tag,{FONT},34,&H00FFFFFF,&H60000000,&H00000000,1,7,48,48,40,1,2,0",
+    f"Style: Temp,{FONT},20,&H00FFFFFF,&H80000000,&H00000000,0,9,24,24,20,1,1.5,0",
     f"Style: Logo,{FONT},84,&H00FFFFFF,&H60000000,&H00000000,1,5,40,40,40,1,3,0",
     "", "[Events]", "Format: Layer, Start, End, Style, Text",
 ]
 ass += [f"Dialogue: 0,{ts(a)},{ts(b - 0.05)},Lyric,{{\\fad(120,120)}}{t}" for a, b, t in LYRICS]
 ass += [f"Dialogue: 0,{ts(a)},{ts(b)},Tag,{{\\fad(300,300)}}{t}" for a, b, t in TAGS]
+ass += [f"Dialogue: 0,{ts(a)},{ts(b)},Temp,仮（カット{n} 未生成）" for a, b, n in STANDINS]
 end = TIMELINE[-1][2]
 ass.append(f"Dialogue: 0,{ts(LOGO_AT)},{ts(end)},Logo,{{\\fad(800,1200)}}原マシナリー\\N{{\\fs34}}since 1948")
 open("out/mv.ass", "w").write("\n".join(ass) + "\n")
