@@ -14,7 +14,7 @@ def call(method, path, body=None, timeout=600):
                 return json.load(r)
         except urllib.error.HTTPError as e:
             msg = e.read().decode()
-            if e.code in (429, 500, 502, 503) and attempt < 1:
+            if e.code in (429, 500, 502, 503) and attempt < 4:
                 time.sleep(20 * (attempt + 1)); continue
             raise RuntimeError(f"{e.code}: {msg}")
 
