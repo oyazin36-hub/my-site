@@ -187,7 +187,7 @@ RECAST = {
  "22": (["adv_big", "new_shy"], "Close-up: the elderly machining advisor places his weathered hand over the hand of a shy young recruit, guiding how to hold a precision tool."),
  "23": (["assembler", "new_viet", "part_pony"], "A new machine powers on with its indicator lights; employees around it applaud and smile, the Vietnamese recruit cheering happily."),
  "24": (["concept", "des_smile", "des_white"], "The cheerful, slightly plump elderly concept designer (clean-shaven, no beard) explains a whiteboard sketch of a special-purpose industrial machine (mechanical parts only, not a building; the whiteboard has drawings only, absolutely no words, labels or letters) to the smiling designer and the white-haired senior designer, who nod with interest."),
- "27": (["president", "vp", "clerk"], "Morning assembly on the high-ceilinged machining hall (orange-brown roof beams on yellow columns, high windows, grey concrete floor), machines lined up behind: the president speaks to the employees standing in a row, the vice president beside him, everyone listening, soft morning light."),
+ "27": (["president", "vp", "clerk"], "Morning assembly on the high-ceilinged machining hall (orange-brown roof beams on yellow columns, high windows, grey concrete floor), machines lined up behind: the president speaks to about twenty employees (a small company, no more than twenty people) standing in one row, the vice president beside him, everyone listening, soft morning light."),
  "28": (["new_viet", "part_okami", "part_pony"], "Lunch break: employees laughing together while eating bento boxes at a long table; the talkative Vietnamese recruit tells a story, relaxed and warm."),
  "29": (["vp", "office"], "The petite vice president by the office window turns toward the camera and smiles warmly, sunlight on her face."),
  "32": (["machinist", "factory_real"], "Close-up in full color, present day: the master machinist's hands operate the control panel of a modern machine."),
@@ -211,3 +211,14 @@ for _c in CUTS:
 
 # 最後の社名の下に出す感謝の一文: (開始秒, 終了秒, 文字)
 ENDNOTE = None  # 感謝は文字ではなく映像（カット 45・48・21・35・50）で表す
+
+# 全カット共通の決まり（社員の服装と床）
+from staff import STAFF as _STAFF
+UNIFORM_NOTE = " Every company employee in the scene, including people in the background, wears the identical navy blue work jacket and navy work trousers."
+FLOOR_NOTE = " The factory floor is grey concrete, not green."
+for _c in CUTS:
+    _r = set(_c.get("refs", []))
+    if _r & set(_STAFF) or "employees" in _c.get("prompt", ""):
+        _c["prompt"] += UNIFORM_NOTE
+    if "big_part" in _r:
+        _c["prompt"] += FLOOR_NOTE
