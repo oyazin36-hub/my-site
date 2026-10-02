@@ -19,7 +19,11 @@ def generate(cut):
         last = f"frames/cut{cut['frame']}_last.jpg"
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-sseof", "-0.1", "-i", prev, "-frames:v", "1", last], check=True)
         inst["image"] = {"bytesBase64Encoded": b64(last), "mimeType": "image/jpeg"}
-    if cut.get("refs") and "lite" in MODEL:
+    first_frame = f"frames/cut{no}_first.jpg"
+    if os.environ.get("FROM_STILLS") and os.path.exists(first_frame):
+        # 見ていただいた 1 枚絵（見本の画風）を最初のコマにして動かす。画風と構図が 1 枚絵とそろう
+        inst["image"] = {"bytesBase64Encoded": b64(first_frame), "mimeType": "image/jpeg"}
+    elif cut.get("refs") and "lite" in MODEL:
         # Lite は参照画像を受け付けないので、参照画像から最初のコマを絵にして、それを動かす
         first = f"frames/cut{no}_first.jpg"
         if not os.path.exists(first):
@@ -38,7 +42,7 @@ def generate(cut):
         inst["referenceImages"] = [{"image": {"bytesBase64Encoded": b64(f"refs/{r}.jpg"), "mimeType": "image/jpeg"},
                                     "referenceType": "asset"} for r in cut["refs"]]
     params = {"aspectRatio": "16:9", "durationSeconds": 8}
-    if not cut.get("refs") and "lite" not in MODEL:  # 参照画像を使うときと Lite は negativePrompt を受け付けない
+    if (os.environ.get("FROM_STILLS") or not cut.get("refs")) and "lite" not in MODEL:  # 参照画像を使うときと Lite は negativePrompt を受け付けない
         params["negativePrompt"] = NEGATIVE
     op = call("POST", f"models/{MODEL}:predictLongRunning", {"instances": [inst], "parameters": params})
     while not op.get("done"):
@@ -61,7 +65,12 @@ def safe(cut):
     except Exception as e:
         return f"FAIL {cut['no']}: {str(e)[:300]}"
 
-todo = [c for c in CUTS if not c.get("done") and (len(sys.argv) == 1 or c["no"] in sys.argv[1:])]
+from cuts import TIMELINE
+used = {n for n, _, _ in TIMELINE}
+if os.environ.get("FROM_STILLS"):  # 見本の画風で作り直すときは、曲で使う全カットが対象（作成済みの 06 も含む）
+    todo = [c for c in CUTS if c["no"] in used and (len(sys.argv) == 1 or c["no"] in sys.argv[1:])]
+else:
+    todo = [c for c in CUTS if not c.get("done") and (len(sys.argv) == 1 or c["no"] in sys.argv[1:])]
 with ThreadPoolExecutor(4) as ex:
     for msg in ex.map(safe, todo):
         print(msg, flush=True)
