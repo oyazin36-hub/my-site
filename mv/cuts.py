@@ -112,7 +112,7 @@ TIMELINE = [
  ("11", 73.6, 75.3), ("12", 75.3, 77.0), ("13", 77.0, 78.6), ("14", 78.6, 86.3), ("43", 86.3, 90.0),
  ("15", 90.0, 96.4), ("44", 96.4, 100.4),
  ("17", 100.4, 107.3), ("18", 107.3, 114.0), ("19", 114.0, 119.8), ("45", 119.8, 126.7),
- ("20", 126.7, 133.7), ("21", 133.7, 141.4),
+ ("51", 126.7, 130.2), ("20", 130.2, 133.7), ("21", 133.7, 141.4),
  ("22", 141.4, 148.7), ("23", 148.7, 154.5), ("24", 154.5, 158.2), ("25", 158.2, 161.2), ("26", 161.2, 168.8),
  ("27", 168.8, 175.7), ("28", 175.7, 178.8), ("29", 178.8, 183.9), ("30", 183.9, 189.9), ("46", 189.9, 195.9),
  ("47", 195.9, 202.9), ("48", 202.9, 209.8),
@@ -201,9 +201,12 @@ RECAST = {
  "45": (["concept", "president", "office"], "In a meeting room, a client in a suit explains their needs while the cheerful elderly concept designer listens with a big smile and quickly sketches a machine idea; the president nods; the client leans in, delighted."),
  # お客様・仕入れ先様
  "50": (["president", "driver", "exterior"], "At golden hour in front of this factory building (long white building with a blue band near the roof, yellow roll-up shutter, two-story office wing, sculpted pine trees and a natural stone wall in front, wooded hill behind), the company's employees stand together with their customers in suits and partner suppliers in work clothes, a plain unbranded 3-ton truck (no brand name or emblem) parked nearby; they smile and look up at the sky as the camera slowly rises toward the evening sky."),
+ # 品質課の課長が三次元測定機で完成品を検査する（「品質を追い」）
+ "51": (["qc_chief", "big_part", "factory_real"], "In a clean, bright inspection room of this factory, the quality control section chief carefully operates a large bridge-type coordinate measuring machine (granite table, moving gantry with a measuring probe); the probe slowly touches the finished precision-machined steel plate, while he watches closely with a serious, satisfied expression. The chief has short jet-black hair. One single continuous shot, not comic panels."),
  "48": (["adv_big", "machinist", "exterior"], "Early morning in front of this factory building (long white building with a blue band near the roof, yellow roll-up shutter, two-story office wing, sculpted pine trees and a natural stone wall in front, wooded hill behind): closer view on the paved yard directly at the large open yellow roll-up shutter (the shutter fills the background, the stone wall is NOT between the truck and the shutter): the rear of a partner supplier's flatbed truck is backed up to the shutter opening and large steel plates are being unloaded into the factory; the supplier's driver in a green uniform and cap bows, and the factory's elderly advisor, machinist and the friendly fifty-something male recruit with long black hair in a ponytail greet him with bows and smiles, checking the material together."),
 }
 CUTS.append(dict(no="50", refs=[], prompt=""))
+CUTS.append(dict(no="51", refs=[], prompt=""))
 for _c in CUTS:
     if _c["no"] in RECAST:
         _c["refs"], _c["prompt"] = RECAST[_c["no"]]
