@@ -242,3 +242,10 @@ for _c in CUTS:
 # 全カット共通: 1 枚の連続した画面、機械にメーカー名やロゴを描かない
 for _c in CUTS:
     _c["prompt"] += " One single continuous shot (never split into comic panels). No maker names, brand names or logos on any machine."
+
+# 工場内の色の決まり（大きさを変えても色は変えない）
+COLOR_NOTE = (" Keep the factory colors exactly as in the reference: green radial drills and green machines, cream-white machining centers,"
+              " orange-brown roof beams, yellow columns, beige walls, grey concrete floor, warm daylight.")
+for _c in CUTS:
+    if "towering" in _c["prompt"]:
+        _c["prompt"] += COLOR_NOTE
