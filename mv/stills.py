@@ -14,9 +14,12 @@ def frame(cut):
     path = f"frames/cut{no}_first.jpg"
     if os.path.exists(path):
         return path
-    parts = [{"inlineData": {"mimeType": "image/jpeg", "data": b64(f"refs/{r}.jpg")}} for r in cut.get("refs", [])]
-    lead = ("Using the attached character and location references (keep faces, hair, clothing and places exactly the same), "
-            if parts else "")
+    # 1 枚目は画風の見本（refs/style.jpg）。人物や服は写さず、絵のタッチだけ合わせる
+    parts = [{"inlineData": {"mimeType": "image/jpeg", "data": b64("refs/style.jpg")}}]
+    parts += [{"inlineData": {"mimeType": "image/jpeg", "data": b64(f"refs/{r}.jpg")}} for r in cut.get("refs", [])]
+    lead = ("Image 1 shows ONLY the art style to copy (ignore the woman in it; do not copy her glasses, hair or clothes). "
+            + ("The other images are character and location references (keep their faces, hair, clothing and places exactly the same, drawn in the art style of image 1). "
+               if cut.get("refs") else ""))
     parts.append({"text": f"{lead}draw this shot as a single 16:9 film still: {cut['prompt']} {STYLE}"})
     r = call("POST", "models/gemini-3.1-flash-image:generateContent", {
         "contents": [{"parts": parts}],
@@ -42,7 +45,7 @@ def make(cut):
     except Exception as e:
         return f"FAIL {no}: {str(e)[:200]}"
 
-need = {n for n, _, _ in TIMELINE if not os.path.exists(f"clips/cut{n}.mp4")}
+need = {n for n, _, _ in TIMELINE if os.environ.get("ALL_STILLS") or not os.path.exists(f"clips/cut{n}.mp4")}
 todo = [c for c in CUTS if c["no"] in need]
 with ThreadPoolExecutor(4) as ex:
     for m in ex.map(make, todo):

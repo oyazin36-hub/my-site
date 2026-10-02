@@ -2,8 +2,9 @@
 import os, sys, time, urllib.request
 from common import call, KEY
 
-STYLE = ("Japanese hand-drawn anime film style, soft painterly backgrounds, warm natural light, "
-         "muted colors, gentle film grain, cinematic 16:9. No on-screen text, no logos, no sparks.")
+STYLE = ("Modern cinematic Japanese TV-anime film style: thin clean delicate line art, soft cel shading with smooth gradients, "
+         "realistic natural proportions and faces, calm subtle expressions, soft warm light with gentle bloom, shallow depth of field, "
+         "muted slightly desaturated colors, clean painterly backgrounds, cinematic 16:9. No on-screen text, no logos, no sparks.")
 NEGATIVE = "drilling, plunging down, wobbling, curved path, zigzag, flying metal chips, piles of shavings, debris scattering, stone, concrete, rock, cracks, cracked surface, sparks, flying sparks, sparkles, embers, fire, text, letters, logos, watermark, photorealistic"
 MODEL = os.environ.get("VEO_MODEL", "veo-3.1-fast-generate-preview")
 
