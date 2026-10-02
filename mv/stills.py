@@ -15,11 +15,10 @@ def frame(cut):
     if os.path.exists(path):
         return path
     # 1 枚目は画風の見本（refs/style.jpg）。人物や服は写さず、絵のタッチだけ合わせる
-    parts = [{"inlineData": {"mimeType": "image/jpeg", "data": b64("refs/style.jpg")}}]
-    parts += [{"inlineData": {"mimeType": "image/jpeg", "data": b64(f"refs/{r}.jpg")}} for r in cut.get("refs", [])]
-    lead = ("Image 1 shows ONLY the art style to copy (ignore the woman in it; do not copy her glasses, hair or clothes). "
-            + ("The other images are character and location references (keep their faces, hair, clothing and places exactly the same, drawn in the art style of image 1). "
-               if cut.get("refs") else ""))
+    # 画風は前のものに戻した（見本の画風 refs/style.jpg は使わない）
+    parts = [{"inlineData": {"mimeType": "image/jpeg", "data": b64(f"refs/{r}.jpg")}} for r in cut.get("refs", [])]
+    lead = ("Using the attached character and location references (keep faces, hair, clothing and places exactly the same), "
+            if parts else "")
     parts.append({"text": f"{lead}draw this shot as a single 16:9 film still: {cut['prompt']} {STYLE}"})
     r = call("POST", "models/gemini-3.1-flash-image:generateContent", {
         "contents": [{"parts": parts}],
