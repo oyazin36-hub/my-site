@@ -180,14 +180,14 @@ RECAST = {
  "12": (["des_smile", "office"], "Over-the-shoulder shot of the smiling designer with glasses working in CAD; lines on the monitor assemble into a 3D machine part."),
  "14": (["des_white", "assembler", "des_smile"], "A small team gathered around a large blueprint on a table, pointing and laughing together, warm window light."),
  "15": (["president", "vp", "new_viet"], "Back view of employees walking together toward a wide-open factory door filled with bright light, camera following low."),
- "18": (["assembler", "factory_real"], "Close-up of hands assembling a special-purpose machine, tightening bolts with a torque wrench, then a medium shot of the bearded master assembler working carefully."),
+ "18": (["assembler", "factory_real"], "Medium shot: the bearded master assembler carefully tightens bolts with a torque wrench while assembling a large special-purpose machine on the factory floor."),
  "19": (["des_smile", "assembler"], "The smiling designer with glasses and the bearded master assembler stand in front of a finished machine, exchange a nod and a small smile."),
  "20": (["insp_woman", "new_glasses", "cmm_device"], "On the grey concrete floor of this high-ceilinged machining hall (orange-brown roof beams on yellow columns, high windows, grey concrete floor), the short-haired woman inspector sweeps the handheld laser scan probe (green marker LEDs, fan of blue laser light) over a large precision-machined steel plate, while the new inspector with glasses checks the colorful 3D deviation map on a tablet; a white tracking camera on a black tripod stands nearby."),
  "21": (["driver", "president", "exterior"], "In front of this factory building (long white building with a blue band near the roof, yellow roll-up shutter, two-story office wing, sculpted pine trees and a natural stone wall in front, wooded hill behind), closer view on the paved yard directly at the large open yellow roll-up shutter (the shutter fills the background, the stone wall is NOT between the truck and the shutter): the rear of a 3-ton flatbed truck is backed up to the shutter opening and a carefully wrapped machined metal part is lifted out of the factory onto it, the small smiling elderly driver helping; he waves from the driver's seat as the president and the petite vice president bow politely, afternoon light."),
  "22": (["adv_big", "new_shy"], "Close-up: the elderly machining advisor places his weathered hand over the hand of a shy young recruit, guiding how to hold a precision tool."),
  "23": (["assembler", "new_viet", "part_pony"], "A new machine powers on with its indicator lights; employees around it applaud and smile, the Vietnamese recruit cheering happily."),
  "24": (["concept", "des_smile", "des_white"], "The cheerful, slightly plump elderly concept designer (clean-shaven, no beard) explains a whiteboard sketch of a special-purpose industrial machine (mechanical parts only, not a building; the whiteboard has drawings only, absolutely no words, labels or letters) to the smiling designer and the white-haired senior designer, who nod with interest."),
- "27": (["president", "vp", "clerk"], "Morning assembly on the high-ceilinged machining hall (orange-brown roof beams on yellow columns, high windows, grey concrete floor), machines lined up behind: the president speaks to about twenty employees (a small company, no more than twenty people) standing in one row, the vice president beside him, everyone listening, soft morning light."),
+ "27": (["president", "vp", "clerk"], "Morning assembly on the high-ceilinged machining hall (orange-brown roof beams on yellow columns, high windows, grey concrete floor), machines lined up behind: the president speaks to exactly twenty employees (count them: a small company of twenty-one people, never more) standing in one short row, the vice president beside him, everyone listening, soft morning light."),
  "28": (["new_viet", "part_okami", "part_pony"], "Lunch break: employees laughing together while eating bento boxes at a long table; the talkative Vietnamese recruit tells a story, relaxed and warm."),
  "29": (["vp", "office"], "The petite vice president by the office window turns toward the camera and smiles warmly, sunlight on her face."),
  "32": (["machinist", "factory_real"], "Close-up in full color, present day: the master machinist's hands operate the control panel of a modern machine."),
@@ -230,3 +230,15 @@ for _c in CUTS:
 for _c in CUTS:
     if _c["no"] in {"20"}:
         _c["done"] = True
+
+# 工場内の大きさの決まり（人に対して設備を大きく）
+SCALE_NOTE = (" Realistic industrial scale: the factory hall is huge with a ceiling about 15 meters high; the large machining centers and"
+              " gantry machines are 4 to 6 meters tall, towering over the workers; people look small next to the machines.")
+for _c in CUTS:
+    _r = set(_c.get("refs", []))
+    if _r & {"factory_real", "big_part", "cmm_device"} or "machining hall" in _c.get("prompt", ""):
+        _c["prompt"] += SCALE_NOTE
+
+# 全カット共通: 1 枚の連続した画面、機械にメーカー名やロゴを描かない
+for _c in CUTS:
+    _c["prompt"] += " One single continuous shot (never split into comic panels). No maker names, brand names or logos on any machine."
