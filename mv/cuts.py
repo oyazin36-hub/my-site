@@ -275,3 +275,12 @@ for _c in CUTS:
             p += SCALE_NOTE + COLOR_NOTE
         p += " One single continuous shot (never split into comic panels). No maker names, brand names or logos on any machine."
         _c["prompt"] = p
+
+# 10/3 カットシーン集の指示で直したカット（シートのカット番号 → 新しいクリップ clips/cutXXX.mp4）
+# f は fix2_videos.py で作り直したもの、c42 は看板が映らないよう少し寄せたもの。クリップができたものから差し替わる
+import os as _os
+_NEW = {2: "f02", 3: "f03", 9: "f09", 12: "f12", 16: "f16", 17: "f17", 30: "f30", 33: "f33", 41: "f41",
+        42: "c42", 45: "f45", 47: "f47", 48: "f48", 49: "f49", 50: "f50"}
+TIMELINE = [(_NEW[i] if i in _NEW and _os.path.exists(f"clips/cut{_NEW[i]}.mp4") else no, s, e)
+            for i, (no, s, e) in enumerate(TIMELINE, 1)]
+LOGO_AT = 9999.0  # 社名は finish2.py で新しい出し方に重ねる
