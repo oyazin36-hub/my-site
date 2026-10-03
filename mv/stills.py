@@ -18,7 +18,7 @@ def frame(cut):
     # 1 枚目は画風の見本（refs/style.jpg）。人物や服は写さず、絵のタッチだけ合わせる
     parts = [{"inlineData": {"mimeType": "image/jpeg", "data": b64("refs/style.jpg")}}]
     parts += [{"inlineData": {"mimeType": "image/jpeg", "data": b64(f"refs/{r}.jpg")}} for r in cut.get("refs", [])]
-    lead = ("Image 1 shows ONLY the art style to copy (ignore the woman in it; do not copy her glasses, hair or clothes). "
+    lead = ("Image 1 shows ONLY the art style to copy (ignore the woman in it; do not copy her glasses, hair or clothes, and NEVER put that young woman in the scene). "
             + ("The other images are character and location references (keep their faces, hair, clothing and places exactly the same, drawn in the art style of image 1). "
                if cut.get("refs") else ""))
     parts.append({"text": f"{lead}draw this shot as a single 16:9 film still: {cut['prompt']} {STYLE}"})
