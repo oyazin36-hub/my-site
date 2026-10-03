@@ -249,3 +249,26 @@ COLOR_NOTE = (" Keep the factory colors exactly as in the reference: green radia
 for _c in CUTS:
     if "towering" in _c["prompt"]:
         _c["prompt"] += COLOR_NOTE
+
+# 完成版を見て不自然だった場面の直し（10/3）: CUTS の prompt を上書きする（共通の決まりより前に入れ直す）
+FIX = {
+ "43": "Unveiling moment: the bearded master assembler and the smiling designer with glasses pull a large light-grey cover cloth off a brand-new, modern cream-white special-purpose machine; the cloth is caught mid-air sliding off the machine, both men look at the machine proudly with excited smiles, colleagues clapping behind them.",
+ "10": "Inside this high-ceilinged machining hall at dawn, seen from the middle of the hall toward the large roll-up shutter at the far end: the shutter slowly rises and golden morning light floods in across the grey concrete floor between the rows of machines, camera slowly pushing forward. The crane hook reel stays small and high up near the ceiling. No people.",
+ "34": "An overhead crane slowly lifts a huge flat precision-machined steel plate with slings high above the floor; the elderly large-part machining advisor and the ponytailed recruit stand safely to the side, well away from under the load, steering it gently with long guide ropes and watching it with focused faces. Nobody stands under the load or touches it with their hands.",
+ "40": "Still-life on a wooden workbench: an old analog vernier caliper next to a modern digital caliper whose screen is blank, soft evening window light. The instruments have no letters, no numbers, no brand names and no labels at all.",
+ "38": "Three employees in navy uniforms (the cheerful Vietnamese recruit, the short-haired woman inspector and the earnest clerk) look up toward bright light with determined smiles, a gentle breeze, camera slowly pushing in. Only these three people in the foreground.",
+ "35": "All twenty-one employees of a small company gathered in front of this factory building exactly as in the reference, smiling, the president and vice president in the center; the camera pulls back and rises to reveal the whole group. No signboards, no standing signs, no extra text anywhere.",
+ "50": "Medium-wide shot at golden hour, people large in the frame with faces clearly visible: the company's employees stand together with their customers in suits and partner suppliers in work clothes in front of this factory building exactly as in the reference, a plain unbranded 3-ton truck nearby; they smile and look up at the sky as the camera slowly rises toward the evening sky.",
+}
+_NOTES = [n for n in ("UNIFORM_NOTE", "FLOOR_NOTE", "SCALE_NOTE", "COLOR_NOTE") if n in globals()]
+for _c in CUTS:
+    if _c["no"] in FIX:
+        p = FIX[_c["no"]]
+        if _c.get("refs") and set(_c["refs"]) & set(_STAFF) or "employees" in p:
+            p += UNIFORM_NOTE
+        if "big_part" in _c.get("refs", []):
+            p += FLOOR_NOTE
+        if set(_c.get("refs", [])) & {"factory_real", "big_part", "cmm_device"} or "machining hall" in p:
+            p += SCALE_NOTE + COLOR_NOTE
+        p += " One single continuous shot (never split into comic panels). No maker names, brand names or logos on any machine."
+        _c["prompt"] = p
