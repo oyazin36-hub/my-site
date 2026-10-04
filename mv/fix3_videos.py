@@ -43,7 +43,7 @@ JOBS = {
         "At the end of the work day, the employees standing together among the machines smile and wave to the camera, warm evening "
         "light; the camera slowly pulls back a little. Everyone keeps the same face."),
 }
-MODEL = "veo-3.1-fast-generate-preview"
+MODEL = os.environ.get("VEO_MODEL", "veo-3.1-fast-generate-preview")  # 急ぐ日は標準版を指定する
 
 def make(no):
     out = f"clips/cutg{no}.mp4"
