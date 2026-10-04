@@ -12,9 +12,9 @@ R = "refs/illust"
 JOBS = {
     "c03b": ([f"{F2}/c12.jpg", f"{F2}/c02.jpg", f"{R}/vp.jpg"],
              "Using image 1 for the art style, the place (today's factory) and the light, draw a new scene: the white-haired, "
-             "slightly stern craftsman in his 70s from image 2 (same face and hair, now in the navy work uniform) hands an old, "
-             "well-worn steel caliper with both hands to the petite woman in her 50s from image 3 (the vice president, same face "
-             "and hair, navy uniform), who receives it with both hands. They look at each other with warm smiles. Medium shot, "
+             "slightly stern craftsman in his 70s from image 2 (same face and hair, now in the navy work uniform) hands a rolled-out "
+             "white paper drawing (plain grey pencil lines of a machine, no text) with both hands to the petite woman in her 50s from image 3 (the vice president, same face "
+             "and hair, navy uniform), who receives it with both hands, both holding the drawing between them. They look at each other with warm smiles. Medium shot, "
              "realistic human scale. " + STYLE),
     "c04a": ([f"{F2}/base_c02.jpg"],
              "Edit this image. Remove the young craftsman completely so the old 1948 workshop is empty, showing the old lathe "
