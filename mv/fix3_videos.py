@@ -43,6 +43,18 @@ JOBS = {
         "At the end of the work day, the employees standing together among the machines smile and wave to the camera, warm evening "
         "light; the camera slowly pulls back a little. Everyone keeps the same face."),
 }
+# 第3版の指示（10/4 夕）
+JOBS.update({
+ "04b": (f"{F3}/c04p1.jpg", f"{F3}/c04p2.jpg",
+         "A slow, smooth transition across time: the three young craftsmen of 1948 working together at the old lathe in sepia "
+         "gradually become today's three employees in the same places and poses in today's bright factory in full color, with the "
+         "same earnest, proud expressions; their hands keep working calmly. The camera stays still."),
+ "41": (f"{F3}/c41b.jpg", None,
+        "The white-haired man presses the buttons on the yellow pendant control box and the overhead crane slowly lifts the huge "
+        "steel plate a little higher; both men stay where they are, clear of the load, watching it. Nobody else appears; nobody "
+        "goes under or touches the load."),
+})
+
 MODEL = os.environ.get("VEO_MODEL", "veo-3.1-fast-generate-preview")  # 急ぐ日は標準版を指定する
 
 def make(no):

@@ -295,3 +295,8 @@ _END = [(258.9, 261.9), (261.9, 264.9), (264.9, 267.9), (267.9, 270.9), (270.9, 
 TIMELINE = TIMELINE[:47] + [(no, s, e) for (no, _, _), (s, e) in zip(TIMELINE[47:], _END)]
 # 52 は短くなった分、手を振り終えて空へ上がる後半が映るよう、1.45 秒後ろから始まるクリップを使う
 TIMELINE[51] = ("e52", *TIMELINE[51][1:])
+
+# 10/4 夕 カットシーン集 第3版の指示（4 は人が時代を越えて変わらない場面に、41 は奥の小さな人を消す）
+_NEW3 = {4: "g04b", 41: "g41"}
+TIMELINE = [(_NEW3[i] if i in _NEW3 and _os.path.exists(f"clips/cut{_NEW3[i]}.mp4") else no, s, e)
+            for i, (no, s, e) in enumerate(TIMELINE, 1)]
