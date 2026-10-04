@@ -55,7 +55,10 @@ if __name__ == "__main__":
         dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
                                     "out/mv.mp4"], capture_output=True, text=True).stdout)
         open("out/logo.ass", "w").write(logo_ass(AT, dur))
-        run(["ffmpeg", "-v", "error", "-y", "-i", "out/mv.mp4", "-vf", "ass=out/logo.ass",
-             "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-c:a", "copy", "out/mv_final.mp4"])
+        # 曲はここで必ず入れ直す（out/mv.mp4 に音が無くても音楽付きになる）
+        run(["ffmpeg", "-v", "error", "-y", "-i", "out/mv.mp4", "-i", "song.mp3", "-map", "0:v", "-map", "1:a",
+             "-vf", "ass=out/logo.ass", "-af", f"afade=t=out:st={dur - 1.5:.2f}:d=1.5",
+             "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-c:a", "aac", "-b:a", "192k", "-t", f"{dur}",
+             "out/mv_final.mp4"])
         run(["ffmpeg", "-v", "error", "-y", "-i", "out/mv_final.mp4", "-c:v", "libx264", "-b:v", "620k",
              "-maxrate", "800k", "-bufsize", "1600k", "-vf", "scale=960:-2", "-c:a", "aac", "-b:a", "96k", "preview_final.mp4"])
