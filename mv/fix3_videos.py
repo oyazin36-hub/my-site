@@ -69,12 +69,12 @@ def make(no):
         return f"FAIL {no} {str(e)[:160]}"
 
 def join03():
-    # カット 3 = 年を重ねる前半（8 秒を約 2 倍速で 4.1 秒）＋ 図面を手渡す後半（4.2 秒）。edit.py は 8 秒のクリップを前提に中ほどを使うので、合わせて 8 秒にする
+    # カット 3 = 年を重ねる前半（1〜7 秒目を 1.25 倍速で 4.8 秒。速すぎると手の動きが不自然）＋ 図面を手渡す後半（3.5 秒）。edit.py は 8 秒のクリップを前提に中ほどを使うので、合わせて 8 秒にする
     import subprocess
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", "clips/cutg03a.mp4", "-i", "clips/cutg03b.mp4", "-filter_complex",
-                    "[0]setpts=PTS/1.95,scale=1280:720,fps=24,format=yuv420p[a];"
-                    "[1]trim=1.5:5.7,setpts=PTS-STARTPTS,scale=1280:720,fps=24,format=yuv420p[b];"
-                    "[a][b]xfade=transition=fade:duration=0.3:offset=3.8[v]",
+                    "[0]trim=1:7,setpts=(PTS-STARTPTS)/1.25,scale=1280:720,fps=24,format=yuv420p[a];"
+                    "[1]trim=1.5:5.0,setpts=PTS-STARTPTS,scale=1280:720,fps=24,format=yuv420p[b];"
+                    "[a][b]xfade=transition=fade:duration=0.3:offset=4.5[v]",
                     "-map", "[v]", "-an", "-c:v", "libx264", "-crf", "16", "clips/cutg03.mp4"], check=True)
 
 if __name__ == "__main__":

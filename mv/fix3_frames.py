@@ -52,6 +52,24 @@ JOBS = {
              "with a ponytail). Medium-wide shot. Not in front of the building and not outdoors. " + STYLE),
 }
 
+# 第3版の指示（10/4 夕）
+JOBS.update({
+    "c04p1": ([f"{F2}/base_c02.jpg"],
+              "Using image 1 for the sepia art style and the place (the old 1948 workshop), draw a new scene: three young "
+              "craftsmen in old work clothes work together around the old lathe, one guiding the work, one measuring, one "
+              "watching closely, all with the same earnest, proud expression. Medium shot, sepia old-film look. "
+              "One single continuous shot. No text, letters, numbers or logos anywhere."),
+    "c04p2": ([f"{F2}/c12.jpg", "frames/fix3/c04p1.jpg", f"{R}/machinist.jpg", f"{R}/new_viet.jpg", f"{R}/insp_woman.jpg"],
+              "Using image 1 for the art style, colors and the place (today's bright factory), draw today's version of image 2: "
+              "three of today's employees in navy work uniforms in exactly the same composition, positions and poses as the three "
+              "craftsmen in image 2, working together around a modern machine with the same earnest, proud expression. The three "
+              "are the man with glasses from image 3, the Vietnamese man from image 4 and the woman with short hair from image 5 "
+              "(same faces and hair). " + STYLE),
+    "c41b": ([f"{F2}/c41.jpg"],
+             "Edit this image. Remove all the small distant people in the background (the tiny figures between and behind the "
+             "machines), so only the two men in front remain. " + KEEP.replace(" Do not add or remove anyone.", "")),
+})
+
 def draw(name):
     imgs, text = JOBS[name]
     out = f"{D}/{name}.jpg"
