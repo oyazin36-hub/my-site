@@ -20,6 +20,7 @@ h1{margin:0;font-size:22px;color:var(--navy)}
 .top{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
 .num{font-size:20px;font-weight:700;color:var(--navy)}
 .time{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--sub)}
+.dl{font:inherit;font-size:13px;background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer}
 .play{margin-left:auto;font:inherit;font-size:13px;background:var(--navy);color:var(--bg);border:0;border-radius:6px;padding:4px 10px;cursor:pointer}
 .lyr{font-size:13px;color:var(--sub);margin:4px 0}
 .shots{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
@@ -50,7 +51,7 @@ textarea{width:100%;min-height:58px;font:inherit;font-size:14px;color:var(--ink)
 <div class="wrap">
 <header>
 <h1>原マシナリー MV カットシーン集 <span class="ver">第3版（10/4 夕）</span></h1>
-<p class="how">第2版の指示を入れた修正版（10/4 夕）の全52カット（4:36）です。前回の指示で直したカットには「✓ 直しました」と前回の指示が付いています。各カットの「▶ 再生」で上の動画がその場面から流れます。直したいカットは<b>ボタンを選んで、内容を書くだけ</b>。参考の写真や動画は「📎 写真・動画を添付」から、そのカットに付けられます。書いた指示と添付は自動で保存され、Claudeがそのまま読み取ります。<br>⚠ はこちらで気付いている不自然な点です。</p>
+<p class="how">第2版の指示を入れた修正版（10/4 夕）の全52カット（4:36）です。前回の指示で直したカットには「✓ 直しました」と前回の指示が付いています。各カットの「▶ 再生」で上の動画がその場面から流れます。直したいカットは<b>ボタンを選んで、内容を書くだけ</b>。各カットの映像は「⬇ 保存」で1本ずつ保存できます（歌詞の文字なし・その場面の音楽付き）。参考の写真や動画は「📎 写真・動画を添付」から、そのカットに付けられます。書いた指示と添付は自動で保存され、Claudeがそのまま読み取ります。<br>⚠ はこちらで気付いている不自然な点です。</p>
 <div class="notice" id="nodb">このページでは保存が使えません。指示は「カット番号＋内容」でチャットに送ってください（例：12 リールを消す）。</div>
 </header>
 <div class="player">
@@ -75,7 +76,7 @@ const list = document.getElementById("list");
 for (const s of SEGS){
   const c = document.createElement("div");
   c.className="card"; c.id=id(s.n);
-  c.innerHTML = `<div class="top"><span class="num">カット ${s.n}</span><span class="time">${fmt(s.start)}–${fmt(s.end)}（${(s.end-s.start).toFixed(1)}秒）</span><button class="play">▶ 再生</button></div>
+  c.innerHTML = `<div class="top"><span class="num">カット ${s.n}</span><span class="time">${fmt(s.start)}–${fmt(s.end)}（${(s.end-s.start).toFixed(1)}秒）</span><button class="play">▶ 再生</button><button class="dl">⬇ 保存</button></div>
   ${s.lyrics.length?`<div class="lyr">♪ ${s.lyrics.join(" / ")}</div>`:""}
   <div class="shots">${s.shots.map(p=>`<img loading="lazy" src="${p}" alt="">`).join("")}</div>
   <div class="desc"></div>
@@ -88,6 +89,7 @@ for (const s of SEGS){
   c.querySelector(".desc").textContent = s.desc;
   if (s.changed) c.querySelector(".prev span").textContent = "前回の指示："+s.prev;
   if (s.issue) c.querySelector(".issue").textContent = "⚠ "+s.issue;
+  c.querySelector(".dl").onclick = ()=>saveCut(s, c.querySelector(".dl"));
   c.querySelector(".play").onclick = ()=>{v.currentTime=s.start+0.05; v.play(); window.scrollTo({top:0,behavior:"smooth"});};
   c.querySelectorAll(".shots img").forEach(im=>im.onclick=()=>openZoom(im.src,false));
   const ta = c.querySelector("textarea"), st = c.querySelector(".st");
@@ -141,6 +143,19 @@ function paint(c,n){
     w.append(m,x); box.append(w);
   }
 }
+let downloads = null;
+async function saveCut(s, btn){
+  const file = "cuts/"+id(s.n)+".mp4", name = `原マシナリーMV_カット${String(s.n).padStart(2,"0")}.mp4`;
+  if(!downloads){ const a=document.createElement("a"); a.href=file; a.download=name; document.body.append(a); a.click(); a.remove(); return; }
+  const label = btn.textContent; btn.disabled = true; btn.textContent = "準備中…";
+  try{
+    const blob = await (await fetch(file)).blob();
+    await downloads.save({filename:name, data:blob});
+    btn.textContent = "✓ 保存";
+  }catch(e){
+    btn.textContent = (e&&e.code==="declined") ? label : "保存できません";
+  }finally{ btn.disabled = false; setTimeout(()=>{btn.textContent=label;}, 2500); }
+}
 const hasNote = d => !!(d.action&&d.action!=="このまま") || !!d.text || !!(d.files&&d.files.length);
 function openZoom(src,isV){
   const z=document.getElementById("zoom"); z.textContent="";
@@ -162,6 +177,7 @@ applyFilter();
 (async()=>{
   try{ db = await window.claude?.use("db"); }catch(e){ db=null; }
   try{ assets = await window.claude?.use("assets"); }catch(e){ assets=null; }
+  try{ downloads = await window.claude?.use("downloads"); }catch(e){ downloads=null; }
   if(!assets) document.querySelectorAll(".att").forEach(a=>a.querySelector("label").style.display="none");
   if(!db){document.getElementById("nodb").style.display="block";return;}
   db.collection("notes3").onSnapshot(snap=>{
