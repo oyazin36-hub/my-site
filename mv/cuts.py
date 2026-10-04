@@ -289,3 +289,9 @@ LOGO_AT = 9999.0  # 社名は finish2.py で新しい出し方に重ねる
 _NEW2 = {n: f"g{n:02d}" for n in (3, 4, 9, 17, 24, 27, 31, 37, 50, 51)}
 TIMELINE = [(_NEW2[i] if i in _NEW2 and _os.path.exists(f"clips/cut{_NEW2[i]}.mp4") else no, s, e)
             for i, (no, s, e) in enumerate(TIMELINE, 1)]
+
+# 10/4 エンディング（48〜52）は 2 秒ずつだと速すぎるので、48〜51 を 3 秒ずつに延ばし、52 を短くする
+_END = [(258.9, 261.9), (261.9, 264.9), (264.9, 267.9), (267.9, 270.9), (270.9, 275.8)]
+TIMELINE = TIMELINE[:47] + [(no, s, e) for (no, _, _), (s, e) in zip(TIMELINE[47:], _END)]
+# 52 は短くなった分、手を振り終えて空へ上がる後半が映るよう、1.45 秒後ろから始まるクリップを使う
+TIMELINE[51] = ("e52", *TIMELINE[51][1:])

@@ -3,7 +3,7 @@
 #   python3 finish2.py test     → 社名部分だけの試し（out/logo_test.mp4）
 import subprocess, sys
 
-AT = 271.0  # 社名が出始める時刻。皆が手を振り終え、カメラが夕日の空へ上がるところ
+AT = 272.0  # 社名が出始める時刻。エンディング最後の全員集合（270.9〜）でカメラが空へ上がり始めるところ
 
 def ts(t):
     return f"{int(t // 3600)}:{int(t % 3600 // 60):02d}:{t % 60:05.2f}"
