@@ -284,3 +284,8 @@ _NEW = {2: "f02", 3: "f03", 9: "f09", 12: "f12", 16: "f16", 17: "f17", 30: "f30"
 TIMELINE = [(_NEW[i] if i in _NEW and _os.path.exists(f"clips/cut{_NEW[i]}.mp4") else no, s, e)
             for i, (no, s, e) in enumerate(TIMELINE, 1)]
 LOGO_AT = 9999.0  # 社名は finish2.py で新しい出し方に重ねる
+
+# 10/4 カットシーン集 第2版の指示で直したカット（fix3_videos.py で作ったもの。できたものから差し替わる）
+_NEW2 = {n: f"g{n:02d}" for n in (3, 4, 9, 17, 24, 27, 31, 37, 50, 51)}
+TIMELINE = [(_NEW2[i] if i in _NEW2 and _os.path.exists(f"clips/cut{_NEW2[i]}.mp4") else no, s, e)
+            for i, (no, s, e) in enumerate(TIMELINE, 1)]
