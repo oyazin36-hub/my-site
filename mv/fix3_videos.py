@@ -67,6 +67,37 @@ JOBS.update({
          "the machine is. Everyone keeps the same face."),
 })
 
+# 10/5 カットシーン集 第3版への追記（写真付き）。最初のコマは frames/fix4
+F4 = "frames/fix4"
+JOBS.update({
+ "07": (f"{F4}/base_c07.jpg", None,
+        "The milling cutter on the spindle spins fast and steadily the whole time and cuts slowly straight along the steel; "
+        "fine metal chips curl away from the spinning cutter. The cutter visibly rotates in every frame. No sparks."),
+ "08": (f"{F4}/c08.jpg", None,
+        "The man with glasses measures the machined top plate of the large steel frame with a caliper and explains; the younger "
+        "man nods and watches carefully, learning. The frame stays still and keeps its shape."),
+ "09r": (f"{F4}/c09.jpg", None,
+         "The man with glasses slides his fingertips along the plain steel straightedge lying flat on the machined top plate, "
+         "checking the flatness. His face is alive: he blinks naturally, his eyes follow his fingers, then he gives a small "
+         "satisfied nod. Slow push-in."),
+ "10": (f"{F4}/c10.jpg", None,
+        "The white-haired advisor finishes drawing with the pencil, rolls up the drawing and hands it with a warm smile to the "
+        "younger designer, who receives it happily. His thick white hair stays the same throughout."),
+ "11": (f"{F4}/c11.jpg", None,
+        "The white-haired designer points at the hand-drawn drawing and the smiling designer compares it with the tablet; they "
+        "nod and smile at each other. The factory behind them stays calm; the camera slowly pushes in."),
+ "24r": (f"{F4}/c24.jpg", None,
+         "The quality manager touches the probe in his hand to several points on the machined top plate of the steel frame, "
+         "slowly and carefully. The tripod camera stays completely still and nothing moves by itself."),
+ "31r": (f"{F4}/c31.jpg", None,
+         "Morning meeting in the office: the president speaks with calm, confident gestures; the employees listen, nod and "
+         "smile. Everyone stays in place; the camera slowly pans across the group."),
+ "37r": (f"{F4}/c37.jpg", None,
+         "The worker on the forklift slowly lifts the bundle of steel bars off the truck bed with the forks and backs away "
+         "carefully toward the shutter; the other people stand clear, watch and bow to the delivery man. Nobody carries "
+         "anything by hand."),
+})
+
 MODEL = os.environ.get("VEO_MODEL", "veo-3.1-fast-generate-preview")  # 急ぐ日は標準版を指定する
 
 def make(no):
