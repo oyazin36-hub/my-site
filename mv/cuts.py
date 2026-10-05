@@ -310,3 +310,7 @@ TIMELINE = [(_NEW4[i] if i in _NEW4 and _os.path.exists(f"clips/cut{_NEW4[i]}.mp
 _NEW5 = {7: "g07", 8: "g08", 9: "g09r", 10: "g10", 11: "g11", 24: "g24r", 31: "g31r", 37: "g37r"}
 TIMELINE = [(_NEW5[i] if i in _NEW5 and _os.path.exists(f"clips/cut{_NEW5[i]}.mp4") else no, s, e)
             for i, (no, s, e) in enumerate(TIMELINE, 1)]
+# 10/5 事務所の写真で描き直した 14・33
+_NEW6 = {14: "g14", 33: "g33r"}
+TIMELINE = [(_NEW6[i] if i in _NEW6 and _os.path.exists(f"clips/cut{_NEW6[i]}.mp4") else no, s, e)
+            for i, (no, s, e) in enumerate(TIMELINE, 1)]
