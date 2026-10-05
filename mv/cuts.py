@@ -321,3 +321,6 @@ if _os.path.exists("clips/cutg17g.mp4"):
 _NEW7 = {7: "g07b", 10: "g10b", 17: "g17b", 25: "g25b", 41: "g41b", 43: "g43b", 47: "g47b", 48: "g48b", 50: "g50b"}
 TIMELINE = [(_NEW7[i] if i in _NEW7 and _os.path.exists(f"clips/cut{_NEW7[i]}.mp4") else no, s, e)
             for i, (no, s, e) in enumerate(TIMELINE, 1)]
+# 10/5 夕：カット 10 は図面が伸び縮みするので、手渡しの瞬間の 1 枚絵をゆっくり寄せる
+if _os.path.exists("clips/cutg10s.mp4"):
+    TIMELINE[9] = ("g10s", *TIMELINE[9][1:])
