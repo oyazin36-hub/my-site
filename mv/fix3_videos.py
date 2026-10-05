@@ -104,8 +104,9 @@ JOBS.update({
         "The smiling designer with glasses works on the CAD drawing on his monitors, moves the mouse, then leans back slightly "
         "and smiles with satisfaction. The colleagues behind him keep working quietly. Slow push-in."),
  "33r": (f"{F4}/c33.jpg", None,
-         "The petite vice president sits at her desk on the right below the hanging signboards and watches over her colleagues; she turns her "
-         "face a little toward the camera with a warm, gentle smile. The camera slowly moves closer to her."),
+         "The petite vice president sits at her desk on the right below the hanging signboards, turned toward the automatic "
+         "entrance door on the left; she watches over the office and her colleagues with a warm, gentle smile. The camera "
+         "slowly moves a little closer to her. Nobody else moves position."),
 })
 
 MODEL = os.environ.get("VEO_MODEL", "veo-3.1-fast-generate-preview")  # 急ぐ日は標準版を指定する
