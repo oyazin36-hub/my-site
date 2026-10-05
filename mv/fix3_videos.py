@@ -152,6 +152,15 @@ JOBS.update({
          "sheet slowly pulls away; the workers bow. Nobody is on the truck bed at any time. The camera stays still."),
 })
 
+# 10/5 夕：カット 10 は平らな図面をそのまま手渡す（始まりと終わりのコマを指定）
+JOBS.update({
+ "10f": (f"{F5}/c10s.jpg", f"{F5}/c10e.jpg",
+         "The white-haired advisor finishes the last line with the pencil, puts the pencil down, lifts the same large flat drawing "
+         "sheet off the desk with both hands and hands it, still flat, to the smiling designer with glasses, who takes it by the "
+         "other corners; they smile at each other. There is only one drawing sheet, it stays flat and keeps the same size the whole "
+         "time; it is never rolled. The camera stays still."),
+})
+
 MODEL = os.environ.get("VEO_MODEL", "veo-3.1-fast-generate-preview")  # 急ぐ日は標準版を指定する
 
 def make(no):

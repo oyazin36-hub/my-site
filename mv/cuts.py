@@ -324,3 +324,5 @@ TIMELINE = [(_NEW7[i] if i in _NEW7 and _os.path.exists(f"clips/cut{_NEW7[i]}.mp
 # 10/5 夕：カット 10 は図面が伸び縮みするので、手渡しの瞬間の 1 枚絵をゆっくり寄せる
 if _os.path.exists("clips/cutg10s.mp4"):
     TIMELINE[9] = ("g10s", *TIMELINE[9][1:])
+if _os.path.exists("clips/cutg10f.mp4"):
+    TIMELINE[9] = ("g10f", *TIMELINE[9][1:])
