@@ -1,4 +1,4 @@
-# カットシーン集 第2版の指示（10/4）の動画を作る。出力は clips/cutgNN.mp4。費用を抑えるため Fast 版だけで作る
+# カットシーン集 第2版の指示（10/4）の動画を作る。出力は clips/cutgNN.mp4。既定は Fast 版
 import os, sys, time, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from common import call, b64, KEY
