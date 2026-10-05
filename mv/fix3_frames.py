@@ -70,6 +70,22 @@ JOBS.update({
              "machines), so only the two men in front remain. " + KEEP.replace(" Do not add or remove anyone.", "")),
 })
 
+# 10/5 本物の工場（中二階からの写真）を元に描き直す
+JOBS.update({
+    "c12r": ([f"{R}/interior_top.jpg"],
+             "Edit this image only in its lighting and time of day: it is early morning before work starts; warm golden "
+             "morning sunlight streams in through the high windows on the right in soft beams across the flat green floor, "
+             "the hall is still quiet and slightly dim. Keep exactly the same view, layout, machines, steel frames and flat "
+             "floor. No people. No text, letters, numbers or logos anywhere."),
+    "c27r": ([f"{R}/interior_top.jpg", f"{F2}/c12.jpg", f"{R}/president.jpg"],
+             "Using image 1 for the place (this real factory hall with the flat green floor, yellow columns and the big white "
+             "double-column gantry machining center with black bellows covers on the right) and image 2 for the art style, draw "
+             "a new shot from floor level: the huge white gantry machining center, about 10 meters long and 5 meters tall, "
+             "towers in the middle of the frame; about ten employees in navy work uniforms stand on the green floor in front of "
+             "it, realistic human scale (people reach about a third of the machine's height), looking up at it and applauding "
+             "with smiles; the president from image 3 stands among them. " + STYLE),
+})
+
 def draw(name):
     imgs, text = JOBS[name]
     out = f"{D}/{name}.jpg"

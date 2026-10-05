@@ -300,3 +300,8 @@ TIMELINE[51] = ("e52", *TIMELINE[51][1:])
 _NEW3 = {4: "g04b", 41: "g41"}
 TIMELINE = [(_NEW3[i] if i in _NEW3 and _os.path.exists(f"clips/cut{_NEW3[i]}.mp4") else no, s, e)
             for i, (no, s, e) in enumerate(TIMELINE, 1)]
+
+# 10/5 本物の工場（中二階からの写真）で描き直した 12・27
+_NEW4 = {12: "g12r", 27: "g27r"}
+TIMELINE = [(_NEW4[i] if i in _NEW4 and _os.path.exists(f"clips/cut{_NEW4[i]}.mp4") else no, s, e)
+            for i, (no, s, e) in enumerate(TIMELINE, 1)]

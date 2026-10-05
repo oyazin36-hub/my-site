@@ -55,6 +55,18 @@ JOBS.update({
         "goes under or touches the load."),
 })
 
+# 10/5 本物の工場で描き直した 12・27
+JOBS.update({
+ "12r": (f"{F3}/c12r.jpg", None,
+         "Early morning in the quiet factory hall: the golden sunlight through the high windows slowly grows brighter and "
+         "spreads across the flat green floor, dust glitters in the light beams, the ceiling lights come on one after another; "
+         "the camera slowly moves forward from the mezzanine. No people appear. Nothing floats in the air."),
+ "27r": (f"{F3}/c27r.jpg", None,
+         "The huge new white gantry machine starts up: its lights come on and the spindle head moves slowly along the beam; "
+         "the employees in front of it look up in awe and applaud with smiles. The camera slowly tilts up to show how tall "
+         "the machine is. Everyone keeps the same face."),
+})
+
 MODEL = os.environ.get("VEO_MODEL", "veo-3.1-fast-generate-preview")  # 急ぐ日は標準版を指定する
 
 def make(no):
