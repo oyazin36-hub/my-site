@@ -118,6 +118,40 @@ JOBS.update({
          "never changes shape; no parts appear or grow."),
 })
 
+# 10/5 夕：加工品の統一・10 の設計者・17 のお披露目・47 ものづくりの未来（最初のコマは frames/fix5）
+F5 = "frames/fix5"
+JOBS.update({
+ "10b": (f"{F5}/c10.jpg", None,
+         "The white-haired advisor hands the rolled drawing to the slim smiling designer with glasses, who receives it happily; "
+         "they nod and smile at each other. Both men keep exactly the same faces, hair and glasses. The camera stays still."),
+ "17b": (f"{F5}/c17a.jpg", f"{F5}/c17b_end.jpg",
+         "The unveiling: the two men pull the huge cover cloth off together in one big sweep; it slides down and away to the "
+         "floor, revealing the whole glass-cutting machine. The camera stays still; the machine's shape never changes."),
+ "47b": (f"{F5}/c47.jpg", None,
+         "Morning light grows brighter through the high windows; everyone looks toward the light with hopeful, determined "
+         "faces; the camera slowly pulls back and rises a little. Nobody moves position; the machines and the product never "
+         "change shape."),
+ "07b": (f"{F5}/c07.jpg", None,
+         "The milling cutter spins fast and steadily the whole time and slowly mills the flat machined top plate of the steel "
+         "frame; fine chips curl away. The frame never changes shape. No sparks. The camera stays almost still."),
+ "25b": (f"{F5}/c25.jpg", None,
+         "The workers bow to see off the truck; the driver waves; the truck with the steel frame product under the clear sheet "
+         "slowly starts to move. Nobody is on the truck bed. The camera stays still."),
+ "41b": (f"{F5}/c41.jpg", None,
+         "The white-haired man presses the buttons on the yellow pendant control box and the crane slowly lifts the steel frame "
+         "product a little higher; both men stay clear of the load and watch. The load never moves over anyone. The camera "
+         "stays still."),
+ "43b": (f"{F5}/c43.jpg", None,
+         "The advisor and the young newcomer look at the finished steel frame product together; the advisor points at the "
+         "machined top plate and the newcomer nods with a proud smile. The camera slowly moves a little closer."),
+ "48b": (f"{F5}/c48.jpg", None,
+         "The president and the customer shake hands firmly and smile, then both look at the finished steel frame product "
+         "beside them. The camera stays almost still."),
+ "50b": (f"{F5}/c50.jpg", None,
+         "The elderly driver smiles and waves from the cab as the white truck with the steel frame product under the clear "
+         "sheet slowly pulls away; the workers bow. Nobody is on the truck bed at any time. The camera stays still."),
+})
+
 MODEL = os.environ.get("VEO_MODEL", "veo-3.1-fast-generate-preview")  # 急ぐ日は標準版を指定する
 
 def make(no):
