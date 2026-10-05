@@ -314,3 +314,6 @@ TIMELINE = [(_NEW5[i] if i in _NEW5 and _os.path.exists(f"clips/cut{_NEW5[i]}.mp
 _NEW6 = {14: "g14", 33: "g33r"}
 TIMELINE = [(_NEW6[i] if i in _NEW6 and _os.path.exists(f"clips/cut{_NEW6[i]}.mp4") else no, s, e)
             for i, (no, s, e) in enumerate(TIMELINE, 1)]
+# 10/5 カット 17 は会社で作っているガラス切断装置の除幕に
+if _os.path.exists("clips/cutg17g.mp4"):
+    TIMELINE[16] = ("g17g", *TIMELINE[16][1:])

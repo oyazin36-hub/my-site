@@ -109,6 +109,15 @@ JOBS.update({
          "slowly moves a little closer to her. Nobody else moves position."),
 })
 
+# 10/5 会社で作っているガラス切断装置（約 9 m）の除幕
+JOBS.update({
+ "17g": (f"{F4}/c17g.jpg", None,
+         "The two men pull the light-grey cover cloth off the big glass-cutting machine; the cloth slides down slowly and stays "
+         "low, never lifting into the air. Then the carriage with the round saw blade glides smoothly along the long horizontal "
+         "beam from right to left while the blade spins, just like a test run, and the two men smile proudly. The machine's frame "
+         "never changes shape; no parts appear or grow."),
+})
+
 MODEL = os.environ.get("VEO_MODEL", "veo-3.1-fast-generate-preview")  # 急ぐ日は標準版を指定する
 
 def make(no):
