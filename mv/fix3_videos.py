@@ -104,7 +104,7 @@ JOBS.update({
         "The smiling designer with glasses works on the CAD drawing on his monitors, moves the mouse, then leans back slightly "
         "and smiles with satisfaction. The colleagues behind him keep working quietly. Slow push-in."),
  "33r": (f"{F4}/c33.jpg", None,
-         "The petite vice president stands in the office and watches over her colleagues working at their desks; she turns her "
+         "The petite vice president sits at her desk on the right below the hanging signboards and watches over her colleagues; she turns her "
          "face a little toward the camera with a warm, gentle smile. The camera slowly moves closer to her."),
 })
 
