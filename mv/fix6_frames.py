@@ -39,6 +39,15 @@ f3.JOBS = {
             f"Edit image 1: both the hand-drawn drawing and the CAD screen show {DRAW} (image 2). " + KEEP_TEXT),
 }
 
+# 10/6 装置（カット 17・47）は銀色の部分以外を白に
+WHITE = ("Repaint only the glass-cutting machine: every coloured part (the light-blue top beam, the green rail, the orange and "
+         "yellow cutting unit, any other coloured covers) becomes clean white; the silver/metal parts (the saw blade, bare metal "
+         "rails, bolts) stay silver. The machine's shape stays exactly the same. ")
+f3.JOBS.update({
+    "c17_end": (["frames/fix5/c17b_end.jpg"], "Edit this image. " + WHITE + KEEP_TEXT),
+    "c47": (["frames/fix5/c47.jpg"], "Edit this image. " + WHITE + KEEP_TEXT),
+})
+
 if __name__ == "__main__":
     os.makedirs(D, exist_ok=True)
     for no, src in (("28", "24"), ("40", "33")):
