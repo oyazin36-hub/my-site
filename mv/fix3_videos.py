@@ -224,6 +224,13 @@ JOBS["37f"] = ("frames/fix8/c37_a.jpg", "frames/fix8/c37_a.jpg",
                "driver keeps her hands on the wheel. Only the people move a little: the white-haired man and the delivery "
                "man bow to each other politely and straighten up again. Nobody new appears. The camera stays still.")
 
+# 10/6 カット 21：ガラス切断装置の梁と支柱のつなぎ目のボルトを締める（組み立て途中）
+JOBS["21a"] = ("frames/fix9/c21_A3.jpg", None,
+               "The skilled assembler on the small work platform fits the long wrench onto a large bolt at the joint between "
+               "the top beam and the white column and tightens it firmly with several strong pulls, then checks the joint "
+               "with his hand and nods. The half-assembled machine, the parts on the pallets and the platform stay exactly "
+               "the same shape and in place. Nobody else appears. The camera stays still.")
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):
