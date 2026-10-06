@@ -335,3 +335,6 @@ _NEW8 = {3: "g03j", 10: "g10d", 11: "g11d", 14: "g14d", 16: "g16d", 17: "g17d", 
          47: "g47d", 50: "g50u"}
 TIMELINE = [(_NEW8[i] if i in _NEW8 and _os.path.exists(f"clips/cut{_NEW8[i]}.mp4") else no, s, e)
             for i, (no, s, e) in enumerate(TIMELINE, 1)]
+# 10/6 カット 4：過去→現在をセピアのままディゾルブし、色をゆっくり戻す（編集のみ）
+if _os.path.exists("clips/cutg04c.mp4"):
+    TIMELINE[3] = ("g04c", *TIMELINE[3][1:])
