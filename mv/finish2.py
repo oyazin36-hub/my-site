@@ -3,6 +3,12 @@
 #   python3 finish2.py test     → 社名部分だけの試し（out/logo_test.mp4）
 import subprocess, sys
 
+# 10/6 夜：全体の雰囲気をカット 26 に寄せる色合わせ（柔らかい光のにじみ・少し明るく温かく・線を少し締める）。
+# 白黒のカット 2 とセピアから始まるカット 4 の前半には暖色をかけない
+GRADE = ("format=gbrp,split[o][g];[g]gblur=sigma=8[gb];[o][gb]blend=all_mode=screen:all_opacity=0.14,format=yuv420p,"
+         "eq=saturation=1.06:gamma=1.03:contrast=0.97,"
+         "colorbalance=rm=0.03:gm=0.005:bm=-0.03:enable='not(between(t,1.8,17.4))',unsharp=5:5:0.3")
+
 AT = 272.0  # 社名が出始める時刻。エンディング最後の全員集合（270.9〜）でカメラが空へ上がり始めるところ
 
 def ts(t):
@@ -57,7 +63,7 @@ if __name__ == "__main__":
         open("out/logo.ass", "w").write(logo_ass(AT, dur))
         # 曲はここで必ず入れ直す（out/mv.mp4 に音が無くても音楽付きになる）
         run(["ffmpeg", "-v", "error", "-y", "-i", "out/mv.mp4", "-i", "song.mp3", "-map", "0:v", "-map", "1:a",
-             "-vf", "ass=out/logo.ass", "-af", f"afade=t=out:st={dur - 1.5:.2f}:d=1.5",
+             "-vf", GRADE + ",ass=out/logo.ass", "-af", f"afade=t=out:st={dur - 1.5:.2f}:d=1.5",
              "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-c:a", "aac", "-b:a", "192k", "-t", f"{dur}",
              "out/mv_final.mp4"])
         run(["ffmpeg", "-v", "error", "-y", "-i", "out/mv_final.mp4", "-c:v", "libx264", "-b:v", "620k",
