@@ -314,6 +314,21 @@ JOBS.update({
          " The table, the drawing sheet and the office stay exactly the same shape and size." + SAME.replace(" The camera stays still.", "")),
 })
 
+# 10/7 カット 4 再挑戦：参考動画と同じ作り方（カメラ完全固定・動きは手元と表情だけ）。1 場面 2 本ずつ作って数値で選ぶ
+LOCKED = (" Locked-off static camera on a tripod: no zoom, no pan, no push-in, the frame never moves. Only tiny, slow, "
+          "natural movements of hands and faces (a hand moving a little, a blink, a small nod, breathing); bodies stay in "
+          "place; nobody stands up, poses or looks at the camera. Calm, quiet anime film.")
+for k in ("a", "b"):
+    JOBS[f"04x{k}"] = ("frames/fix10/c04_90r.jpg", None,
+        "The three 1990s craftsmen work quietly at the lathe: the man with glasses slowly turns the small wrench on the tool "
+        "post, the young man carefully reads the micrometer, the woman watches." + LOCKED +
+        " The lathe and the workshop keep exactly the same shape. Every person keeps the same face, hair, cap and clothes; nobody new appears.")
+    JOBS[f"04y{k}"] = ("frames/fix10/c04_now_p.jpg", None,
+        "The three employees quietly discuss the drawing on the table: the man with glasses slowly moves his pen along a "
+        "line of the drawing, the man in the middle keeps his hand on his chin and nods slightly, the woman listens and "
+        "smiles a little." + LOCKED +
+        " The table, the drawing sheet and the office keep exactly the same shape and size. Every person keeps the same face, hair and navy uniform; nobody new appears.")
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):

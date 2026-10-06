@@ -370,3 +370,6 @@ if _os.path.exists("clips/cutg04h.mp4"):
 # 10/7 カット 4：参考動画のような小さくゆっくりした動き。1990 年代（セピア）→ 本物の事務所で図面を見ながら話し合う
 if _os.path.exists("clips/cutg04i.mp4"):
     TIMELINE[3] = ("g04i", *TIMELINE[3][1:])
+# 10/7 カット 4 再挑戦：カメラ固定・小さな動きの 2 本から、動きの量を測って基準内（約 3 以下）の部分だけを使用
+if _os.path.exists("clips/cutg04j.mp4"):
+    TIMELINE[3] = ("g04j", *TIMELINE[3][1:])
