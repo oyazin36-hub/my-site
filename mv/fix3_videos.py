@@ -204,6 +204,26 @@ JOBS.update({
 
 MODEL = os.environ.get("VEO_MODEL", "veo-3.1-fast-generate-preview")  # 急ぐ日は標準版を指定する
 
+# 10/6 図面の向きを基準の正面図にそろえた 1 枚目（frames/fix7）と、カット 37（すり抜けない・フォークに載せたまま）
+F7 = "frames/fix7"
+JOBS.update({
+ "03e": (f"{F7}/c03.jpg", None, JOBS["03d"][2] + " The drawing on the sheet stays exactly the same and the same way up."),
+ "10e": (f"{F7}/c10s.jpg", f"{F7}/c10e.jpg", JOBS["10d"][2] + " The drawing on the sheet stays exactly the same and the same way up."),
+ "11e": (f"{F7}/c11.jpg", None, JOBS["11d"][2] + " The drawings stay exactly the same and the same way up."),
+ "16e": (f"{F7}/c16.jpg", None, JOBS["16d"][2] + " The drawing on the paper stays exactly the same and the same way up."),
+ "40e": (f"{F7}/c40.jpg", None, JOBS["40d"][2] + " The drawing stays exactly the same and the same way up."),
+ "37e": ("frames/fix8/c37_a.jpg", None,
+         "The forklift slowly rolls a short way forward, carrying the one bundle of steel bars that rests on its forks; the "
+         "bundle stays on the forks the whole time and never touches or passes through anything. The white-haired man and the "
+         "delivery man bow to each other; the others stand clear and watch. The camera stays still."),
+})
+
+# 10/6 カット 37 やり直し：フォークリフトは動かさず（最初と最後のコマを同じに）、人だけ動く
+JOBS["37f"] = ("frames/fix8/c37_a.jpg", "frames/fix8/c37_a.jpg",
+               "The forklift and the bundle of steel bars on its forks stay completely still in place the whole time; the "
+               "driver keeps her hands on the wheel. Only the people move a little: the white-haired man and the delivery "
+               "man bow to each other politely and straighten up again. Nobody new appears. The camera stays still.")
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):

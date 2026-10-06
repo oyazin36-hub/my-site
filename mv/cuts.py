@@ -338,3 +338,6 @@ TIMELINE = [(_NEW8[i] if i in _NEW8 and _os.path.exists(f"clips/cut{_NEW8[i]}.mp
 # 10/6 カット 4：過去→現在をセピアのままディゾルブし、色をゆっくり戻す（編集のみ）
 if _os.path.exists("clips/cutg04c.mp4"):
     TIMELINE[3] = ("g04c", *TIMELINE[3][1:])
+# 10/6 図面の向きをそろえた版（3・10・11・16・40）と、カット 37（鉄の束がすり抜けない 1 枚絵）
+_NEW9 = {3: "g03k", 10: "g10h", 11: "g11e", 16: "g16e", 37: "g37s", 40: "g40f"}
+TIMELINE = [(_NEW9[i] if i in _NEW9 and _os.path.exists(f"clips/cut{_NEW9[i]}.mp4") else no, s, e) for i,(no,s,e) in enumerate(TIMELINE,1)]
