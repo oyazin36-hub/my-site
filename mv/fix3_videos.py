@@ -299,6 +299,21 @@ JOBS.update({
          "glances at the reading." + NATURAL + " The lathe and the factory stay exactly the same shape." + SAME),
 })
 
+# 10/7 カット 4：参考動画の動き（小さくゆっくりした自然な動き、カメラはゆっくり寄るだけ）に合わせる
+GENTLE = (" Very calm and gentle like a quiet anime film: small, slow, natural movements only, no sudden or big motions, "
+          "nobody stands up, poses or looks at the camera; the camera very slowly pushes in a little.")
+JOBS.update({
+ "04s": ("frames/fix10/c04_90r.jpg", None,
+         "The three 1990s craftsmen keep working at the lathe: the man with glasses slowly turns the small wrench on the "
+         "tool post, the young man in the middle carefully reads the micrometer, the woman leans in and watches quietly."
+         + GENTLE + " The lathe and the workshop stay exactly the same shape." + SAME.replace(" The camera stays still.", "")),
+ "04o": ("frames/fix10/c04_now_p.jpg", None,
+         "In the office the three employees quietly discuss the drawing on the table: the man with glasses slowly traces a "
+         "line on the drawing with his pen while explaining, the man in the middle thinks with his hand on his chin and "
+         "nods slowly, the woman tilts her head and smiles a little." + GENTLE +
+         " The table, the drawing sheet and the office stay exactly the same shape and size." + SAME.replace(" The camera stays still.", "")),
+})
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):
