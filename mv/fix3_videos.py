@@ -167,6 +167,41 @@ JOBS.update({
  "50t": (f"{F5}/c50.jpg", None, JOBS["50b"][2] + " The truck is a silver flatbed truck and stays exactly the same."),
 })
 
+# 10/6 図面をガラス切断装置の設計図に・装置を白に・トラック（最初のコマは frames/fix6）
+F6 = "frames/fix6"
+STILL = " The drawing stays flat and keeps exactly the same lines; the camera stays almost still."
+JOBS.update({
+ "25u": (f"{F6}/c25.jpg", None, JOBS["25b"][2] + " The truck, its lettering and the level load stay exactly the same."),
+ "50u": (f"{F6}/c50.jpg", None, JOBS["50b"][2] + " The truck, its lettering and the level load stay exactly the same."),
+ "03d": (f"{F6}/c03.jpg", None,
+         "The white-haired craftsman hands the drawing of the machine to the vice president; she takes it carefully with both "
+         "hands, they look at each other and smile warmly, and she nods." + STILL),
+ "10d": (f"{F6}/c10s.jpg", f"{F6}/c10e.jpg",
+         "The white-haired advisor finishes the last line with the pencil, puts the pencil down, lifts the single flat drawing "
+         "sheet off the desk with both hands and hands it, still flat, to the smiling designer with glasses, who takes it by the "
+         "other corners; they smile at each other. Only one sheet; it is never rolled." + STILL),
+ "11d": (f"{F6}/c11.jpg", None,
+         "The white-haired designer points at the machine drawing on the bench and the smiling designer compares it with the same "
+         "drawing on his tablet; they nod and smile at each other." + STILL),
+ "14d": (f"{F6}/c14.jpg", None,
+         "The smiling designer with glasses works on the CAD model of the machine on his two monitors, moves the mouse, then "
+         "leans back slightly and smiles. The colleagues behind him keep working quietly. The screens keep showing the same "
+         "machine." + STILL),
+ "16d": (f"{F6}/c16.jpg", None,
+         "The three men lean over the machine drawing on the table, point at it and laugh together warmly." + STILL),
+ "28d": (f"{F6}/c28.jpg", None,
+         "The planner explains the machine sketch on the whiteboard with lively gestures; the two colleagues listen, nod and "
+         "smile. The sketch on the whiteboard stays exactly the same." + STILL),
+ "40d": (f"{F6}/c40.jpg", None,
+         "The hand-drawn machine drawing slowly blends into the CAD model of the same machine on the screen; the older and the "
+         "younger hands rest on the desk. The machine's shape stays exactly the same." + STILL),
+ "17d": ("frames/fix5/c17a.jpg", f"{F6}/c17_end.jpg",
+         "The unveiling: the two men pull the huge cover cloth off together in one big sweep; it slides down to the floor, "
+         "revealing the whole white glass-cutting machine. The camera stays still; the machine's shape and white colour never "
+         "change."),
+ "47d": (f"{F6}/c47.jpg", None, JOBS["47b"][2] + " The machine stays white."),
+})
+
 MODEL = os.environ.get("VEO_MODEL", "veo-3.1-fast-generate-preview")  # 急ぐ日は標準版を指定する
 
 def make(no):
@@ -192,14 +227,14 @@ def make(no):
     except Exception as e:
         return f"FAIL {no} {str(e)[:160]}"
 
-def join03():
+def join03(b="clips/cutg03b.mp4", out="clips/cutg03.mp4"):
     # カット 3 = 年を重ねる前半（1〜7 秒目を 1.25 倍速で 4.8 秒。速すぎると手の動きが不自然）＋ 図面を手渡す後半（3.5 秒）。edit.py は 8 秒のクリップを前提に中ほどを使うので、合わせて 8 秒にする
     import subprocess
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", "clips/cutg03a.mp4", "-i", "clips/cutg03b.mp4", "-filter_complex",
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", "clips/cutg03a.mp4", "-i", b, "-filter_complex",
                     "[0]trim=1:7,setpts=(PTS-STARTPTS)/1.25,scale=1280:720,fps=24,format=yuv420p[a];"
                     "[1]trim=1.5:5.0,setpts=PTS-STARTPTS,scale=1280:720,fps=24,format=yuv420p[b];"
                     "[a][b]xfade=transition=fade:duration=0.3:offset=4.5[v]",
-                    "-map", "[v]", "-an", "-c:v", "libx264", "-crf", "16", "clips/cutg03.mp4"], check=True)
+                    "-map", "[v]", "-an", "-c:v", "libx264", "-crf", "16", out], check=True)
 
 if __name__ == "__main__":
     nos = sys.argv[1:] or list(JOBS)

@@ -330,3 +330,8 @@ if _os.path.exists("clips/cutg10f.mp4"):
 for _i, _id in ((25, "g25t"), (50, "g50t")):
     if _os.path.exists(f"clips/cut{_id}.mp4"):
         TIMELINE[_i - 1] = (_id, *TIMELINE[_i - 1][1:])
+# 10/6 図面・装置の色・トラックの差し替え
+_NEW8 = {3: "g03j", 10: "g10d", 11: "g11d", 14: "g14d", 16: "g16d", 17: "g17d", 25: "g25u", 28: "g28d", 40: "g40d",
+         47: "g47d", 50: "g50u"}
+TIMELINE = [(_NEW8[i] if i in _NEW8 and _os.path.exists(f"clips/cut{_NEW8[i]}.mp4") else no, s, e)
+            for i, (no, s, e) in enumerate(TIMELINE, 1)]
