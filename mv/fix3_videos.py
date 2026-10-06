@@ -279,6 +279,12 @@ JOBS["02s"] = ("frames/fix12/c02_b.jpg", None,
                "the hands and sleeves are visible, never a face; nobody else appears. The stone block, the workbench and the "
                "old lathe in the background keep exactly the same shape. The camera stays still.")
 
+# 10/7 カット 4 の 1990 年代：こぢんまりしたトタン張りの町工場（frames/fix10/c04_1990_e.jpg）
+JOBS["04e"] = ("frames/fix10/c04_1990_e.jpg", None,
+               "The three 1990s craftsmen work calmly together at the lathe: one measures the part with the micrometer, one "
+               "adjusts the handle, the woman watches closely; small, natural movements. The lathe and the workshop stay "
+               "exactly the same shape." + SAME)
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):

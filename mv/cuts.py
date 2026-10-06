@@ -358,3 +358,6 @@ TIMELINE = [(_NEW11[i] if i in _NEW11 and _os.path.exists(f"clips/cut{_NEW11[i]}
 # 10/7 カット 2：1948 年の町工場、職人の手元だけでノミとハンマーで石を削る（白黒）
 if _os.path.exists("clips/cutg02t.mp4"):
     TIMELINE[1] = ("g02t", *TIMELINE[1][1:])
+# 10/7 カット 4 の 1990 年代を、こぢんまりした町工場に
+if _os.path.exists("clips/cutg04f.mp4"):
+    TIMELINE[3] = ("g04f", *TIMELINE[3][1:])
