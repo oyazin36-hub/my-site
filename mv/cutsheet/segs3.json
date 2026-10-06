@@ -29,10 +29,10 @@
    "thumbs3/c02_1.jpg",
    "thumbs3/c02_2.jpg"
   ],
-  "desc": "1948年の町工場で、白髪で少し強面の70代の職人が旋盤を手入れする（セピア）",
+  "desc": "1948年の町工場で、白髪で少し強面の70代の職人が旋盤を手入れする（白黒）",
   "issue": "",
-  "changed": false,
-  "prev": ""
+  "changed": true,
+  "prev": "白黒にして欲しい"
  },
  {
   "n": 3,
@@ -178,7 +178,7 @@
   ],
   "desc": "顧問が普通の大きさの図面（描く人の向き）に描き込み、同じ大きさのまま設計者に手渡す",
   "issue": "",
-  "changed": true,
+  "changed": false,
   "prev": "図面のサイズが変化するのはおかしい／図面でかい／向き逆"
  },
  {
@@ -384,7 +384,7 @@
   ],
   "desc": "組付けの熟練工が床に立ち、組み立て途中のガラス切断装置の支柱のつなぎ目で M20 のナットを締める",
   "issue": "",
-  "changed": true,
+  "changed": false,
   "prev": "もうちょっと低い場所で作業／レンチを小さく（M20 のナットを締めるイメージ）"
  },
  {
@@ -874,7 +874,7 @@
   "n": 48,
   "src": "45",
   "start": 258.9,
-  "end": 261.9,
+  "end": 263.4,
   "lyrics": [],
   "shots": [
    "thumbs3/c48_0.jpg",
@@ -883,67 +883,35 @@
   ],
   "desc": "エンディング①：社長とお客様が、製品の前で握手",
   "issue": "",
-  "changed": false,
-  "prev": ""
+  "changed": true,
+  "prev": "49・50 を消した分、長めに"
  },
  {
   "n": 49,
-  "src": "48",
-  "start": 261.9,
-  "end": 264.9,
+  "src": "35",
+  "start": 263.4,
+  "end": 270.9,
   "lyrics": [],
   "shots": [
    "thumbs3/c49_0.jpg",
    "thumbs3/c49_1.jpg",
    "thumbs3/c49_2.jpg"
   ],
-  "desc": "エンディング②：シャッター前で、仕入れ先様と熟練工があいさつ（新しい場面）",
+  "desc": "エンディング④：仕事終わりの工場で、皆が笑顔で手を振る（新しい場面）",
   "issue": "",
-  "changed": false,
-  "prev": ""
+  "changed": true,
+  "prev": "49・50 を消した分、長めに"
  },
  {
   "n": 50,
-  "src": "21",
-  "start": 264.9,
-  "end": 267.9,
-  "lyrics": [],
-  "shots": [
-   "thumbs3/c50_0.jpg",
-   "thumbs3/c50_1.jpg",
-   "thumbs3/c50_2.jpg"
-  ],
-  "desc": "エンディング③：会社のトラック（文字入り・荷物は水平）が出発し、皆で見送る",
-  "issue": "",
-  "changed": false,
-  "prev": "トラックはこれに統一（壁の「13」は消す）"
- },
- {
-  "n": 51,
-  "src": "35",
-  "start": 267.9,
-  "end": 270.9,
-  "lyrics": [],
-  "shots": [
-   "thumbs3/c51_0.jpg",
-   "thumbs3/c51_1.jpg",
-   "thumbs3/c51_2.jpg"
-  ],
-  "desc": "エンディング④：仕事終わりの工場で、皆が笑顔で手を振る（新しい場面）",
-  "issue": "",
-  "changed": false,
-  "prev": "差し替えたい：同じ映像を使いまわさない"
- },
- {
-  "n": 52,
   "src": "50",
   "start": 270.9,
   "end": 275.8,
   "lyrics": [],
   "shots": [
-   "thumbs3/c52_0.jpg",
-   "thumbs3/c52_1.jpg",
-   "thumbs3/c52_2.jpg"
+   "thumbs3/c50_0.jpg",
+   "thumbs3/c50_1.jpg",
+   "thumbs3/c50_2.jpg"
   ],
   "desc": "エンディング⑤：全員集合から夕日の空へ。新しい社名の出し方",
   "issue": "",

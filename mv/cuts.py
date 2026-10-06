@@ -347,3 +347,7 @@ TIMELINE = [(_NEW10[i] if i in _NEW10 and _os.path.exists(f"clips/cut{_NEW10[i]}
 # 10/6 夜：21 は床に立って腰の高さの M20 ナットを締める（後半だけ使用）
 if _os.path.exists("clips/cutg21c.mp4"):
     TIMELINE[20] = ("g21c", *TIMELINE[20][1:])
+# 10/6 夜：2 は白黒。49・50 は削除し、空いた 6 秒は 48 と 51 に分ける
+if _os.path.exists("clips/cutf02bw.mp4"):
+    TIMELINE[1] = ("f02bw", *TIMELINE[1][1:])
+TIMELINE = TIMELINE[:47] + [(TIMELINE[47][0], 258.9, 263.4), (TIMELINE[50][0], 263.4, 270.9)] + TIMELINE[51:]
