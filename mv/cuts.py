@@ -344,3 +344,6 @@ TIMELINE = [(_NEW9[i] if i in _NEW9 and _os.path.exists(f"clips/cut{_NEW9[i]}.mp
 # 10/6 夕：10 は普通の大きさの図面（描く人の向き）で手渡す 1 枚絵 2 枚、21 はガラス切断装置の組み立て
 _NEW10 = {10: "g10j", 21: "g21a"}
 TIMELINE = [(_NEW10[i] if i in _NEW10 and _os.path.exists(f"clips/cut{_NEW10[i]}.mp4") else no, s, e) for i,(no,s,e) in enumerate(TIMELINE,1)]
+# 10/6 夜：21 は床に立って腰の高さの M20 ナットを締める（後半だけ使用）
+if _os.path.exists("clips/cutg21c.mp4"):
+    TIMELINE[20] = ("g21c", *TIMELINE[20][1:])

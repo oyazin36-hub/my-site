@@ -231,6 +231,14 @@ JOBS["21a"] = ("frames/fix9/c21_A3.jpg", None,
                "with his hand and nods. The half-assembled machine, the parts on the pallets and the platform stay exactly "
                "the same shape and in place. Nobody else appears. The camera stays still.")
 
+# 10/6 夜 カット 21：床に立ち、腰の高さで支柱のつなぎ目の M20 ナットを締める（frames/fix9/c21_p.jpg）
+JOBS["21b"] = ("frames/fix9/c21_p.jpg", None,
+               "The skilled assembler stands on the floor and tightens the hex nut on the white column with the spanner: "
+               "several firm short pulls, re-seating the spanner on the same nut each time, then he moves the spanner to "
+               "the next nut in the row below and gives it a pull. The spanner and the nuts keep the same size; the machine, "
+               "the parts on the pallets and everything else stay exactly the same shape and in place. Nobody else "
+               "appears. The camera stays still.")
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):
