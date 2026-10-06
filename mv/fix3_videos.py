@@ -239,6 +239,39 @@ JOBS["21b"] = ("frames/fix9/c21_p.jpg", None,
                "the parts on the pallets and everything else stay exactly the same shape and in place. Nobody else "
                "appears. The camera stays still.")
 
+# 10/6 夜：3（約 50 歳の職人が溶接 → 副社長へ A3 の図面）、4（1990 年代）、22（ベトナム人の新人が溶接）、45（社長の顔）
+SAME = " Every person keeps exactly the same face, hair, age and clothes the whole time; nobody new appears. The camera stays still."
+F10 = "frames/fix10"
+JOBS.update({
+ "03w": (f"{F10}/c03w.jpg", None,
+         "The craftsman welds the joint of the steel frame steadily, moving the torch slowly along the seam with a bright "
+         "blue-white arc and a few small sparks; the steel frame and the table stay exactly the same shape." + SAME),
+ "03h": (f"{F10}/c03h.jpg", None,
+         "The craftsman hands the A3 drawing sheet to the vice president; she takes it carefully with both hands, they "
+         "look at each other and smile warmly, and she nods. The sheet stays the same size and flat." + SAME),
+ "04n": (f"{F10}/c04_1990.jpg", None,
+         "The three 1990s craftsmen work calmly together at the NC lathe: one measures the part, one adjusts the handle, "
+         "one watches closely; small, natural movements. The lathe stays exactly the same shape." + SAME),
+ "22v": (f"{F10}/c22.jpg", f"{F10}/c22_end.jpg",
+         "The young welder finishes the weld with a steady hand, the arc goes out, he flips his welding face shield up "
+         "and smiles with relief at the senior beside him, who nods with approval. The steel frame stays the same shape."
+         + SAME),
+ "45v": (f"{F10}/c45.jpg", None,
+         "The employees stand together and look ahead into the bright warm light with hopeful, determined faces; the "
+         "president in front lifts his chin slightly with a confident look; hair and clothes move gently in a soft breeze."
+         + SAME),
+})
+
+# 10/6 夜：社長の顔をそろえた 31・48
+JOBS.update({
+ "31p": ("frames/fix10/p31.jpg", None,
+         "Morning meeting in the office: the president speaks with calm, confident gestures; the employees listen, nod and "
+         "smile. Everyone stays in place." + SAME),
+ "48p": ("frames/fix10/p48.jpg", None,
+         "The president and the customer shake hands firmly and smile, then both look at the finished steel frame product "
+         "beside them; the product stays exactly the same shape." + SAME),
+})
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):

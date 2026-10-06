@@ -351,3 +351,7 @@ if _os.path.exists("clips/cutg21c.mp4"):
 if _os.path.exists("clips/cutf02bw.mp4"):
     TIMELINE[1] = ("f02bw", *TIMELINE[1][1:])
 TIMELINE = TIMELINE[:47] + [(TIMELINE[47][0], 258.9, 263.4), (TIMELINE[50][0], 263.4, 270.9)] + TIMELINE[51:]
+# 10/6 夜：3（約 50 歳の職人が溶接 → 副社長へ A3 の図面）、4（1948 → 1990 年代 → 今）、10（A3）、22（ベトナム人の新人が溶接）、
+# 社長の顔をそろえた 31・45・48（番号は 49・50 を消した後の並び）
+_NEW11 = {3: "g03m", 4: "g04d", 10: "g10k", 22: "g22v", 31: "g31q", 45: "g45w", 48: "g48p"}
+TIMELINE = [(_NEW11[i] if i in _NEW11 and _os.path.exists(f"clips/cut{_NEW11[i]}.mp4") else no, s, e) for i,(no,s,e) in enumerate(TIMELINE,1)]
