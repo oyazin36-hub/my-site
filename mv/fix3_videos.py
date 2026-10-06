@@ -272,6 +272,13 @@ JOBS.update({
          "beside them; the product stays exactly the same shape." + SAME),
 })
 
+# 10/7 カット 2：1948 年の町工場、職人の手元だけ（顔は出さない）。ノミとハンマーで石を削る（編集で白黒に）
+JOBS["02s"] = ("frames/fix12/c02_b.jpg", None,
+               "The craftsman's hands strike the steel chisel with the hammer several times in a steady rhythm, small stone "
+               "chips fly off and a little dust rises; between strikes he shifts the chisel slightly along the stone. Only "
+               "the hands and sleeves are visible, never a face; nobody else appears. The stone block, the workbench and the "
+               "old lathe in the background keep exactly the same shape. The camera stays still.")
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):
