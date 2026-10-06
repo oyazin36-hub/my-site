@@ -364,3 +364,6 @@ if _os.path.exists("clips/cutg04f.mp4"):
 # 10/7 カット 4 は 1948 年をやめて、1990 年代 → 今だけに
 if _os.path.exists("clips/cutg04g.mp4"):
     TIMELINE[3] = ("g04g", *TIMELINE[3][1:])
+# 10/7 カット 4：カット 3 に合わせた描き方。1990 年代（セピア）→ 今、どちらも自然に作業し続ける動画
+if _os.path.exists("clips/cutg04h.mp4"):
+    TIMELINE[3] = ("g04h", *TIMELINE[3][1:])

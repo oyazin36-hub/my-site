@@ -285,6 +285,20 @@ JOBS["04e"] = ("frames/fix10/c04_1990_e.jpg", None,
                "adjusts the handle, the woman watches closely; small, natural movements. The lathe and the workshop stay "
                "exactly the same shape." + SAME)
 
+# 10/7 カット 4 をカット 3 に合わせた描き方で、2 場面とも自然に作業し続ける動画に
+NATURAL = (" Natural, continuous, unhurried real working movements like a documentary shot: hands keep working the whole "
+           "time, small head turns and glances, breathing; nobody stops to pose, stands up straight or looks at the camera.")
+JOBS.update({
+ "04r": ("frames/fix10/c04_90r.jpg", None,
+         "The three 1990s craftsmen keep working at the lathe: the man with glasses carefully adjusts the tool post with "
+         "a small wrench, the young man in the middle measures the part with the micrometer and reads it, the woman leans "
+         "in and watches, then points at the part." + NATURAL + " The lathe and the workshop stay exactly the same shape." + SAME),
+ "04t": ("frames/fix10/c04_nowr.jpg", None,
+         "The three employees keep working at the lathe: the man with glasses checks the part with the digital gauge, the "
+         "young man in the middle measures with the micrometer, the woman turns the handle of the lathe slowly and "
+         "glances at the reading." + NATURAL + " The lathe and the factory stay exactly the same shape." + SAME),
+})
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):
