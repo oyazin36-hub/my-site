@@ -161,6 +161,12 @@ JOBS.update({
          "time; it is never rolled. The camera stays still."),
 })
 
+# 10/6 トラックを会社のトラック（銀色の平ボディ）に統一
+JOBS.update({
+ "25t": (f"{F5}/c25.jpg", None, JOBS["25b"][2] + " The truck is a silver flatbed truck and stays exactly the same."),
+ "50t": (f"{F5}/c50.jpg", None, JOBS["50b"][2] + " The truck is a silver flatbed truck and stays exactly the same."),
+})
+
 MODEL = os.environ.get("VEO_MODEL", "veo-3.1-fast-generate-preview")  # 急ぐ日は標準版を指定する
 
 def make(no):

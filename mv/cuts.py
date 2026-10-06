@@ -326,3 +326,7 @@ if _os.path.exists("clips/cutg10s.mp4"):
     TIMELINE[9] = ("g10s", *TIMELINE[9][1:])
 if _os.path.exists("clips/cutg10f.mp4"):
     TIMELINE[9] = ("g10f", *TIMELINE[9][1:])
+# 10/6 会社のトラックに統一した 25・50
+for _i, _id in ((25, "g25t"), (50, "g50t")):
+    if _os.path.exists(f"clips/cut{_id}.mp4"):
+        TIMELINE[_i - 1] = (_id, *TIMELINE[_i - 1][1:])
