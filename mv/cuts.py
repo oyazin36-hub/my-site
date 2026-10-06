@@ -361,3 +361,6 @@ if _os.path.exists("clips/cutg02t.mp4"):
 # 10/7 カット 4 の 1990 年代を、こぢんまりした町工場に
 if _os.path.exists("clips/cutg04f.mp4"):
     TIMELINE[3] = ("g04f", *TIMELINE[3][1:])
+# 10/7 カット 4 は 1948 年をやめて、1990 年代 → 今だけに
+if _os.path.exists("clips/cutg04g.mp4"):
+    TIMELINE[3] = ("g04g", *TIMELINE[3][1:])
