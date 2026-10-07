@@ -391,3 +391,6 @@ if _os.path.exists("clips/cutg47t.mp4"):
 # 10/7 カット 3：溶接の場面だけセピア色（図面を手渡す場面へ切り替わるところで色が戻る）
 if _os.path.exists("clips/cutg03n.mp4"):
     TIMELINE[2] = ("g03n", *TIMELINE[2][1:])
+# 10/7 カット 41：製品を地面と平行のまま真横から吊り上げる（41hb の 1.0〜4.9 秒を使う。その後はスイッチが別の人の手に移るので使わない）
+if _os.path.exists("clips/cutg41m.mp4"):
+    TIMELINE[40] = ("g41m", *TIMELINE[40][1:])

@@ -400,6 +400,15 @@ for k in ("i", "j"):
 for k in ("k", "l"):
     JOBS[f"07r{k}"] = ("frames/fix14/c07n.jpg", "frames/fix14/c07n.jpg", JOBS["07ri"][2])
 
+# 10/7 カット 41：製品は地面と平行のまま、まっすぐゆっくり上がる（真横からの絵）
+for k in ("a", "b"):
+    JOBS[f"41h{k}"] = ("frames/c41n/n2.jpg", None,
+        "The white-haired man presses a button on the yellow pendant control box and the crane slowly lifts the steel frame "
+        "product straight up by about 30 cm. The product stays perfectly level and parallel to the floor the whole time: it "
+        "does not tilt, swing, sway or rotate, and its shape, size and proportions never change. The four chains stay taut and "
+        "equal. Both men stay where they are, clear of the load, only glancing up a little. Nothing else changes. "
+        "Locked-off static camera.")
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):
