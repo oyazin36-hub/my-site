@@ -5,7 +5,10 @@ import subprocess, sys
 
 # 10/6 夜：全体の雰囲気をカット 26 に寄せる色合わせ（柔らかい光のにじみ・少し明るく温かく・線を少し締める）。
 # 白黒のカット 2 とセピアから始まるカット 4 の前半には暖色をかけない
-GRADE = ("format=gbrp,split[o][g];[g]gblur=sigma=8[gb];[o][gb]blend=all_mode=screen:all_opacity=0.14,format=yuv420p,"
+# 10/7：人物だけくっきり浮かないよう、輪郭の強い線（主に人物の線画）を背景並みにやわらげる
+SOFT = ("format=yuv420p,split=3[so][sb][se];[sb]gblur=sigma=2.2[sbl];[se]format=gray,sobel=scale=3,gblur=sigma=1.5,"
+        "format=yuv420p[sm];[so][sbl][sm]maskedmerge,")
+GRADE = (SOFT + "format=gbrp,split[o][g];[g]gblur=sigma=8[gb];[o][gb]blend=all_mode=screen:all_opacity=0.14,format=yuv420p,"
          "eq=saturation=1.06:gamma=1.03:contrast=0.97,"
          "colorbalance=rm=0.03:gm=0.005:bm=-0.03:enable='not(between(t,1.8,7.4))',unsharp=5:5:0.3")
 
