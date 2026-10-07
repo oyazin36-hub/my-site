@@ -388,3 +388,6 @@ if _os.path.exists("clips/cutg07m.mp4"):
 # 10/7 カット 47：白髪の女性をトラック運転手に替えた 1 枚絵をゆっくり寄せる
 if _os.path.exists("clips/cutg47t.mp4"):
     TIMELINE[46] = ("g47t", *TIMELINE[46][1:])
+# 10/7 カット 3：溶接の場面だけセピア色（図面を手渡す場面へ切り替わるところで色が戻る）
+if _os.path.exists("clips/cutg03n.mp4"):
+    TIMELINE[2] = ("g03n", *TIMELINE[2][1:])
