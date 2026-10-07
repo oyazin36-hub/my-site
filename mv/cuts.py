@@ -373,3 +373,6 @@ if _os.path.exists("clips/cutg04i.mp4"):
 # 10/7 カット 4 再挑戦：カメラ固定・小さな動きの 2 本から、動きの量を測って基準内（約 3 以下）の部分だけを使用
 if _os.path.exists("clips/cutg04j.mp4"):
     TIMELINE[3] = ("g04j", *TIMELINE[3][1:])
+# 10/7 新しい設定表の顔（社長・品質課の課長・先代社長の奥さん）にそろえた 23・24・27・32・49（カメラ固定・小さな動き、基準内の部分だけ）
+_NEW12 = {23: "g23m", 24: "g24m", 27: "g27m", 32: "g32m", 49: "g49m"}
+TIMELINE = [(_NEW12[i] if i in _NEW12 and _os.path.exists(f"clips/cut{_NEW12[i]}.mp4") else no, s, e) for i,(no,s,e) in enumerate(TIMELINE,1)]

@@ -329,6 +329,22 @@ for k in ("a", "b"):
         "smiles a little." + LOCKED +
         " The table, the drawing sheet and the office keep exactly the same shape and size. Every person keeps the same face, hair and navy uniform; nobody new appears.")
 
+# 10/7 新しい設定表の顔（社長・品質課の課長・先代社長の奥さん）にそろえた 23・24・27・32・49。カメラ固定・小さな動き
+F13 = "frames/fix13"
+KEEPF = " The machines, tables and room keep exactly the same shape. Every person keeps the same face, hair and clothes; nobody new appears."
+JOBS.update({
+ "23n": (f"{F13}/c23.jpg", None, "In the meeting the client in the suit explains with a gentle open-hand gesture, the president "
+         "behind the table nods slowly, the smiling concept designer adds a few lines to the drawing with his pen." + LOCKED + KEEPF),
+ "24n": (f"{F13}/c24.jpg", None, "The quality control section chief kneels and slowly touches the probe to a few points on the "
+         "machined top plate, carefully checking; the tripod stays still." + LOCKED + KEEPF),
+ "27n": (f"{F13}/c27.jpg", None, "The employees in front of the big white gantry machine applaud warmly with smiles; the "
+         "president in the middle claps and smiles; the machine stays still." + LOCKED + KEEPF),
+ "32n": (f"{F13}/c32.jpg", None, "Lunch break: the employees eat their bento and laugh together; the young man in front tells "
+         "a story with a small hand gesture, the founder's wife laughs, the woman on the right smiles and listens." + LOCKED + KEEPF),
+ "49n": (f"{F13}/c49.jpg", None, "At the end of the work day the employees stand together and wave gently at the camera with "
+         "warm smiles." + LOCKED.replace("looks at the camera", "moves from their place") + KEEPF),
+})
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):
