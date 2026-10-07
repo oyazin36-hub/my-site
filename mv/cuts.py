@@ -379,3 +379,6 @@ TIMELINE = [(_NEW12[i] if i in _NEW12 and _os.path.exists(f"clips/cut{_NEW12[i]}
 # 10/7 カット 47：社長・副社長を真ん中に
 if _os.path.exists("clips/cutg47m.mp4"):
     TIMELINE[46] = ("g47m", *TIMELINE[46][1:])
+# 10/7 カット 47：21 人にした 1 枚目（社長・副社長が真ん中）をゆっくり寄せる（動画化は未承認のため止め絵）
+if _os.path.exists("clips/cutg47s.mp4"):
+    TIMELINE[46] = ("g47s", *TIMELINE[46][1:])
