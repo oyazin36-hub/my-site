@@ -350,6 +350,22 @@ JOBS["47n"] = ("frames/fix13/c47.jpg", None,
                "Everyone applauds warmly with smiles around the finished product and the white glass-cutting machine; the "
                "president and the vice president in the center clap and smile at each other." + LOCKED + KEEPF)
 
+# 10/7 カット 7：実際の加工動画を元にした絵（frames/fix14/c07.jpg）。カメラ固定、主軸が削り進む
+for k in ("a", "b"):
+    JOBS[f"07r{k}"] = ("frames/fix14/c07.jpg", None,
+        "Inside the huge gantry machining center the spindle head rotates and slowly mills the top of the large welded "
+        "steel frame, moving a little along the cross rail; a fine coolant mist sprays at the cutting point and a few small "
+        "metal chips fly off and land near it. The workpiece, its pockets, the machine and the covers keep exactly the same "
+        "shape and position; no chip conveyor appears; no people. Locked-off static camera: no zoom, no pan. Calm, steady.")
+
+# 10/7 カット 7 やり直し：始めと終わりを同じ絵にして機械の形・位置を固定。動くのは回転・霧・少しの切りくずだけ
+for k in ("c", "d"):
+    JOBS[f"07r{k}"] = ("frames/fix14/c07.jpg", "frames/fix14/c07.jpg",
+        "The spindle stays in the same place and keeps rotating, cutting the top of the steel frame: a fine coolant mist "
+        "sprays and swirls at the cutting point and a few tiny metal chips flick off. Nothing else moves: the spindle head, "
+        "the cross rail, the machine covers, the panels, the workpiece and its pockets keep exactly the same shape and "
+        "position the whole time; no new parts or panels appear; no people. Locked-off static camera.")
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):

@@ -382,3 +382,6 @@ if _os.path.exists("clips/cutg47m.mp4"):
 # 10/7 カット 47：21 人にした 1 枚目（社長・副社長が真ん中）をゆっくり寄せる（動画化は未承認のため止め絵）
 if _os.path.exists("clips/cutg47s.mp4"):
     TIMELINE[46] = ("g47s", *TIMELINE[46][1:])
+# 10/7 カット 7：実際の加工動画を元にした絵。始めと終わりを同じ絵にして機械の形を固定
+if _os.path.exists("clips/cutg07m.mp4"):
+    TIMELINE[6] = ("g07m", *TIMELINE[6][1:])
