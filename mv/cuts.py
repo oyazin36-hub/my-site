@@ -376,3 +376,6 @@ if _os.path.exists("clips/cutg04j.mp4"):
 # 10/7 新しい設定表の顔（社長・品質課の課長・先代社長の奥さん）にそろえた 23・24・27・32・49（カメラ固定・小さな動き、基準内の部分だけ）
 _NEW12 = {23: "g23m", 24: "g24m", 27: "g27m", 32: "g32m", 49: "g49m"}
 TIMELINE = [(_NEW12[i] if i in _NEW12 and _os.path.exists(f"clips/cut{_NEW12[i]}.mp4") else no, s, e) for i,(no,s,e) in enumerate(TIMELINE,1)]
+# 10/7 カット 47：社長・副社長を真ん中に
+if _os.path.exists("clips/cutg47m.mp4"):
+    TIMELINE[46] = ("g47m", *TIMELINE[46][1:])

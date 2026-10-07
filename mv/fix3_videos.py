@@ -345,6 +345,11 @@ JOBS.update({
          "warm smiles." + LOCKED.replace("looks at the camera", "moves from their place") + KEEPF),
 })
 
+# 10/7 カット 47：社長・副社長を真ん中に（frames/fix13/c47.jpg）
+JOBS["47n"] = ("frames/fix13/c47.jpg", None,
+               "Everyone applauds warmly with smiles around the finished product and the white glass-cutting machine; the "
+               "president and the vice president in the center clap and smile at each other." + LOCKED + KEEPF)
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):
