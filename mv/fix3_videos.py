@@ -366,6 +366,15 @@ for k in ("c", "d"):
         "the cross rail, the machine covers, the panels, the workpiece and its pockets keep exactly the same shape and "
         "position the whole time; no new parts or panels appear; no people. Locked-off static camera.")
 
+# 10/7 カット 7 再：飛び散りを抑える（ミストは刃先だけ薄く、削り屑はほぼ飛ばない）
+for k in ("e", "f"):
+    JOBS[f"07r{k}"] = ("frames/fix14/c07.jpg", "frames/fix14/c07.jpg",
+        "Calm, quiet machining. The spindle stays in the same place and keeps rotating slowly, cutting the top of the steel "
+        "frame. Only a very thin, faint wisp of coolant mist stays right at the tool tip, low and small, never forming clouds "
+        "or spreading out; no chips fly into the air, no sparks, no splashes, no debris. Nothing else moves: the spindle head, "
+        "the cross rail, the machine covers, the panels, the workpiece and its pockets keep exactly the same shape and "
+        "position the whole time; no new parts or panels appear; no people. Locked-off static camera.")
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):
