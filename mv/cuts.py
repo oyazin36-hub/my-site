@@ -394,3 +394,6 @@ if _os.path.exists("clips/cutg03n.mp4"):
 # 10/7 カット 41：製品を地面と平行のまま真横から吊り上げる（41hb の 1.0〜4.9 秒を使う。その後はスイッチが別の人の手に移るので使わない）
 if _os.path.exists("clips/cutg41m.mp4"):
     TIMELINE[40] = ("g41m", *TIMELINE[40][1:])
+# 10/8 カット 38：1990 年代の場面なのでセピア色（カット 3 の溶接と同じ色合い）
+if _os.path.exists("clips/cutg38s.mp4"):
+    TIMELINE[37] = ("g38s", *TIMELINE[37][1:])
