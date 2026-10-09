@@ -409,6 +409,16 @@ for k in ("a", "b"):
         "equal. Both men stay where they are, clear of the load, only glancing up a little. Nothing else changes. "
         "Locked-off static camera.")
 
+# 10/9 カット 22：写真どおりの壁際の作業場。マスクは頭のバンドに付いたまま、こめかみの蝶番を軸に上へ跳ね上げる
+for k, end in (("a", "e1"), ("b", "e2")):
+    JOBS[f"22w{k}"] = ("frames/c22n/y1c.jpg", f"frames/c22n/{end}.jpg",
+        "The young welder finishes the weld with a steady hand; the arc and sparks stop. Then, with his free gloved hand, he "
+        "flips his welding helmet up in one smooth, natural motion: the helmet stays on his head on its headband and only "
+        "rotates upward around the hinge at his temples, so the dark visor swings up above his forehead and his face appears. "
+        "The helmet never comes off, never slides, never changes shape or size, and never disappears. He looks up at the senior "
+        "with glasses and smiles with relief; the senior smiles back and nods. The steel frame product, the steel plate and "
+        "the room stay exactly the same. Locked-off static camera.")
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):

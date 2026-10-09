@@ -397,3 +397,6 @@ if _os.path.exists("clips/cutg41m.mp4"):
 # 10/8 カット 38：1990 年代の場面なのでセピア色（カット 3 の溶接と同じ色合い）
 if _os.path.exists("clips/cutg38s.mp4"):
     TIMELINE[37] = ("g38s", *TIMELINE[37][1:])
+# 10/9 カット 22：写真どおりの壁際の作業場で、定盤の上の製品を溶接 → マスクを跳ね上げて笑い合う（22wa の 0.3〜6.1 秒）
+if _os.path.exists("clips/cutg22m.mp4"):
+    TIMELINE[21] = ("g22m", *TIMELINE[21][1:])
