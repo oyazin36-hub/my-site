@@ -41,7 +41,7 @@ ass = [
     "[V4+ Styles]",
     "Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, BackColour, Bold, Alignment, MarginL, MarginR, MarginV, BorderStyle, Outline, Shadow",
     f"Style: Lyric,{FONT},40,&H00FFFFFF,&H50000000,&H00000000,0,2,40,40,48,1,2.5,0",
-    f"Style: Tag,{FONT},108,&H00FFFFFF,&H60000000,&H00000000,1,7,40,40,24,1,5,2",
+    f"Style: Tag,{FONT},84,&H00FFFFFF,&H60000000,&H00000000,1,7,40,40,26,1,4,2",
     f"Style: Temp,{FONT},20,&H00FFFFFF,&H80000000,&H00000000,0,9,24,24,20,1,1.5,0",
     f"Style: Logo,{FONT},84,&H00FFFFFF,&H60000000,&H00000000,1,8,40,40,110,1,3,0",
     "", "[Events]", "Format: Layer, Start, End, Style, Text",
