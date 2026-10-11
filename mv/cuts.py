@@ -159,6 +159,7 @@ LYRICS = [
 def _era_tags():
     era = {n: "現代" for n in range(1, len(TIMELINE) + 1)}
     era[2] = "1950年代"; era[38] = "1990年代"
+    era[5] = era[29] = "岡崎"   # 岡崎の街の場面は「岡崎」のまま
     spans = []
     for n, (_, a, b) in enumerate(TIMELINE, 1):
         if n == 3:      # 前半の溶接はセピア、図面を手渡すところからカラー
