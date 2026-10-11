@@ -160,6 +160,7 @@ def _era_tags():
     era = {n: "現代" for n in range(1, len(TIMELINE) + 1)}
     era[2] = "1950年代"; era[38] = "1990年代"
     era[5] = era[29] = "岡崎"   # 岡崎の街の場面は「岡崎」のまま
+    era[36] = None              # 古いアルバム（手帳）の場面は表示なし
     spans = []
     for n, (_, a, b) in enumerate(TIMELINE, 1):
         if n == 3:      # 前半の溶接はセピア、図面を手渡すところからカラー
@@ -170,11 +171,13 @@ def _era_tags():
             spans.append((a, b, era[n]))
     out = []
     for a, b, t in spans:
+        if t is None:
+            out.append((a, b, None)); continue
         if out and out[-1][2] == t and abs(out[-1][1] - a) < 0.2:
             out[-1] = (out[-1][0], b, t)
         else:
             out.append((a, b, t))
-    return [(round(a + 0.2, 2), round(b - 0.2, 2), t) for a, b, t in out]
+    return [(round(a + 0.2, 2), round(b - 0.2, 2), t) for a, b, t in out if t]
 TAGS = _era_tags()
 
 # 最後の社名（ロゴの代わり）の表示開始秒
