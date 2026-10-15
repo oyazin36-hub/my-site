@@ -432,3 +432,9 @@ _S26.update({9: "g09m", 10: "g10z", 11: "g11s", 13: "g13s", 14: "g14z", 21: "g21
 for _n, _c in _S26.items():
     if _os.path.exists(f"clips/cut{_c}.mp4"):
         TIMELINE[_n - 1] = (_c, *TIMELINE[_n - 1][1:])
+# 10/15 カット 26 風の第 2 弾（大勢の場面）と、細かく直したカット
+_S26.update({2: "g02r", 3: "g03r", 4: "g04r", 17: "g17q", 18: "g18q", 22: "g22r", 25: "g25q", 27: "g27q", 31: "g31x", 32: "g32q",
+             33: "g33x", 37: "g37r", 38: "g38r", 40: "g40q", 41: "g41q", 42: "g42q", 45: "g45q", 47: "g47r", 48: "g48q", 49: "g49q", 50: "g50q"})
+for _n, _c in _S26.items():
+    if _os.path.exists(f"clips/cut{_c}.mp4"):
+        TIMELINE[_n - 1] = (_c, *TIMELINE[_n - 1][1:])

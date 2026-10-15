@@ -460,6 +460,40 @@ JOBS["14z"] = ("frames/s26/c14a.jpg", None, "Quiet office scene. The designer at
 
 JOBS["24t"] = ("frames/s26/c24a.jpg", "frames/s26/c24a.jpg", _S26M["24"] + " He keeps measuring the whole time and never straightens up or lowers the probe." + LOCKED + KEEPF)
 
+# 10/15 カット 26 風の第 2 弾（大勢の場面）と、細かく直したカット
+_S26Q = {
+ "17": ("c17a", None, "The two staff slowly pull the large cloth off the white glass cutting machine, revealing it; the machine underneath keeps exactly the same shape and stays white with silver parts."),
+ "18": ("c18a", None, "The employees walk slowly away toward the bright light at the entrance, seen from behind."),
+ "25": ("c25b", None, "The staff bow to see off the truck; the driver waves; the truck slowly starts to move. The truck, its lettering and the level load stay exactly the same; nobody is on the truck bed."),
+ "27": ("c27a", None, "Everyone claps warmly and smiles at the new machine; the machine keeps exactly the same shape."),
+ "31": ("c31a", None, "In the morning meeting the president speaks with a small gesture; the staff listen and nod slightly."),
+ "32": ("c32a", None, "The staff eat their bento and laugh together, small natural movements."),
+ "33": ("c33a", None, "The vice-president at her desk looks up and smiles warmly, watching over everyone; the staff work quietly."),
+ "42": ("c42a", None, "Everyone in front of the factory smiles; a few people wave a little; a gentle breeze."),
+ "45": ("c45a", None, "The employees look up toward the warm light with hopeful faces; the president lifts his chin slightly with a confident look."),
+ "48": ("c48a", None, "The president and the client shake hands firmly and smile at each other, nodding slightly."),
+ "49": ("c49a", None, "Everyone waves slowly and smiles at the end of the work day."),
+ "50": ("c50a", None, "Everyone gathered in front of the factory waves and smiles in the warm evening light."),
+ "02": ("c02a", None, "The craftsman's hands tap the chisel with the hammer, chipping small flakes of stone; dust floats. Black and white."),
+ "03w": ("c03wa", None, "The welder welds steadily with a bright arc and small sparks, moving the torch slowly along the joint."),
+ "03h": ("c03ha", None, "The craftsman hands the A3 drawing to the vice-president, who takes it with both hands and looks at it, nodding. The drawing stays flat with the same lines."),
+ "38": ("c38a", None, "The hand slowly turns the handle of the old lathe; the machine keeps exactly the same shape."),
+ "40": ("c40a", None, "The older hand draws a few slow pencil lines on the paper; the younger hand moves the mouse a little; the screen keeps the same flat 2D front-view drawing."),
+ "41": ("c41a", None, "The white-haired man presses a button on the yellow pendant and the crane slowly lifts the steel frame product straight up a little. The product stays perfectly level and parallel to the floor the whole time: it never tilts, swings or rotates, and its shape never changes. The four chains stay taut and equal. The white-haired man keeps holding the pendant the whole time; the other man keeps his empty hands at his sides. Nobody moves under the load."),
+}
+for _n, (_f, _l, _m) in _S26Q.items():
+    JOBS[f"{_n}q"] = (f"frames/s26/{_f}.jpg", f"frames/s26/{_l}.jpg" if _l else None, _m + LOCKED + KEEPF)
+JOBS["04q"] = ("frames/s26/c04oa.jpg", "frames/s26/c04fa.jpg",
+    "Locked-off static camera: the sepia 1990s town workshop with three young workers at the lathe slowly dissolves into the present-day office where three people discuss a drawing at the table. Calm, gentle transition; nothing distorts.")
+JOBS["22q"] = ("frames/s26/c22a.jpg", "frames/s26/c22e.jpg", JOBS["22wa"][2])
+
+JOBS["31r"] = ("frames/s26/c31a.jpg", None, _S26Q["31"][2] + LOCKED + KEEPF)   # 31q は前の動画と名前が重なる
+
+JOBS["31x"] = ("frames/s26/c31a.jpg", None, _S26Q["31"][2] + LOCKED + KEEPF)
+JOBS["33x"] = ("frames/s26/c33a.jpg", "frames/s26/c33a.jpg", _S26Q["33"][2] + " Everyone stays in the same place; nobody comes closer to the camera." + LOCKED + KEEPF)
+JOBS["04ox"] = ("frames/s26/c04oa.jpg", None, "The three young workers in the sepia 1990s workshop work at the old lathe together, small natural movements; sepia tone." + LOCKED + KEEPF)
+JOBS["04fx"] = ("frames/s26/c04fa.jpg", None, "In the office the three people look at the drawing on the table and discuss it; one points at the drawing, the others nod." + LOCKED + KEEPF)
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):
