@@ -422,3 +422,8 @@ if _os.path.exists("clips/cutg38s.mp4"):
 # 10/9 カット 22：写真どおりの壁際の作業場で、定盤の上の製品を溶接 → マスクを跳ね上げて笑い合う（22wa の 0.3〜6.1 秒）
 if _os.path.exists("clips/cutg22m.mp4"):
     TIMELINE[21] = ("g22m", *TIMELINE[21][1:])
+# 10/15 カット 26 の絵柄に合わせて作り直したカット
+_S26 = {8: "g08v", 16: "g16s", 28: "g28s"}
+for _n, _c in _S26.items():
+    if _os.path.exists(f"clips/cut{_c}.mp4"):
+        TIMELINE[_n - 1] = (_c, *TIMELINE[_n - 1][1:])
