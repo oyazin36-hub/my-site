@@ -443,3 +443,8 @@ _S26.update({17: "g17y", 21: "g21y", 33: "g33z"})
 for _n, _c in _S26.items():
     if _os.path.exists(f"clips/cut{_c}.mp4"):
         TIMELINE[_n - 1] = (_c, *TIMELINE[_n - 1][1:])
+# 10/15 カット 17・21 は前に OK をもらった版に戻す（17 は完成した白いガラス切断装置のお披露目、21 は M20 のナットを締める）
+_S26.update({17: "g17d", 21: "g21c"})
+for _n, _c in _S26.items():
+    if _os.path.exists(f"clips/cut{_c}.mp4"):
+        TIMELINE[_n - 1] = (_c, *TIMELINE[_n - 1][1:])
