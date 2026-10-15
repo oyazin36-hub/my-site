@@ -427,3 +427,8 @@ _S26 = {8: "g08v", 16: "g16s", 28: "g28s"}
 for _n, _c in _S26.items():
     if _os.path.exists(f"clips/cut{_c}.mp4"):
         TIMELINE[_n - 1] = (_c, *TIMELINE[_n - 1][1:])
+# 10/15 カット 26 風の第 1 弾（9・43・21 は大きな動きが入る前の部分だけ使うよう位置をずらした版）
+_S26.update({9: "g09m", 10: "g10z", 11: "g11s", 13: "g13s", 14: "g14z", 21: "g21m", 23: "g23s", 24: "g24t", 39: "g39s", 43: "g43m"})
+for _n, _c in _S26.items():
+    if _os.path.exists(f"clips/cut{_c}.mp4"):
+        TIMELINE[_n - 1] = (_c, *TIMELINE[_n - 1][1:])

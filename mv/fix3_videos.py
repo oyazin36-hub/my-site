@@ -439,6 +439,27 @@ JOBS["08t"] = ("frames/s26/c08v.jpg", None,
 # カット 8：顔を大きく切り出した絵は安全チェックで止まるので、切り出す前の絵で作り、あとで同じ範囲を切り出す
 JOBS["08u"] = ("frames/s26/c08u.jpg", None, JOBS["08s"][2])
 
+# 10/15 カット 26 の絵柄に合わせて作り直し（第 1 弾の残り 10 カット）
+_S26M = {
+ "09": "The inspector slowly slides his fingertips along the straightedge on the top plate and checks the gap closely, focused.",
+ "10": "The advisor keeps drawing a few slow pencil lines on the A3 drawing; the designer beside him watches and nods slightly. The drawing stays flat and its lines do not change except the new pencil strokes.",
+ "11": "The two designers compare the drawing with the tablet; the white-haired designer points at the drawing and the smiling designer nods.",
+ "13": "The machinist calmly presses a button on the control panel and watches the screen, focused.",
+ "14": "The designer moves the mouse a little and watches the CAD drawing on the monitors, focused; the screen images stay simple line drawings.",
+ "21": "The assembler slowly turns the wrench a little to tighten the nut at the column joint; the white machine stays exactly the same shape.",
+ "23": "The client explains with a small open-hand gesture; the concept designer sketches a few lines on the paper and nods; the designer listens.",
+ "24": "The quality-control chief keeps the probe tip on the edge of the hole and slowly moves it a little along the edge, focused; the tripod camera stays still.",
+ "39": "The machinist presses buttons on the control panel and watches the screen, focused.",
+ "43": "The advisor points at the machined top plate and says something; the newcomer nods with a proud smile.",
+}
+for _n, _m in _S26M.items():
+    JOBS[f"{_n}s"] = (f"frames/s26/c{_n}a.jpg", None, _m + LOCKED + KEEPF)
+
+JOBS["10z"] = ("frames/s26/c10a.jpg", None, _S26M["10"] + LOCKED + KEEPF)   # 10s は前の別の動画と名前が重なるので 10z
+JOBS["14z"] = ("frames/s26/c14a.jpg", None, "Quiet office scene. The designer at the desk works on the computer with the mouse, looking at the monitors. Tiny, slow movements only; locked-off static camera.")
+
+JOBS["24t"] = ("frames/s26/c24a.jpg", "frames/s26/c24a.jpg", _S26M["24"] + " He keeps measuring the whole time and never straightens up or lowers the probe." + LOCKED + KEEPF)
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):
