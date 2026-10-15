@@ -419,6 +419,26 @@ for k, end in (("a", "e1"), ("b", "e2")):
         "with glasses and smiles with relief; the senior smiles back and nods. The steel frame product, the steel plate and "
         "the room stay exactly the same. Locked-off static camera.")
 
+# 10/15 カット 26 の絵柄に合わせる試し：カット 8・16・28（動きは小さくゆっくり、カメラ固定）
+JOBS.update({
+ "08s": ("frames/s26/c08v.jpg", None,
+         "The senior with glasses calmly reads the caliper in his hands (it stays exactly the same shape and stays at the bottom "
+         "edge of the picture); the newcomer beside him watches with a bright, eager smile and nods a little." + LOCKED + KEEPF),
+ "16s": ("frames/s26/c16b.jpg", None,
+         "The three men around the drawing laugh softly together; the bearded man's finger moves a little along the drawing, the "
+         "others nod and smile. The drawing on the table stays flat and keeps exactly the same lines." + LOCKED + KEEPF),
+ "28s": ("frames/s26/c28c.jpg", None,
+         "The cheerful concept designer explains with a small open-hand gesture toward the whiteboard; the two listeners nod slowly "
+         "with interest. The whiteboard drawing keeps exactly the same lines and has no words." + LOCKED + KEEPF),
+})
+
+JOBS["08t"] = ("frames/s26/c08v.jpg", None,
+    "Anime factory scene. Two workers look down at a measuring tool on the workbench; the man with glasses reads it calmly, "
+    "the other man smiles and nods slightly. Tiny, slow movements only; locked-off static camera; calm, quiet mood.")
+
+# カット 8：顔を大きく切り出した絵は安全チェックで止まるので、切り出す前の絵で作り、あとで同じ範囲を切り出す
+JOBS["08u"] = ("frames/s26/c08u.jpg", None, JOBS["08s"][2])
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):
