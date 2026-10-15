@@ -494,6 +494,14 @@ JOBS["33x"] = ("frames/s26/c33a.jpg", "frames/s26/c33a.jpg", _S26Q["33"][2] + " 
 JOBS["04ox"] = ("frames/s26/c04oa.jpg", None, "The three young workers in the sepia 1990s workshop work at the old lathe together, small natural movements; sepia tone." + LOCKED + KEEPF)
 JOBS["04fx"] = ("frames/s26/c04fa.jpg", None, "In the office the three people look at the drawing on the table and discuss it; one points at the drawing, the others nod." + LOCKED + KEEPF)
 
+# 10/15 直し：17 は正しいガラス切断装置が布の下から出てくる／21 は根元のナットを締める／33 は人が歩き回らない
+JOBS["17y"] = ("frames/s26/s17.jpg", "frames/s26/e17.jpg",
+    "The two staff slowly pull the large cloth off, revealing the white glass cutting machine (tall white gantry, columns with octagonal holes); the machine keeps exactly the same shape; the others watch and smile." + LOCKED + KEEPF)
+JOBS["21y"] = ("frames/s26/n21b.jpg", "frames/s26/n21b.jpg",
+    "The crouching assembler slowly turns the wrench a little to tighten the hexagon nut at the base of the column; the wrench stays on the nut; the machine keeps exactly the same shape." + LOCKED + KEEPF)
+JOBS["33y"] = ("frames/s26/c33a.jpg", "frames/s26/c33a.jpg",
+    "Quiet office: the vice-president at her desk by the right wall smiles gently and watches over everyone; the two men type at their computers. Nobody walks, nobody enters or leaves, nobody new appears; everyone stays seated in the same place." + LOCKED + KEEPF)
+
 def make(no):
     out = f"clips/cutg{no}.mp4"
     if os.path.exists(out):

@@ -438,3 +438,8 @@ _S26.update({2: "g02r", 3: "g03r", 4: "g04r", 17: "g17q", 18: "g18q", 22: "g22r"
 for _n, _c in _S26.items():
     if _os.path.exists(f"clips/cut{_c}.mp4"):
         TIMELINE[_n - 1] = (_c, *TIMELINE[_n - 1][1:])
+# 10/15 直し：17 は正しいガラス切断装置が出てくる／21 は根元のナットを締める／33 は人が歩き回らないよう 1 枚絵をゆっくり寄せる
+_S26.update({17: "g17y", 21: "g21y", 33: "g33z"})
+for _n, _c in _S26.items():
+    if _os.path.exists(f"clips/cut{_c}.mp4"):
+        TIMELINE[_n - 1] = (_c, *TIMELINE[_n - 1][1:])
